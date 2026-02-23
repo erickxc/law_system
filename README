@@ -1,0 +1,476 @@
+# ⚖️ Law System - Sistema de Gestão de Estudos Jurídicos
+
+Sistema completo de gerenciamento de estudos para acadêmicos de Direito, com controle de sessões de estudo, histórico de desempenho, gestão de usuários e muito mais.
+
+![Python](https://img.shields.io/badge/Python-3.11+-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.109-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-316192)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+---
+
+## 📋 **Índice**
+
+- [Características](#características)
+- [Tecnologias](#tecnologias)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação](#instalação)
+- [Configuração](#configuração)
+- [Uso](#uso)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [API Endpoints](#api-endpoints)
+- [Banco de Dados](#banco-de-dados)
+- [Segurança](#segurança)
+- [Deploy](#deploy)
+- [Contribuindo](#contribuindo)
+- [Licença](#licença)
+
+---
+
+## ✨ **Características**
+
+### **Para Estudantes:**
+- 📚 Dashboard acadêmico personalizado
+- ⏱️ Cronômetro de sessões de estudo
+- ✅ Checklist de tarefas por sessão
+- 📊 Histórico completo de estudos
+- 📈 Estatísticas de desempenho
+- 🎯 Acompanhamento de progresso por matéria
+- 👤 Perfil completo com foto
+
+### **Para Administradores:**
+- 🔐 Sistema de aprovação de usuários
+- 📧 Notificações automáticas por e-mail
+- 👥 Gestão de acesso centralizada
+- 📋 Visualização de usuários pendentes
+- ⚡ Aprovação com um clique
+
+### **Recursos Técnicos:**
+- 🔒 Autenticação JWT com tokens de longa duração
+- ✉️ Sistema de e-mails automatizados
+- 📱 Interface responsiva e moderna
+- 🎨 Design profissional com Tailwind CSS
+- 🔄 Validações em tempo real (CPF, senha)
+- 📝 Logs detalhados de todas as operações
+- 🌐 API RESTful documentada (Swagger)
+
+---
+
+## 🛠️ **Tecnologias**
+
+### **Backend:**
+- **FastAPI** - Framework web moderno e rápido
+- **SQLAlchemy** - ORM para Python
+- **PostgreSQL** - Banco de dados relacional
+- **JWT (python-jose)** - Autenticação stateless
+- **Bcrypt** - Hash de senhas
+- **Pydantic** - Validação de dados
+- **SMTP** - Envio de e-mails
+
+### **Frontend:**
+- **HTML5** / **CSS3** / **JavaScript ES6+**
+- **Tailwind CSS** - Framework CSS utilitário
+- **Chart.js** - Gráficos interativos
+- **Font Awesome** - Ícones
+
+---
+
+## 📦 **Pré-requisitos**
+
+Antes de começar, você precisa ter instalado:
+
+- **Python 3.11+** - [Download](https://www.python.org/downloads/)
+- **PostgreSQL 14+** - [Download](https://www.postgresql.org/download/)
+- **Git** - [Download](https://git-scm.com/downloads/)
+- **Conta Gmail** - Para envio de e-mails (com senha de app)
+
+---
+
+## 🚀 **Instalação**
+
+### **1. Clone o repositório:**
+
+```bash
+git clone https://github.com/seu-usuario/law-system.git
+cd law-system
+```
+
+### **2. Crie um ambiente virtual:**
+
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### **3. Instale as dependências:**
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## ⚙️ **Configuração**
+
+### **1. Configure o Banco de Dados:**
+
+```bash
+# Entre no PostgreSQL
+psql -U postgres
+
+# Execute os comandos:
+CREATE DATABASE law_study_system;
+CREATE USER study_app WITH PASSWORD 'sua_senha_forte_aqui';
+GRANT ALL PRIVILEGES ON DATABASE law_study_system TO study_app;
+\q
+```
+
+### **2. Configure as Variáveis de Ambiente:**
+
+Copie o arquivo de exemplo:
+
+```bash
+cp .env.example .env
+```
+
+Edite o arquivo `.env` com suas configurações:
+
+```env
+# Database
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=law_study_system
+DB_USER=study_app
+DB_PASSWORD=sua_senha_aqui
+
+# Security (GERE UMA NOVA!)
+SECRET_KEY=sua_chave_secreta_de_32_caracteres_minimo
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=28800
+
+# Email (Configure com Gmail)
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=seu-email@gmail.com
+SMTP_PASS=sua-senha-de-app-do-gmail
+ADMIN_EMAIL=admin@example.com
+
+# Application
+ENVIRONMENT=development
+```
+
+**⚠️ IMPORTANTE:**
+- Nunca commite o arquivo `.env`!
+- Gere uma SECRET_KEY forte: `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+- Para Gmail, crie uma [Senha de App](https://support.google.com/accounts/answer/185833)
+
+### **3. Crie o Primeiro Administrador:**
+
+```bash
+python create_admin.py
+```
+
+Ou manualmente via SQL:
+
+```sql
+-- Gere o hash da senha primeiro
+-- Usando Python: from app.core.security import hash_password
+-- hash_password("Admin123!")
+
+INSERT INTO core.users (id, full_name, email, password_hash, role, group_id, is_active, is_approved)
+SELECT 
+    gen_random_uuid(),
+    'Administrador',
+    'admin@lawsystem.com',
+    '$2b$12$...seu_hash_aqui...',
+    'admin',
+    id,
+    true,
+    true
+FROM core.groups WHERE name = 'admin';
+```
+
+---
+
+## 🎮 **Uso**
+
+### **Iniciar a Aplicação:**
+
+**Terminal 1 - API Backend:**
+```bash
+cd law-system
+uvicorn main:app --reload
+# API rodando em: http://127.0.0.1:8000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd law-system/app/frontend
+python -m http.server 5500
+# Frontend rodando em: http://127.0.0.1:5500
+```
+
+### **Acessar a Aplicação:**
+
+- **Frontend**: http://127.0.0.1:5500/index.html
+- **API Docs (Swagger)**: http://127.0.0.1:8000/docs
+- **ReDoc**: http://127.0.0.1:8000/redoc
+
+### **Fluxo de Uso:**
+
+1. **Registro de Novo Usuário:**
+   - Acesse `/index.html`
+   - Clique em "Solicitar Inscrição"
+   - Preencha o formulário (validação em tempo real)
+   - Admin recebe e-mail de notificação
+
+2. **Aprovação pelo Admin:**
+   - Admin faz login
+   - Acessa "Gestão de Acesso"
+   - Aprova o usuário
+   - Usuário recebe e-mail de boas-vindas
+
+3. **Login do Estudante:**
+   - Acessa `/index.html`
+   - Faz login com credenciais aprovadas
+   - Redireciona para o dashboard
+
+4. **Usar o Sistema:**
+   - Ver progresso no dashboard
+   - Iniciar sessões de estudo
+   - Consultar histórico
+   - Ver estatísticas
+
+---
+
+## 📂 **Estrutura do Projeto**
+
+```
+law-system/
+├── app/
+│   ├── frontend/
+│   │   ├── index.html          # Tela de login/registro
+│   │   └── dash.html           # Dashboard principal
+│   ├── api/
+│   │   └── routes/             # Rotas organizadas (futuro)
+│   ├── core/
+│   │   ├── security.py         # JWT e autenticação
+│   │   └── email.py            # Envio de e-mails
+│   ├── models/
+│   │   ├── user.py             # Model de usuário
+│   │   └── academic.py         # Models acadêmicos
+│   ├── database.py             # Conexão com BD
+│   └── main.py                 # Aplicação principal
+├── config.py                   # Configurações
+├── .env                        # Variáveis de ambiente (NÃO COMMITAR!)
+├── .env.example                # Exemplo de .env
+├── .gitignore
+├── requirements.txt
+├── README.md
+└── create_admin.py             # Script para criar admin
+
+```
+
+---
+
+## 🔌 **API Endpoints**
+
+### **Autenticação**
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| POST | `/register` | Registra novo usuário | ❌ |
+| POST | `/login` | Autentica usuário | ❌ |
+
+### **Usuário**
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| GET | `/users/me` | Dados do usuário atual | ✅ |
+| GET | `/subjects/my-group` | Matérias do grupo | ✅ |
+
+### **Sessões de Estudo**
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| POST | `/sessions/` | Salva sessão de estudo | ✅ |
+| GET | `/sessions/history` | Histórico (últimas 15) | ✅ |
+
+### **Admin**
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| GET | `/admin/pending` | Usuários pendentes | 👑 Admin |
+| POST | `/admin/approve/{id}` | Aprova usuário | 👑 Admin |
+
+### **Sistema**
+
+| Método | Endpoint | Descrição | Auth |
+|--------|----------|-----------|------|
+| GET | `/` | Informações da API | ❌ |
+| GET | `/health` | Health check | ❌ |
+| GET | `/docs` | Documentação Swagger | ❌ |
+
+**Legenda:**
+- ❌ = Público
+- ✅ = Requer token JWT
+- 👑 = Requer permissões de admin
+
+---
+
+## 🗄️ **Banco de Dados**
+
+### **Schemas:**
+
+- `core` - Usuários, grupos, permissões
+- `academic` - Matérias, cursos
+- `study` - Sessões de estudo, tarefas
+
+### **Principais Tabelas:**
+
+```sql
+core.groups          # Grupos (admin, student)
+core.users           # Usuários do sistema
+academic.subjects    # Matérias
+study.sessoes_estudo # Sessões de estudo
+```
+
+### **Diagrama ER:**
+
+```
+┌─────────────┐       ┌──────────────┐
+│   groups    │◄──────┤    users     │
+└─────────────┘       └──────────────┘
+                             │
+                             │
+┌─────────────┐       ┌──────┴───────┐
+│  subjects   │◄──────┤sessoes_estudo│
+└─────────────┘       └──────────────┘
+```
+
+---
+
+## 🔒 **Segurança**
+
+### **Implementações de Segurança:**
+
+✅ **Senhas:**
+- Hash com Bcrypt (12 rounds)
+- Validação de força (maiúscula, minúscula, número, 8+ caracteres)
+- Nunca armazenadas em texto plano
+
+✅ **Tokens JWT:**
+- Expiração configurável (padrão: 8 horas)
+- Algoritmo HS256
+- SECRET_KEY em variável de ambiente
+
+✅ **Validações:**
+- CPF validado matematicamente
+- E-mail validado com Pydantic
+- Proteção contra SQL injection (ORM)
+
+✅ **CORS:**
+- Configurável por ambiente
+- Apenas origens confiáveis em produção
+
+✅ **Aprovação Manual:**
+- Novos usuários pendentes até aprovação
+- Notificação automática ao admin
+
+---
+
+## 🚀 **Deploy**
+
+### **Recomendações para Produção:**
+
+1. **Variáveis de Ambiente:**
+   ```env
+   ENVIRONMENT=production
+   DEBUG=False
+   CORS_ORIGINS=["https://seudominio.com"]
+   ```
+
+2. **HTTPS:**
+   - Use Nginx ou Caddy como reverse proxy
+   - Certificado SSL/TLS (Let's Encrypt)
+
+3. **Banco de Dados:**
+   - Backup automático diário
+   - Conexões SSL
+   - Senha forte
+
+4. **Servidor:**
+   - Gunicorn com workers: `gunicorn app.main:app -w 4 -k uvicorn.workers.UvicornWorker`
+   - Systemd service para auto-restart
+   - Monitoramento (Prometheus, Grafana)
+
+5. **Segurança:**
+   - Firewall configurado
+   - Rate limiting (slowapi)
+   - Logs centralizados
+
+---
+
+## 🤝 **Contribuindo**
+
+Contribuições são bem-vindas! Siga estes passos:
+
+1. Fork o projeto
+2. Crie uma branch: `git checkout -b feature/nova-feature`
+3. Commit: `git commit -m 'Add: nova feature'`
+4. Push: `git push origin feature/nova-feature`
+5. Abra um Pull Request
+
+### **Padrões de Código:**
+
+- Siga PEP 8 para Python
+- Docstrings em todas as funções
+- Type hints sempre que possível
+- Testes para novas features
+
+---
+
+## 📝 **Changelog**
+
+### **v1.0.0 (2026-02-14)**
+- ✨ Sistema de autenticação completo
+- ✨ Dashboard acadêmico
+- ✨ Sessões de estudo com cronômetro
+- ✨ Histórico e estatísticas
+- ✨ Sistema de aprovação de usuários
+- ✨ Notificações por e-mail
+- ✨ Validação de CPF em tempo real
+
+---
+
+## 📞 **Suporte**
+
+- **Email**: goncalvecardoso@gmail.com
+- **Issues**: [GitHub Issues](https://github.com/seu-usuario/law-system/issues)
+- **Documentação**: `/docs` endpoint da API
+
+---
+
+## 📄 **Licença**
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+
+---
+
+## 🙏 **Agradecimentos**
+
+- FastAPI pela excelente framework
+- Tailwind CSS pelo design system
+- Chart.js pelos gráficos
+- Comunidade open source
+
+---
+
+**Desenvolvido com ❤️ para estudantes de Direito**
+
+⭐️ Se este projeto foi útil, considere dar uma estrela!
