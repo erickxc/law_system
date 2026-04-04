@@ -1,34 +1,56 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app.routes.auth import get_current_user
-from app.models.academic import Teacher # Assumindo que o model está em academic.py
+from typing import Optional, List
+from uuid import UUID
 from pydantic import BaseModel
-from typing import List
+
+from app.database import get_db
+from app.core.auth import get_current_user
+from app.models.academic import Teacher
 
 router = APIRouter(prefix="/teachers", tags=["Teachers"])
 
+
 class TeacherCreate(BaseModel):
     name: str
-    contact: str = None
-    email: str = None
+    contact: Optional[str] = None
+    email: Optional[str] = None
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def create_teacher(
-    data: TeacherCreate, 
+
+class TeacherResponse(BaseModel):
+    id: UUID
+    name: str
+    contact: Optional[str]
+    email: Optional[str]
+
+    class Config:
+        from_attributes = True
+
+
+@router.post("/", response_model=TeacherResponse, status_code=status.HTTP_201_CREATED)
+def create_teacher(
+    data: TeacherCreate,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user)
+    current_user=Depends(get_current_user)
 ):
     new_teacher = Teacher(
         name=data.name,
         contact=data.contact,
         email=data.email
     )
-    db.add(new_teacher)
-    db.commit()
-    db.refresh(new_teacher)
-    return new_teacher
+    try:
+        db.add(new_teacher)
+        db.commit()
+        db.refresh(new_teacher)
+        return new_teacher
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=400, detail="Erro ao criar professor.")
 
-@router.get("/", response_model=List[TeacherCreate])
-async def list_teachers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+@router.get("/", response_model=List[TeacherResponse])
+def list_teachers(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
     return db.query(Teacher).all()
