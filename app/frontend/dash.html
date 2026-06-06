@@ -98,7 +98,14 @@
             <span class="mx-1.5" style="color:var(--text-5)">/</span>
             <b id="crumb-page">Dashboard</b>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+            <button onclick="openSearch()" class="btn btn-sm" title="Buscar (Ctrl+K)" style="padding: 4px 10px;">
+                <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
+                <span class="search-shortcut">⌘K</span>
+            </button>
+            <button onclick="requestNotifPerm()" class="btn btn-icon btn-sm" id="btn-notif" title="Ativar notificações"><i class="fa-solid fa-bell text-[11px]"></i></button>
+            <button onclick="toggleTheme()" class="btn btn-icon btn-sm" title="Alternar tema"><i class="fa-solid fa-moon text-[12px]" id="theme-toggle-icon"></i></button>
+            <span style="width:1px;height:20px;background:var(--border);margin:0 4px;"></span>
             <span id="userDisplayName" class="text-[12.5px] font-medium" style="color: var(--text-2)">—</span>
             <div class="avatar" id="headerAvatar">—</div>
         </div>
@@ -127,6 +134,7 @@
 <script src="js/calendar.js"></script>
 <script src="js/schedule.js"></script>
 <script src="js/profile.js"></script>
+<script src="js/search.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

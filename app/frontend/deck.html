@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deck compartilhado · Law System</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="css/theme.css">
+</head>
+<body class="min-h-screen">
+
+<header class="topbar">
+    <div class="flex items-center gap-3">
+        <div class="brand-mark"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div>
+            <p class="text-[13px] font-semibold" style="color:var(--text)">Law System</p>
+            <p class="text-[10px] mono" style="color:var(--text-4)">Deck compartilhado · read-only</p>
+        </div>
+    </div>
+    <a href="index.html" class="btn btn-primary btn-sm">Entrar no sistema</a>
+</header>
+
+<main class="page-shell">
+    <div id="loading" class="empty"><i class="fa-solid fa-circle-notch fa-spin"></i><p class="title mt-2">Carregando…</p></div>
+    <div id="error" class="hidden card" style="max-width:520px;margin:60px auto;">
+        <div class="card-body text-center">
+            <i class="fa-solid fa-link-slash text-[28px]" style="color:var(--danger)"></i>
+            <h2 class="text-[16px] font-semibold mt-3 mb-1" style="color:var(--text)">Deck não disponível</h2>
+            <p class="text-[12.5px]" style="color:var(--text-4)" id="error-msg">O link foi revogado ou não existe.</p>
+        </div>
+    </div>
+    <div id="content" class="hidden"></div>
+</main>
+
+<script src="config.js"></script>
+<script src="js/common.js"></script>
+<script>
+const token = (location.pathname.match(/\/d\/([^\/?#]+)/) || [])[1] || (new URLSearchParams(location.search)).get('t');
+
+let currentCardIndex = 0;
+let cards = [];
+let subjectInfo = {};
+let isFlipped = false;
+
+async function load() {
+    if (!token) { showError('Link inválido.'); return; }
+    try {
+        const res = await fetch(`${API_BASE}/public/decks/${token}`);
+        if (!res.ok) { showError(res.status === 404 ? 'Deck não encontrado ou link revogado.' : 'Erro ao carregar.'); return; }
+        const data = await res.json();
+        subjectInfo = data.subject;
+        cards = data.cards;
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
+        document.title = `${subjectInfo.name} · Deck compartilhado`;
+        render();
+    } catch {
+        showError('Erro de conexão.');
+    }
+}
+
+function showError(msg) {
+    document.getElementById('loading').classList.add('hidden');
+    document.getElementById('error-msg').textContent = msg;
+    document.getElementById('error').classList.remove('hidden');
+}
+
+function render() {
+    if (cards.length === 0) {
+        document.getElementById('content').innerHTML = `
+        <div class="max-w-2xl mx-auto">
+            <div class="mb-5">
+                <h1 class="page-title">${subjectInfo.name}</h1>
+                <p class="page-sub">${subjectInfo.sigla ? subjectInfo.sigla + ' · ' : ''}${subjectInfo.period}º período · 0 cards</p>
+            </div>
+            <div class="card"><div class="card-body">${emptyState('fa-layer-group','Deck vazio','Este deck não tem flashcards ainda.')}</div></div>
+        </div>`;
+        return;
+    }
+
+    const card = cards[currentCardIndex];
+    const diff = { easy: {l:'Fácil', c:'#16a34a'}, medium: {l:'Médio', c:'#d97706'}, hard: {l:'Difícil', c:'#dc2626'} }[card.difficulty || 'medium'];
+    const progress = Math.round(((currentCardIndex + 1) / cards.length) * 100);
+
+    document.getElementById('content').innerHTML = `
+    <div class="max-w-2xl mx-auto">
+        <div class="mb-5">
+            <h1 class="page-title">${subjectInfo.name}</h1>
+            <p class="page-sub">${subjectInfo.sigla ? subjectInfo.sigla + ' · ' : ''}${subjectInfo.period}º período · ${cards.length} cards</p>
+        </div>
+
+        <div class="flex items-center gap-3 mb-5">
+            <button onclick="prevCard()" class="btn btn-icon" ${currentCardIndex === 0 ? 'disabled' : ''}><i class="fa-solid fa-chevron-left text-[10px]"></i></button>
+            <div class="flex-1">
+                <div class="flex justify-between mb-1.5">
+                    <span class="text-[12px]" style="color:var(--text-3)">Card ${currentCardIndex+1} de ${cards.length}</span>
+                    <span class="mono text-[11px]" style="color:var(--text-4)">${progress}%</span>
+                </div>
+                <div class="bar"><div style="width:${progress}%"></div></div>
+            </div>
+            <button onclick="nextCard()" class="btn btn-icon" ${currentCardIndex === cards.length - 1 ? 'disabled' : ''}><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 mb-4">
+            <span class="badge" style="background:${diff.c}1a;color:${diff.c};border-color:${diff.c}40">${diff.l}</span>
+            ${card.tags ? `<span class="text-[11px] mono" style="color:var(--text-4)">${card.tags.split(',').map(t => '#'+t.trim()).join(' ')}</span>` : ''}
+        </div>
+
+        <div class="card-scene mb-5" style="height:300px; cursor: pointer;" onclick="flipDeckCard()">
+            <div class="card-flip ${isFlipped ? 'flipped' : ''}" id="deck-card" style="height:100%">
+                <div class="card-face front">
+                    <p class="text-[10.5px] uppercase tracking-wider mb-5" style="color:var(--text-4); letter-spacing:.16em; font-weight: 600;"><i class="fa-solid fa-circle-question text-[11px]" style="color:var(--accent)"></i> Pergunta</p>
+                    <p class="text-[20px] font-medium text-center leading-snug" style="color:var(--text); max-width: 540px;">${card.front}</p>
+                    <p class="face-hint" style="color:var(--text-4)">Clique pra ver a resposta</p>
+                </div>
+                <div class="card-face back">
+                    <p class="text-[10.5px] uppercase tracking-wider mb-5" style="color: #fbbf24; letter-spacing:.16em; font-weight: 600;"><i class="fa-solid fa-lightbulb text-[11px]"></i> Resposta</p>
+                    <p class="text-[19px] font-medium text-center leading-snug" style="max-width: 540px;">${card.back}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="text-center mb-5">
+            <button onclick="flipDeckCard()" class="btn"><i class="fa-solid fa-rotate text-[11px]"></i> ${isFlipped ? 'Voltar à pergunta' : 'Mostrar resposta'}</button>
+        </div>
+
+        <div class="card" style="background: linear-gradient(135deg, var(--accent-bg) 0%, var(--purple-bg) 100%); border-color: var(--accent);">
+            <div class="card-body text-center">
+                <p class="text-[12.5px]" style="color:var(--text-2)"><i class="fa-solid fa-share-nodes text-[11px]"></i> Quer salvar este deck e revisar com SM-2?</p>
+                <a href="index.html" class="btn btn-primary mt-2"><i class="fa-solid fa-arrow-right-to-bracket text-[10px]"></i> Crie sua conta gratuita</a>
+            </div>
+        </div>
+
+        <p class="text-center text-[10.5px] mono mt-6" style="color:var(--text-5)">
+            Deck público gerado pelo dono · sem rastreamento, sem dados pessoais
+        </p>
+    </div>`;
+}
+
+function flipDeckCard() {
+    isFlipped = !isFlipped;
+    document.getElementById('deck-card').classList.toggle('flipped', isFlipped);
+}
+function nextCard() {
+    if (currentCardIndex < cards.length - 1) {
+        currentCardIndex++;
+        isFlipped = false;
+        render();
+    }
+}
+function prevCard() {
+    if (currentCardIndex > 0) {
+        currentCardIndex--;
+        isFlipped = false;
+        render();
+    }
+}
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextCard();
+    else if (e.key === 'ArrowLeft') prevCard();
+    else if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipDeckCard(); }
+});
+
+load();
+</script>
+</body>
+</html>

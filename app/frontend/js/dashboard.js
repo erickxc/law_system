@@ -20,6 +20,12 @@ async function showDashboard() {
             ? `${Math.floor(tot.total_minutes/60)}<span class="unit">h</span> ${tot.total_minutes%60}<span class="unit">m</span>`
             : `${tot.total_minutes}<span class="unit">m</span>`;
 
+        // Meta diária: minutos estudados HOJE / meta do usuário
+        const goal = (me && me.daily_goal_minutes) || 30;
+        const todayKey = new Date().toISOString().slice(0,10);
+        const todayMin = (tot.last_30_days || []).find(d => d.date === todayKey)?.minutes || 0;
+        const goalPct = Math.min(100, Math.round(todayMin / goal * 100));
+
         document.getElementById('mainContent').innerHTML = `
         <div class="page-shell">
             <div class="flex items-baseline justify-between mb-5">
@@ -30,6 +36,25 @@ async function showDashboard() {
                 <div class="flex gap-2">
                     <button onclick="showSessions()" class="btn"><i class="fa-solid fa-plus text-[10px]"></i> Sessão</button>
                     <button onclick="showFlashcards()" class="btn"><i class="fa-solid fa-layer-group text-[10px]"></i> Cards</button>
+                </div>
+            </div>
+
+            <!-- Meta diária + streak destacados -->
+            <div class="card mb-4" style="border: 1px solid var(--border);">
+                <div class="card-body" style="padding: 18px 22px;">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <h3 class="text-[13px] font-semibold" style="color:var(--text)">Meta de hoje</h3>
+                            ${tot.current_streak > 0 ? `<span class="streak-badge"><i class="fa-solid fa-fire text-[10px]"></i> ${tot.current_streak} dia${tot.current_streak > 1 ? 's' : ''} seguidos</span>` : ''}
+                        </div>
+                        <button onclick="openGoalModal()" class="btn btn-icon btn-sm" title="Ajustar meta"><i class="fa-solid fa-gear text-[10px]"></i></button>
+                    </div>
+                    <div class="flex items-baseline gap-2 mb-2">
+                        <span class="text-[28px] font-bold mono" style="color: ${todayMin >= goal ? 'var(--success)' : 'var(--text)'}; letter-spacing:-.02em;">${todayMin}</span>
+                        <span class="text-[14px] mono" style="color:var(--text-4)">/ ${goal} min</span>
+                        ${todayMin >= goal ? `<span class="ml-auto badge badge-concluida"><i class="fa-solid fa-check text-[8px]"></i>Meta atingida!</span>` : `<span class="ml-auto text-[12px] mono" style="color:var(--text-4)">${goal - todayMin}m restantes</span>`}
+                    </div>
+                    <div class="bar"><div style="width: ${goalPct}%; background: ${todayMin >= goal ? 'var(--success)' : 'var(--accent)'};"></div></div>
                 </div>
             </div>
 
@@ -119,6 +144,39 @@ async function showDashboard() {
 
         if (stats) renderDashboardCharts(stats);
     } catch (e) { toast('Erro ao carregar dashboard: ' + e.message, 'error'); }
+}
+
+function openGoalModal() {
+    const cur = (me && me.daily_goal_minutes) || 30;
+    openModal(`
+    <div class="modal-head">
+        <h3>Meta diária de estudo</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p class="text-[12.5px] mb-4" style="color:var(--text-3)">Quantos minutos você quer estudar por dia? Sugerimos entre 30 e 90 min para criar consistência.</p>
+    <div>
+        <label class="label">Meta (minutos por dia)</label>
+        <input type="number" id="goal-input" class="input mono text-[18px]" value="${cur}" min="5" max="600" style="text-align:center;">
+        <div class="flex gap-2 mt-3 flex-wrap">
+            ${[15, 30, 45, 60, 90, 120].map(v => `<button onclick="document.getElementById('goal-input').value=${v}" class="btn btn-sm">${v}m</button>`).join('')}
+        </div>
+    </div>
+    <div class="flex gap-2 justify-end pt-4 mt-3" style="border-top:1px solid var(--border)">
+        <button onclick="closeModal()" class="btn">Cancelar</button>
+        <button onclick="saveGoal()" class="btn btn-primary">Salvar</button>
+    </div>`);
+}
+
+async function saveGoal() {
+    const v = parseInt(document.getElementById('goal-input').value);
+    if (!v || v < 5 || v > 600) { toast('Meta deve ser entre 5 e 600 minutos.', 'warning'); return; }
+    try {
+        await api('/users/me/goal', { method: 'PUT', body: JSON.stringify({ daily_goal_minutes: v }) });
+        me.daily_goal_minutes = v;
+        closeModal();
+        showDashboard();
+        toast(`Meta diária ajustada para ${v} min`, 'success');
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 function renderUpcomingItem(it) {

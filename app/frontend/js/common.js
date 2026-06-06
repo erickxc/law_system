@@ -93,3 +93,76 @@ function kpi(label, value, icon, unit) {
 
 // ─── Logout ──────────────────────────────────────────────────────────────
 function logout() { localStorage.removeItem('access_token'); location.href = 'index.html'; }
+
+// ─── Dark mode ───────────────────────────────────────────────────────────
+function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('theme', t);
+}
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    const btn = document.getElementById('theme-toggle-icon');
+    if (btn) btn.className = next === 'dark' ? 'fa-solid fa-sun text-[12px]' : 'fa-solid fa-moon text-[12px]';
+}
+// Init theme ASAP (antes do init() pra evitar flash)
+(function initTheme() {
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+})();
+
+// ─── Notification API local ──────────────────────────────────────────────
+function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        toast('Seu navegador não suporta notificações.', 'warning');
+        return Promise.resolve('unsupported');
+    }
+    return Notification.requestPermission();
+}
+function showNotification(title, body, opts = {}) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+        new Notification(title, { body, icon: '/favicon.ico', badge: '/favicon.ico', ...opts });
+    } catch (e) { /* silent */ }
+}
+
+// ─── Markdown render (simples, sem dependência) ──────────────────────────
+function renderMarkdown(src) {
+    if (!src) return '';
+    // Escape HTML primeiro
+    let s = src
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    // Code inline
+    s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+    // Headers (no início da linha)
+    s = s.replace(/^###\s+(.+)$/gm, '<h3>$1</h3>');
+    s = s.replace(/^##\s+(.+)$/gm, '<h2>$1</h2>');
+    s = s.replace(/^#\s+(.+)$/gm, '<h1>$1</h1>');
+    // Bold + italic
+    s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/(?<![*\w])\*([^*\n]+)\*(?!\w)/g, '<em>$1</em>');
+    s = s.replace(/__([^_\n]+)__/g, '<strong>$1</strong>');
+    // Links
+    s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+    // Blockquote
+    s = s.replace(/^&gt;\s+(.+)$/gm, '<blockquote>$1</blockquote>');
+    // Unordered lists
+    s = s.replace(/(^|\n)((?:[-*]\s+.+\n?)+)/g, (m, pre, block) => {
+        const items = block.trim().split('\n').map(l => l.replace(/^[-*]\s+/, '')).map(t => `<li>${t}</li>`).join('');
+        return `${pre}<ul>${items}</ul>`;
+    });
+    // Ordered lists
+    s = s.replace(/(^|\n)((?:\d+\.\s+.+\n?)+)/g, (m, pre, block) => {
+        const items = block.trim().split('\n').map(l => l.replace(/^\d+\.\s+/, '')).map(t => `<li>${t}</li>`).join('');
+        return `${pre}<ol>${items}</ol>`;
+    });
+    // Paragraphs (linhas não-tag viram <p>)
+    s = s.split(/\n\n+/).map(block => {
+        if (/^<(h\d|ul|ol|blockquote|pre)/.test(block)) return block;
+        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+    }).join('\n');
+    return s;
+}

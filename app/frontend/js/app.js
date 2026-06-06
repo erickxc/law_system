@@ -50,8 +50,60 @@ async function init() {
         subjects = await api('/subjects/').catch(() => []);
         teachers = await api('/teachers/').catch(() => []);
         loadFlashcardBadge();
+
+        // Atualizar ícone tema com tema salvo
+        const t = document.documentElement.getAttribute('data-theme') || 'light';
+        const ico = document.getElementById('theme-toggle-icon');
+        if (ico) ico.className = t === 'dark' ? 'fa-solid fa-sun text-[12px]' : 'fa-solid fa-moon text-[12px]';
+
+        // Atualizar visual do botão de notificações
+        updateNotifButton();
+
         showDashboard();
     } catch (e) { toast('Erro ao carregar dados. ' + e.message, 'error'); }
+}
+
+function updateNotifButton() {
+    const btn = document.getElementById('btn-notif');
+    if (!btn) return;
+    if (!('Notification' in window)) { btn.style.display = 'none'; return; }
+    if (Notification.permission === 'granted') {
+        btn.innerHTML = '<i class="fa-solid fa-bell text-[11px]" style="color:var(--success)"></i>';
+        btn.title = 'Notificações ativas';
+    } else if (Notification.permission === 'denied') {
+        btn.innerHTML = '<i class="fa-solid fa-bell-slash text-[11px]" style="color:var(--text-5)"></i>';
+        btn.title = 'Notificações bloqueadas no navegador';
+    } else {
+        btn.innerHTML = '<i class="fa-solid fa-bell text-[11px]"></i>';
+        btn.title = 'Ativar notificações';
+    }
+}
+
+async function requestNotifPerm() {
+    if (!('Notification' in window)) { toast('Navegador não suporta notificações.', 'warning'); return; }
+    const result = await Notification.requestPermission();
+    updateNotifButton();
+    if (result === 'granted') {
+        showNotification('Notificações ativas', 'Você será avisado sobre revisões pendentes e ciclos do Pomodoro.');
+        toast('Notificações ativadas', 'success');
+        scheduleReviewReminder();
+    }
+}
+
+// Lembrete client-side: a cada 4h checa se tem cards pendentes
+function scheduleReviewReminder() {
+    if (Notification.permission !== 'granted') return;
+    setInterval(async () => {
+        try {
+            const stats = await api('/flashcards/stats');
+            if (stats && stats.due_today > 0) {
+                showNotification(
+                    'Hora da revisão',
+                    `${stats.due_today} flashcard${stats.due_today > 1 ? 's' : ''} aguardando revisão.`
+                );
+            }
+        } catch {}
+    }, 4 * 60 * 60 * 1000); // 4 horas
 }
 
 async function loadFlashcardBadge() {

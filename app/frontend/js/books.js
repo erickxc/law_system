@@ -396,13 +396,17 @@ function renderOverlaysForPage(pageNum, wrap) {
 
 function showNoteDetail(item, type) {
     const isHL = type === 'highlight';
+    const body = isHL ? item.selected_text : item.note_text;
+    const rendered = isHL
+        ? `<p class="text-[13px]" style="color:var(--text); white-space: pre-wrap;">${body}</p>`
+        : `<div class="md-body">${renderMarkdown(body)}</div>`;
     openModal(`
     <div class="modal-head">
         <h3>${isHL ? 'Grifo' : 'Anotação'} · pg. ${item.page_number}</h3>
         <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <div class="p-3 mb-3" style="background:var(--bg-2); border-radius: 4px;">
-        <p class="text-[13px]" style="color:var(--text); white-space: pre-wrap;">${isHL ? item.selected_text : item.note_text}</p>
+    <div class="p-3 mb-3" style="background:var(--bg-2); border-radius: 4px; max-height: 60vh; overflow-y: auto;">
+        ${rendered}
     </div>
     <p class="text-[11px] mono" style="color:var(--text-4)">${item.color || ''} ${item.created_at ? '· ' + new Date(item.created_at).toLocaleDateString('pt-BR') : ''}</p>
     <div class="flex gap-2 justify-end pt-3 mt-3" style="border-top:1px solid var(--border)">
@@ -501,7 +505,8 @@ function annotateFromSelection() {
     </div>
     <div>
         <label class="label">Sua anotação</label>
-        <textarea id="popover-ann-text" rows="4" class="input" autofocus placeholder="Notas, comentários, conexões…"></textarea>
+        <textarea id="popover-ann-text" rows="5" class="input" autofocus placeholder="Notas, comentários, conexões…&#10;&#10;Suporta markdown: **negrito**, *itálico*, # título, - lista, > citação"></textarea>
+        <p class="help"><i class="fa-solid fa-circle-info text-[10px]"></i> Markdown suportado: <code style="font-family:monospace;background:var(--bg-2);padding:0 4px;border-radius:2px">**negrito**</code> <code style="font-family:monospace;background:var(--bg-2);padding:0 4px;border-radius:2px">*itálico*</code> <code style="font-family:monospace;background:var(--bg-2);padding:0 4px;border-radius:2px"># título</code> <code style="font-family:monospace;background:var(--bg-2);padding:0 4px;border-radius:2px">- lista</code></p>
     </div>
     <div class="flex gap-2 justify-end pt-3 mt-3">
         <button onclick="closeModal()" class="btn">Cancelar</button>
@@ -566,14 +571,17 @@ function renderNotesList() {
     el.innerHTML = all.map(it => {
         const isHL = it.type === 'highlight';
         const bg = isHL ? (hlBgs[it.color] || hlBgs.yellow) : 'var(--bg-2)';
-        return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="readerGoToPage(${it.page_number})" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? (hlBgs[it.color]?.replace('f','c')||'#ca8a04') : 'var(--warning)'};">
+        const preview = isHL
+            ? `<p class="text-[12px] line-clamp-3" style="color:var(--text); white-space: pre-wrap;">${it.selected_text}</p>`
+            : `<div class="md-body" style="font-size:11.5px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${renderMarkdown(it.note_text)}</div>`;
+        return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="showNoteDetail(${JSON.stringify(it).replace(/"/g,'&quot;')}, '${it.type}')" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? '#ca8a04' : 'var(--warning)'};">
             <div class="flex items-center justify-between mb-1">
                 <span class="text-[10px] mono uppercase font-medium" style="color:var(--text-4); letter-spacing:.04em;">
                     <i class="fa-solid fa-${isHL ? 'highlighter' : 'note-sticky'} text-[9px]"></i> pg. ${it.page_number}
                 </span>
                 <button onclick="event.stopPropagation();deleteNote('${it.id}','${it.type}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>
             </div>
-            <p class="text-[12px] line-clamp-3" style="color:var(--text); white-space: pre-wrap;">${isHL ? it.selected_text : it.note_text}</p>
+            ${preview}
         </div>`;
     }).join('');
 }

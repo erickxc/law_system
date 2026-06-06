@@ -52,6 +52,9 @@ function renderSubjects() {
                         </td>
                         <td style="color:var(--text-3)">${s.no_teacher ? '<span style="color:var(--text-5)">— sem prof.</span>' : (s.teacher_name || '<span style="color:var(--text-5)">n/d</span>')}</td>
                         <td class="actions">
+                            <button onclick="openShareModal('${s.id}')" class="btn btn-icon btn-sm" title="Compartilhar deck">
+                                <i class="fa-solid fa-${s.share_token ? 'link' : 'share-nodes'} text-[10px]" ${s.share_token ? 'style="color:var(--accent)"' : ''}></i>
+                            </button>
                             <button onclick="openSubjectModal('${s.id}')" class="btn btn-icon btn-sm" title="Editar"><i class="fa-solid fa-pen text-[10px]"></i></button>
                             <button onclick="deleteSubject('${s.id}','${escAttr(s.name)}')" class="btn btn-icon btn-sm" title="Excluir"><i class="fa-solid fa-trash text-[10px]"></i></button>
                         </td>
@@ -133,6 +136,79 @@ async function saveSubject(e) {
         closeModal();
         renderSubjects();
     } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Compartilhamento de deck ────────────────────────────────────────────
+async function openShareModal(subjectId) {
+    const s = subjects.find(x => x.id === subjectId);
+    if (!s) return;
+    const baseUrl = location.origin;
+    let token = s.share_token;
+    const renderModal = (token) => {
+        const url = token ? `${baseUrl}/d/${token}` : null;
+        openModal(`
+        <div class="modal-head">
+            <h3>Compartilhar deck</h3>
+            <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <p class="text-[12.5px] mb-3" style="color:var(--text-3)">Compartilhe todos os flashcards de <strong>${s.name}</strong> em um link público (somente leitura). Útil pra estudar em grupo ou enviar pra colegas.</p>
+        ${token ? `
+        <div style="background:var(--bg-2); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
+            <p class="text-[10.5px] uppercase tracking-wider mb-2" style="color:var(--text-4)">Link público</p>
+            <div class="flex items-center gap-2">
+                <input type="text" id="share-url" class="input mono text-[12px]" readonly value="${url}">
+                <button onclick="copyShareUrl()" class="btn btn-primary"><i class="fa-solid fa-copy text-[10px]"></i></button>
+            </div>
+            <p class="help mt-2"><i class="fa-solid fa-eye text-[10px]"></i> Qualquer pessoa com o link vê só pergunta/resposta. Não vê dados pessoais.</p>
+        </div>
+        <div class="flex gap-2 justify-between pt-3 mt-3" style="border-top:1px solid var(--border)">
+            <button onclick="regenerateShare('${subjectId}')" class="btn"><i class="fa-solid fa-rotate text-[10px]"></i> Gerar novo link</button>
+            <button onclick="revokeShare('${subjectId}')" class="btn btn-danger"><i class="fa-solid fa-link-slash text-[10px]"></i> Revogar acesso</button>
+        </div>
+        ` : `
+        <div class="flex gap-2 justify-end pt-3">
+            <button onclick="closeModal()" class="btn">Cancelar</button>
+            <button onclick="enableShare('${subjectId}')" class="btn btn-primary"><i class="fa-solid fa-share-nodes text-[10px]"></i> Gerar link</button>
+        </div>
+        `}`);
+    };
+    renderModal(token);
+}
+
+async function enableShare(subjectId) {
+    try {
+        const r = await api(`/subjects/${subjectId}/share`, { method: 'POST' });
+        // Atualiza cache local
+        const s = subjects.find(x => x.id === subjectId);
+        if (s) s.share_token = r.share_token;
+        closeModal();
+        openShareModal(subjectId);
+        toast('Link gerado', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function regenerateShare(subjectId) {
+    if (!confirm('Gerar novo link? O link atual deixará de funcionar.')) return;
+    return enableShare(subjectId);
+}
+
+async function revokeShare(subjectId) {
+    if (!confirm('Revogar acesso? O link atual deixará de funcionar imediatamente.')) return;
+    try {
+        await api(`/subjects/${subjectId}/share`, { method: 'DELETE' });
+        const s = subjects.find(x => x.id === subjectId);
+        if (s) s.share_token = null;
+        closeModal();
+        renderSubjects();
+        toast('Acesso revogado', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+function copyShareUrl() {
+    const inp = document.getElementById('share-url');
+    inp.select();
+    navigator.clipboard?.writeText(inp.value);
+    toast('Link copiado', 'success');
 }
 
 async function deleteSubject(id, name) {

@@ -92,12 +92,14 @@ function renderFlashcards(cards, stats) {
 
     document.getElementById('mainContent').innerHTML = `
     <div class="page-shell">
-        <div class="flex items-baseline justify-between mb-5">
+        <div class="flex items-baseline justify-between mb-5 flex-wrap gap-2">
             <div>
                 <h1 class="page-title">Flashcards</h1>
                 <p class="page-sub">Revisão espaçada (SM-2) · ${cards.length} cards no acervo</p>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 flex-wrap">
+                <button onclick="openImportModal()" class="btn"><i class="fa-solid fa-file-import text-[10px]"></i> Importar</button>
+                <button onclick="exportFlashcards()" class="btn"><i class="fa-solid fa-file-export text-[10px]"></i> Exportar</button>
                 <button onclick="openReviewConfigModal()" class="btn btn-accent">
                     <i class="fa-solid fa-play text-[10px]"></i> Iniciar revisão
                 </button>
@@ -243,6 +245,10 @@ function openReviewConfigModal() {
                     <option value="20">20 cards</option>
                     <option value="30">30 cards</option>
                     <option value="50">50 cards</option>
+                    <option value="100">100 cards</option>
+                    <option value="200">200 cards</option>
+                    <option value="500">500 cards</option>
+                    <option value="1000">1000 cards</option>
                 </select>
             </div>
             <div>
@@ -528,6 +534,81 @@ async function submitReview(id, confidence) {
         reviewIndex++;
         showReviewCard();
     } catch (e) { toast(e.message, 'error'); }
+}
+
+// ─── Import / Export ─────────────────────────────────────────────────────
+async function exportFlashcards() {
+    openModal(`
+    <div class="modal-head">
+        <h3>Exportar flashcards</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p class="text-[12.5px] mb-4" style="color:var(--text-3)">Baixe todos os seus flashcards para fazer backup ou usar em outro app.</p>
+    <div class="flex gap-2 justify-end">
+        <button onclick="downloadExport('json')" class="btn btn-primary"><i class="fa-solid fa-file-code text-[10px]"></i> JSON</button>
+        <button onclick="downloadExport('csv')"  class="btn btn-primary"><i class="fa-solid fa-file-csv text-[10px]"></i> CSV</button>
+    </div>`);
+}
+
+async function downloadExport(fmt) {
+    try {
+        const res = await fetch(`${API_BASE}/flashcards/export?fmt=${fmt}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) { toast('Erro ao exportar.', 'error'); return; }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `flashcards-${new Date().toISOString().slice(0,10)}.${fmt}`;
+        a.click();
+        URL.revokeObjectURL(url);
+        closeModal();
+        toast(`Baixado em ${fmt.toUpperCase()}`, 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+function openImportModal() {
+    openModal(`
+    <div class="modal-head">
+        <h3>Importar flashcards</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="space-y-3">
+        <div>
+            <label class="label">Arquivo JSON exportado pelo Law System</label>
+            <input type="file" id="import-file" accept=".json,application/json" class="input" style="padding: 7px;">
+            <p class="help">Formato esperado: <code style="font-family:monospace;background:var(--bg-2);padding:1px 4px;border-radius:3px;font-size:11px">{"cards":[{"front","back","subject?","tags?","difficulty?"}, ...]}</code></p>
+        </div>
+        <div class="flex items-center gap-2">
+            <input type="checkbox" id="import-auto-create" checked>
+            <label for="import-auto-create" class="text-[12.5px]" style="color:var(--text-2)">Criar matérias automaticamente se não existirem</label>
+        </div>
+    </div>
+    <div class="flex gap-2 justify-end pt-3 mt-3" style="border-top:1px solid var(--border)">
+        <button onclick="closeModal()" class="btn">Cancelar</button>
+        <button onclick="doImport()" class="btn btn-primary"><i class="fa-solid fa-upload text-[10px]"></i> Importar</button>
+    </div>`);
+}
+
+async function doImport() {
+    const fileInput = document.getElementById('import-file');
+    const autoCreate = document.getElementById('import-auto-create').checked;
+    const file = fileInput.files[0];
+    if (!file) { toast('Selecione um arquivo.', 'warning'); return; }
+    try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        const cards = Array.isArray(parsed) ? parsed : parsed.cards;
+        if (!Array.isArray(cards)) throw new Error('JSON inválido: esperado {cards: [...]}');
+        const result = await api('/flashcards/import', {
+            method: 'POST',
+            body: JSON.stringify({ cards, auto_create_subjects: autoCreate }),
+        });
+        closeModal();
+        toast(`${result.created} cards importados${result.failed > 0 ? ` · ${result.failed} falharam` : ''}`, result.failed > 0 ? 'warning' : 'success');
+        showFlashcards();
+    } catch (e) { toast('Erro: ' + e.message, 'error'); }
 }
 
 function showReviewComplete(byTimeout) {
