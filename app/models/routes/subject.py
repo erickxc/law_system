@@ -1,31 +1,39 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
 from uuid import UUID
+from pydantic import BaseModel, field_validator
 
 from app.database import get_db
 from app.core.auth import get_current_user
 from app.models.academic import Subject
-from pydantic import BaseModel, field_validator
 
 router = APIRouter(prefix="/subjects", tags=["Subjects"])
 
+VALID_PRIORITIES = {"Alta", "Média", "Baixa"}
+VALID_STATUSES = {"Pendente", "Em Curso", "Concluída"}
 
-# =========================
-# SCHEMAS
-# =========================
+
+# ── Schemas ──────────────────────────────────────────────────────────────
 
 class SubjectCreate(BaseModel):
     name: str
     sigla: Optional[str] = None
-    priority: str
+    priority: str = "Média"
     period: int
     no_teacher: bool = False
     teacher_id: Optional[UUID] = None
 
+    @field_validator("priority")
+    @classmethod
+    def _priority(cls, v):
+        if v not in VALID_PRIORITIES:
+            raise ValueError(f"priority deve ser: {', '.join(VALID_PRIORITIES)}")
+        return v
+
     @field_validator("teacher_id")
     @classmethod
-    def validate_teacher(cls, v, info):
+    def _teacher(cls, v, info):
         if not info.data.get("no_teacher") and not v:
             raise ValueError("Para matérias com docente, o campo professor é obrigatório.")
         return v
@@ -36,8 +44,23 @@ class SubjectUpdate(BaseModel):
     sigla: Optional[str] = None
     priority: Optional[str] = None
     period: Optional[int] = None
+    status: Optional[str] = None
     no_teacher: Optional[bool] = None
     teacher_id: Optional[UUID] = None
+
+    @field_validator("priority")
+    @classmethod
+    def _priority(cls, v):
+        if v is not None and v not in VALID_PRIORITIES:
+            raise ValueError(f"priority deve ser: {', '.join(VALID_PRIORITIES)}")
+        return v
+
+    @field_validator("status")
+    @classmethod
+    def _status(cls, v):
+        if v is not None and v not in VALID_STATUSES:
+            raise ValueError(f"status deve ser: {', '.join(VALID_STATUSES)}")
+        return v
 
 
 class SubjectResponse(BaseModel):
@@ -49,20 +72,36 @@ class SubjectResponse(BaseModel):
     status: str
     no_teacher: bool
     teacher_id: Optional[UUID]
+    teacher_name: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-# =========================
-# ENDPOINTS
-# =========================
+# ── Helpers ──────────────────────────────────────────────────────────────
+
+def _enrich(s: Subject) -> dict:
+    """Returns dict ready for SubjectResponse with teacher_name."""
+    return {
+        "id": s.id,
+        "name": s.name,
+        "sigla": s.sigla,
+        "priority": s.priority,
+        "period": s.period,
+        "status": s.status,
+        "no_teacher": s.no_teacher,
+        "teacher_id": s.teacher_id,
+        "teacher_name": s.teacher.name if s.teacher else None,
+    }
+
+
+# ── Endpoints ────────────────────────────────────────────────────────────
 
 @router.post("/", response_model=SubjectResponse, status_code=status.HTTP_201_CREATED)
 def create_subject(
     data: SubjectCreate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     new_subject = Subject(
         name=data.name,
@@ -73,42 +112,61 @@ def create_subject(
         teacher_id=data.teacher_id if not data.no_teacher else None,
         status="Pendente",
         user_id=current_user.id,
-        group_id=current_user.group_id
+        group_id=current_user.group_id,
     )
-
     try:
         db.add(new_subject)
         db.commit()
         db.refresh(new_subject)
-        return new_subject
+        new_subject = db.query(Subject).options(joinedload(Subject.teacher)).filter(
+            Subject.id == new_subject.id
+        ).first()
+        return _enrich(new_subject)
     except Exception:
         db.rollback()
         raise HTTPException(status_code=400, detail="Erro ao criar matéria.")
 
 
+@router.post("/create", response_model=SubjectResponse, status_code=status.HTTP_201_CREATED)
+def create_subject_alias(
+    data: SubjectCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Alias de POST /subjects/ — mantido por compatibilidade com frontend antigo."""
+    return create_subject(data, db, current_user)
+
+
 @router.get("/", response_model=List[SubjectResponse])
 def list_subjects(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
-    return db.query(Subject).filter(Subject.user_id == current_user.id).all()
+    subjects = (
+        db.query(Subject)
+        .options(joinedload(Subject.teacher))
+        .filter(Subject.user_id == current_user.id)
+        .order_by(Subject.period, Subject.name)
+        .all()
+    )
+    return [_enrich(s) for s in subjects]
 
 
 @router.get("/{subject_id}", response_model=SubjectResponse)
 def get_subject(
     subject_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
-    subject = db.query(Subject).filter(
-        Subject.id == subject_id,
-        Subject.user_id == current_user.id
-    ).first()
-
+    subject = (
+        db.query(Subject)
+        .options(joinedload(Subject.teacher))
+        .filter(Subject.id == subject_id, Subject.user_id == current_user.id)
+        .first()
+    )
     if not subject:
         raise HTTPException(status_code=404, detail="Matéria não encontrada.")
-
-    return subject
+    return _enrich(subject)
 
 
 @router.put("/{subject_id}", response_model=SubjectResponse)
@@ -116,13 +174,12 @@ def update_subject(
     subject_id: UUID,
     data: SubjectUpdate,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     subject = db.query(Subject).filter(
         Subject.id == subject_id,
-        Subject.user_id == current_user.id
+        Subject.user_id == current_user.id,
     ).first()
-
     if not subject:
         raise HTTPException(status_code=404, detail="Matéria não encontrada.")
 
@@ -131,22 +188,43 @@ def update_subject(
 
     db.commit()
     db.refresh(subject)
-    return subject
+    subject = db.query(Subject).options(joinedload(Subject.teacher)).filter(Subject.id == subject.id).first()
+    return _enrich(subject)
+
+
+@router.patch("/{subject_id}/status", response_model=SubjectResponse)
+def update_subject_status(
+    subject_id: UUID,
+    s_status: str = Query(..., description="Novo status"),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    if s_status not in VALID_STATUSES:
+        raise HTTPException(400, f"status deve ser: {', '.join(VALID_STATUSES)}")
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id,
+        Subject.user_id == current_user.id,
+    ).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Matéria não encontrada.")
+    subject.status = s_status
+    db.commit()
+    db.refresh(subject)
+    subject = db.query(Subject).options(joinedload(Subject.teacher)).filter(Subject.id == subject.id).first()
+    return _enrich(subject)
 
 
 @router.delete("/{subject_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_subject(
     subject_id: UUID,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user)
+    current_user=Depends(get_current_user),
 ):
     subject = db.query(Subject).filter(
         Subject.id == subject_id,
-        Subject.user_id == current_user.id
+        Subject.user_id == current_user.id,
     ).first()
-
     if not subject:
         raise HTTPException(status_code=404, detail="Matéria não encontrada.")
-
     db.delete(subject)
     db.commit()
