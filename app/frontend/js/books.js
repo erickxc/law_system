@@ -492,14 +492,18 @@ async function readerGoToPage(pageNum) {
     // Renderizar canvas
     await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
 
-    // Renderizar text layer
-    const textContent = await page.getTextContent();
-    const pdfjs = await loadPdfJs();
-    if (pdfjs.renderTextLayer) {
-        pdfjs.renderTextLayer({ textContent, container: textLayerDiv, viewport, textDivs: [] });
-    } else if (pdfjs.TextLayer) {
-        const tl = new pdfjs.TextLayer({ textContentSource: textContent, container: textLayerDiv, viewport });
-        await tl.render();
+    // Renderizar text layer (PDF.js 4.x usa textContentSource; classe TextLayer em 4.4+)
+    try {
+        const textContent = await page.getTextContent();
+        const pdfjs = await loadPdfJs();
+        if (pdfjs.TextLayer) {
+            const tl = new pdfjs.TextLayer({ textContentSource: textContent, container: textLayerDiv, viewport });
+            await tl.render();
+        } else if (pdfjs.renderTextLayer) {
+            await pdfjs.renderTextLayer({ textContentSource: textContent, container: textLayerDiv, viewport, textDivs: [] }).promise;
+        }
+    } catch (textErr) {
+        console.warn('Text layer failed (PDF readable, sem seleção de texto):', textErr);
     }
 
     // Render existing highlights/annotations for this page
