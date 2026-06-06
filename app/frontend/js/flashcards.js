@@ -8,6 +8,75 @@ const DIFFICULTY = {
     hard:   { label: 'Difícil', color: '#dc2626' },
 };
 
+// ─── Som ao virar o card (Web Audio API, sem arquivo) ────────────────────
+let _audioCtx = null;
+function flipSound() {
+    try {
+        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = _audioCtx;
+        if (ctx.state === 'suspended') ctx.resume();
+
+        const now = ctx.currentTime;
+
+        // Whoosh — noise burst com filter sweep
+        const bufferSize = ctx.sampleRate * 0.18;
+        const noise = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const data = noise.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+        }
+        const noiseSrc = ctx.createBufferSource();
+        noiseSrc.buffer = noise;
+
+        const noiseFilter = ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(2200, now);
+        noiseFilter.frequency.exponentialRampToValueAtTime(800, now + 0.18);
+        noiseFilter.Q.value = 1.5;
+
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.18, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+
+        noiseSrc.connect(noiseFilter).connect(noiseGain).connect(ctx.destination);
+        noiseSrc.start(now);
+        noiseSrc.stop(now + 0.2);
+
+        // Click — pluck curto
+        const osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(660, now);
+        osc.frequency.exponentialRampToValueAtTime(220, now + 0.08);
+        const oscGain = ctx.createGain();
+        oscGain.gain.setValueAtTime(0.12, now);
+        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.connect(oscGain).connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.1);
+    } catch (e) { /* fail silently */ }
+}
+
+function successSound() {
+    try {
+        if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const ctx = _audioCtx;
+        if (ctx.state === 'suspended') ctx.resume();
+        const now = ctx.currentTime;
+        [523, 659, 784].forEach((f, i) => {
+            const osc = ctx.createOscillator();
+            osc.type = 'sine';
+            osc.frequency.value = f;
+            const g = ctx.createGain();
+            g.gain.setValueAtTime(0, now + i * 0.06);
+            g.gain.linearRampToValueAtTime(0.1, now + i * 0.06 + 0.02);
+            g.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.18);
+            osc.connect(g).connect(ctx.destination);
+            osc.start(now + i * 0.06);
+            osc.stop(now + i * 0.06 + 0.2);
+        });
+    } catch (e) {}
+}
+
 async function showFlashcards() {
     setActive('menu-flashcards');
     setPage('Flashcards', 'Estudo');
@@ -75,23 +144,30 @@ function renderCardList(cards) {
 function fcCard(c) {
     const diff = DIFFICULTY[c.difficulty || 'medium'];
     const acc = c.accuracy_pct != null ? `${c.accuracy_pct}%` : '—';
+    const accColor = c.accuracy_pct == null ? 'var(--text-5)' : c.accuracy_pct >= 70 ? 'var(--success)' : c.accuracy_pct >= 50 ? 'var(--warning)' : 'var(--danger)';
     return `
-    <div class="card" style="${c.is_due ? 'border-left: 3px solid var(--warning);' : ''}">
-        <div class="card-body" style="padding: 14px;">
-            <div class="flex items-center gap-2 mb-2 flex-wrap">
+    <div class="fc-card-mini" style="background: linear-gradient(145deg, #ffffff, #fafafa); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; transition: transform .15s, box-shadow .15s; position: relative;"
+        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(0,0,0,.06)'"
+        onmouseout="this.style.transform=''; this.style.boxShadow=''">
+        <!-- Faixa colorida no topo -->
+        <div style="height: 3px; background: ${c.is_due ? 'var(--warning)' : diff.color};"></div>
+
+        <div style="padding: 14px 16px;">
+            <div class="flex items-center gap-1.5 mb-2 flex-wrap">
                 <span class="badge" style="background:${diff.color}1a;color:${diff.color};border-color:${diff.color}40">${diff.label}</span>
                 ${c.subject_name ? `<span class="badge badge-em-curso">${c.subject_name}</span>` : ''}
                 ${c.is_due ? `<span class="badge badge-due"><i class="fa-solid fa-clock text-[8px]"></i>Revisar</span>` : ''}
             </div>
-            <p class="text-[13.5px] font-medium mb-2" style="color:var(--text); line-height: 1.4;">${c.front}</p>
-            <p class="text-[12px] mb-3 line-clamp-2" style="color:var(--text-4); line-height: 1.4;">${c.back}</p>
+
+            <p class="text-[13.5px] font-semibold mb-2" style="color:var(--text); line-height: 1.4;"><i class="fa-solid fa-circle-question text-[10px]" style="color:var(--text-5); margin-right: 4px;"></i>${c.front}</p>
+            <p class="text-[12px] mb-3" style="color:var(--text-3); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><i class="fa-solid fa-lightbulb text-[10px]" style="color:var(--text-5); margin-right: 4px;"></i>${c.back}</p>
 
             ${c.tags ? `<div class="mb-3 text-[10.5px] mono" style="color:var(--text-4)">${c.tags.split(',').map(t => '#'+t.trim()).join(' ')}</div>` : ''}
 
             <div class="flex items-center justify-between pt-2" style="border-top:1px solid var(--border);">
                 <div class="text-[11px] mono flex items-center gap-3" style="color:var(--text-4)">
-                    <span><i class="fa-solid fa-repeat text-[9px]"></i> ${c.total_reviews}</span>
-                    <span><i class="fa-solid fa-bullseye text-[9px]"></i> ${acc}</span>
+                    <span title="Revisões"><i class="fa-solid fa-repeat text-[9px]"></i> ${c.total_reviews}</span>
+                    <span title="Acerto" style="color: ${accColor}"><i class="fa-solid fa-bullseye text-[9px]"></i> ${acc}</span>
                 </div>
                 <div class="flex gap-1">
                     <button onclick="openFlashcardModal('${c.id}')" class="btn btn-icon btn-sm" title="Editar"><i class="fa-solid fa-pen text-[10px]"></i></button>
@@ -356,26 +432,29 @@ function showReviewCard() {
         </div>
 
         <div class="max-w-2xl mx-auto">
-            <div class="flex items-center justify-center gap-2 mb-3">
+            <div class="flex items-center justify-center gap-2 mb-4">
                 ${card.subject_name ? `<span class="badge badge-em-curso">${card.subject_name}</span>` : ''}
                 <span class="badge" style="background:${diff.color}1a;color:${diff.color};border-color:${diff.color}40">${diff.label}</span>
             </div>
 
-            <div class="card-scene mb-5" style="height:280px">
+            <div class="card-scene mb-6" style="height:300px; cursor: pointer;" onclick="if(!document.getElementById('review-card').classList.contains('flipped')) flipCard()">
                 <div class="card-flip" id="review-card" style="height:100%">
-                    <div class="card-face front" style="box-shadow: 0 4px 16px rgba(0,0,0,.04);">
-                        <p class="text-[10.5px] uppercase tracking-wider mb-4" style="color:var(--text-4); letter-spacing:.12em;">Pergunta</p>
-                        <p class="text-[19px] font-medium text-center leading-snug" style="color:var(--text); max-width: 540px;">${card.front}</p>
+                    <div class="card-face front">
+                        <p class="text-[10.5px] uppercase tracking-wider mb-5" style="color:var(--text-4); letter-spacing:.16em; font-weight: 600;"><i class="fa-solid fa-circle-question text-[11px]" style="color:var(--accent)"></i> Pergunta</p>
+                        <p class="text-[20px] font-medium text-center leading-snug" style="color:var(--text); max-width: 540px;">${card.front}</p>
+                        <p class="face-hint" style="color:var(--text-4)">Clique ou pressione espaço para revelar</p>
                     </div>
-                    <div class="card-face back" style="box-shadow: 0 4px 16px rgba(0,0,0,.18);">
-                        <p class="text-[10.5px] uppercase tracking-wider mb-4" style="color: rgba(255,255,255,.6); letter-spacing:.12em;">Resposta</p>
-                        <p class="text-[18px] font-medium text-center leading-snug" style="max-width: 540px;">${card.back}</p>
+                    <div class="card-face back">
+                        <p class="text-[10.5px] uppercase tracking-wider mb-5" style="color: #fbbf24; letter-spacing:.16em; font-weight: 600;"><i class="fa-solid fa-lightbulb text-[11px]"></i> Resposta</p>
+                        <p class="text-[19px] font-medium text-center leading-snug" style="max-width: 540px;">${card.back}</p>
+                        <p class="face-hint" style="color: rgba(255,255,255,.4)">Avalie como foi sua resposta</p>
                     </div>
                 </div>
             </div>
 
-            <div class="text-center mb-5">
-                <button onclick="flipCard()" class="btn btn-lg" id="btn-flip"><i class="fa-solid fa-rotate text-[11px]"></i> Mostrar resposta</button>
+            <div class="text-center mb-5" id="btn-flip-wrap">
+                <button onclick="flipCard()" class="btn btn-lg btn-primary" id="btn-flip"><i class="fa-solid fa-rotate text-[11px]"></i> Mostrar resposta</button>
+                <p class="text-[11px] mt-2" style="color:var(--text-4)">Pressione <kbd style="background:var(--bg-2);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;border:1px solid var(--border)">espaço</kbd> ou <kbd style="background:var(--bg-2);padding:1px 6px;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:10px;border:1px solid var(--border)">enter</kbd></p>
             </div>
 
             <div id="confidence-section" class="hidden">
@@ -437,6 +516,7 @@ function showReviewCard() {
 }
 
 function flipCard() {
+    flipSound();
     document.getElementById('review-card').classList.add('flipped');
     document.getElementById('confidence-section').classList.remove('hidden');
     document.getElementById('btn-flip').style.display = 'none';
@@ -455,6 +535,7 @@ function showReviewComplete(byTimeout) {
     document.onkeydown = null;
     const reviewed = reviewIndex;
     const total = reviewQueue.length;
+    if (!byTimeout && reviewed > 0) successSound();
     document.getElementById('mainContent').innerHTML = `
     <div class="page-shell">
         <div class="card" style="max-width: 480px; margin: 60px auto;">

@@ -18,7 +18,7 @@ from app.models.user import User
 from app.models import academic
 from app.models.routes import (
     sessions, subject, teacher, update_user, admin,
-    flashcards, books, calendar, schedule,
+    flashcards, books, calendar, schedule, dashboard,
 )
 from app.core.auth import get_current_user
 from config import settings
@@ -74,6 +74,7 @@ app.include_router(flashcards.router)
 app.include_router(books.router)
 app.include_router(calendar.router)
 app.include_router(schedule.router)
+app.include_router(dashboard.router)
 
 
 class UserCreate(BaseModel):

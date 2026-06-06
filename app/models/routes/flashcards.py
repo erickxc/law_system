@@ -48,8 +48,14 @@ class FlashcardUpdate(BaseModel):
 
 
 class ReviewInput(BaseModel):
-    is_correct: bool
     confidence: int = 3  # 1 (blackout) to 5 (perfect)
+    is_correct: Optional[bool] = None  # se omitido, deriva de confidence >= 3
+
+    @field_validator("confidence")
+    @classmethod
+    def _conf(cls, v):
+        # Clamp 1..5
+        return max(1, min(5, v))
 
 
 class SessionStartInput(BaseModel):
@@ -321,19 +327,21 @@ def review_flashcard(
     if not card:
         raise HTTPException(status_code=404, detail="Flashcard não encontrado.")
 
-    confidence = max(1, min(5, data.confidence))
+    confidence = data.confidence  # já clampado no validator
+    # Se is_correct não foi enviado, deriva de confidence >= 3
+    is_correct = data.is_correct if data.is_correct is not None else (confidence >= 3)
     new_interval, new_ef, next_review = _sm2(card, confidence)
 
     review = FlashcardReview(
         flashcard_id=card.id,
         user_id=current_user.id,
-        is_correct=data.is_correct,
+        is_correct=is_correct,
         confidence=confidence,
     )
     db.add(review)
 
     card.total_reviews += 1
-    if data.is_correct:
+    if is_correct:
         card.correct_reviews += 1
     card.interval_days = new_interval
     card.ease_factor = new_ef
@@ -346,5 +354,5 @@ def review_flashcard(
     return {
         "card": _card_dict(card),
         "next_review_in_days": round(new_interval, 1),
-        "message": "Ótimo!" if data.is_correct else "Vamos revisar em breve.",
+        "message": "Ótimo!" if is_correct else "Vamos revisar em breve.",
     }

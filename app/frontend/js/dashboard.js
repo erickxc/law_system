@@ -9,10 +9,11 @@ async function showDashboard() {
     document.getElementById('mainContent').innerHTML = `<div class="page-shell">${loadingBlock()}</div>`;
 
     try {
-        const [stats, history, fcStats] = await Promise.all([
+        const [stats, history, fcStats, upcoming] = await Promise.all([
             api('/sessions/stats').catch(() => null),
             api('/sessions/history').catch(() => []),
             api('/flashcards/stats').catch(() => null),
+            api('/dashboard/upcoming?days=7&limit=8').catch(() => []),
         ]);
         const tot = stats || { total_minutes:0, accuracy:0, current_streak:0, total_questions:0, last_30_days:[], by_subject:[], best_day:null };
         const hoursStr = tot.total_minutes >= 60
@@ -56,28 +57,31 @@ async function showDashboard() {
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-3">
+                <!-- Próximos compromissos: coluna 1-2 -->
                 <div class="card lg:col-span-2">
                     <div class="card-header">
-                        <span class="card-title">Sessões recentes</span>
-                        ${history.length ? `<a href="#" onclick="showHistory();return false" class="card-sub ml-auto" style="color:var(--accent)">Ver tudo →</a>` : ''}
+                        <span class="card-title"><i class="fa-solid fa-calendar-check text-[11px]" style="color:var(--accent)"></i> Próximos compromissos</span>
+                        <span class="card-sub">próximos 7 dias</span>
+                        <a href="#" onclick="showCalendar();return false" class="card-sub ml-auto" style="color:var(--accent)">Ver calendário →</a>
                     </div>
-                    ${history.length === 0 ? emptyState('fa-stopwatch','Nenhuma sessão','Inicie uma sessão para registrar progresso.') :
-                    `<table class="tbl">
-                        <thead><tr><th>Matéria</th><th style="width:90px">Data</th><th style="width:70px" class="text-right">Duração</th><th style="width:90px" class="text-right">Acerto</th></tr></thead>
-                        <tbody>${history.slice(0,6).map(s => {
-                            const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
-                            return `<tr>
-                                <td style="color:var(--text)">${s.subject_name}</td>
-                                <td class="num text-[11.5px]">${fmtShortDate(s.start_time)}</td>
-                                <td class="num text-right">${fmtDuration(s.duration_seconds)}</td>
-                                <td class="num text-right" style="color:${a==null?'var(--text-5)':a>=70?'var(--success)':a>=50?'var(--warning)':'var(--danger)'}">${a!=null ? a+'%' : '—'}</td>
-                            </tr>`;
-                        }).join('')}</tbody>
-                    </table>`}
+                    ${(!upcoming || upcoming.length === 0) ? `<div class="card-body">${emptyState('fa-calendar-day','Nada agendado','Adicione eventos no calendário ou aulas no horário.')}</div>` :
+                    `<div>
+                        ${upcoming.map(it => renderUpcomingItem(it)).join('')}
+                    </div>`}
                 </div>
 
+                <!-- Card pendência de revisão -->
                 <div class="space-y-3">
+                    ${fcStats && fcStats.due_today > 0 ? `
+                    <div class="card" style="border-color: var(--warning); border-left-width: 3px;">
+                        <div class="card-body">
+                            <p class="text-[11px] font-medium mb-1" style="color: var(--warning)">REVISÃO PENDENTE</p>
+                            <p class="text-[28px] font-semibold mono" style="color:var(--text); letter-spacing:-.02em;">${fcStats.due_today} <span class="text-[12px] font-normal" style="color:var(--text-4)">cards</span></p>
+                            <p class="text-[12px] mt-1 mb-3" style="color:var(--text-4)">Revise diariamente para fixar.</p>
+                            <button onclick="startReview()" class="btn btn-accent btn-sm w-full">Revisar agora →</button>
+                        </div>
+                    </div>` : ''}
                     <div class="card">
                         <div class="card-header"><span class="card-title">Matérias por status</span></div>
                         <div class="card-body">
@@ -89,21 +93,89 @@ async function showDashboard() {
                                 </div>`).join('')}</div>`}
                         </div>
                     </div>
-                    ${fcStats && fcStats.due_today > 0 ? `
-                    <div class="card" style="border-color: var(--warning); border-left-width: 3px;">
-                        <div class="card-body">
-                            <p class="text-[11px] font-medium mb-1" style="color: var(--warning)">REVISÃO PENDENTE</p>
-                            <p class="text-[28px] font-semibold mono" style="color:var(--text); letter-spacing:-.02em;">${fcStats.due_today} <span class="text-[12px] font-normal" style="color:var(--text-4)">cards</span></p>
-                            <p class="text-[12px] mt-1 mb-3" style="color:var(--text-4)">Revise diariamente para fixar.</p>
-                            <button onclick="startReview()" class="btn btn-accent btn-sm w-full">Revisar agora →</button>
-                        </div>
-                    </div>` : ''}
                 </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">Sessões recentes</span>
+                    ${history.length ? `<a href="#" onclick="showHistory();return false" class="card-sub ml-auto" style="color:var(--accent)">Ver tudo →</a>` : ''}
+                </div>
+                ${history.length === 0 ? `<div class="card-body">${emptyState('fa-stopwatch','Nenhuma sessão','Inicie uma sessão para registrar progresso.')}</div>` :
+                `<table class="tbl">
+                    <thead><tr><th>Matéria</th><th style="width:120px">Data</th><th style="width:80px" class="text-right">Duração</th><th style="width:100px" class="text-right">Acerto</th></tr></thead>
+                    <tbody>${history.slice(0,6).map(s => {
+                        const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
+                        return `<tr>
+                            <td style="color:var(--text)">${s.subject_name}</td>
+                            <td class="num text-[11.5px]">${fmtShortDate(s.start_time)}</td>
+                            <td class="num text-right">${fmtDuration(s.duration_seconds)}</td>
+                            <td class="num text-right" style="color:${a==null?'var(--text-5)':a>=70?'var(--success)':a>=50?'var(--warning)':'var(--danger)'}">${a!=null ? a+'%' : '—'}</td>
+                        </tr>`;
+                    }).join('')}</tbody>
+                </table>`}
             </div>
         </div>`;
 
         if (stats) renderDashboardCharts(stats);
     } catch (e) { toast('Erro ao carregar dashboard: ' + e.message, 'error'); }
+}
+
+function renderUpcomingItem(it) {
+    const dt = new Date(it.start_at);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const itemDate = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    const daysDiff = Math.floor((itemDate - today) / 86400000);
+
+    let dayLabel;
+    if (daysDiff === 0) dayLabel = 'HOJE';
+    else if (daysDiff === 1) dayLabel = 'AMANHÃ';
+    else if (daysDiff < 7) dayLabel = ['DOM','SEG','TER','QUA','QUI','SEX','SÁB'][dt.getDay()];
+    else dayLabel = fmtShortDate(it.start_at);
+
+    const dayNum = dt.getDate();
+    const monthName = dt.toLocaleDateString('pt-BR',{month:'short'}).replace('.','').toUpperCase();
+    const time = it.all_day ? '' : it.start_at.slice(11, 16);
+    const isToday = daysDiff === 0;
+
+    const typeIcons = {
+        revisao: 'fa-repeat', estudo: 'fa-book-open', aula: 'fa-chalkboard-user',
+        prova: 'fa-clipboard-check', outro: 'fa-calendar-day',
+    };
+    const icon = typeIcons[it.event_type] || 'fa-calendar-day';
+
+    const meta = [];
+    if (it.subject_name) meta.push(it.subject_name);
+    if (it.location) meta.push(`<i class="fa-solid fa-location-dot text-[9px]"></i> ${it.location}`);
+    if (it.teacher_name) meta.push(it.teacher_name);
+
+    return `<div class="flex items-center gap-4 px-4 py-3" style="border-bottom: 1px solid var(--border);">
+        <!-- Coluna data -->
+        <div class="text-center" style="min-width: 48px;">
+            <p class="text-[9.5px] font-bold tracking-wider" style="color: ${isToday ? 'var(--warning)' : 'var(--text-4)'};">${dayLabel}</p>
+            <p class="serif text-[18px] font-semibold mono" style="color: ${isToday ? 'var(--warning)' : 'var(--text)'}; line-height:1; letter-spacing:-.02em;">${String(dayNum).padStart(2,'0')}</p>
+            ${daysDiff > 1 && daysDiff < 7 ? '' : `<p class="text-[9px] mono" style="color:var(--text-4)">${monthName}</p>`}
+        </div>
+
+        <!-- Faixa colorida -->
+        <div style="width: 3px; height: 38px; background: ${it.color}; border-radius: 99px; flex-shrink: 0;"></div>
+
+        <!-- Conteúdo -->
+        <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2 mb-0.5">
+                <i class="fa-solid ${icon} text-[10px]" style="color:${it.color}"></i>
+                <p class="text-[13.5px] font-medium truncate" style="color:var(--text);">${it.title}</p>
+            </div>
+            ${meta.length ? `<p class="text-[11px] truncate" style="color:var(--text-4)">${meta.join(' · ')}</p>` : ''}
+        </div>
+
+        <!-- Hora -->
+        <div class="text-right" style="min-width: 50px;">
+            ${time ? `<p class="text-[12.5px] mono font-medium" style="color:var(--text-2)">${time}</p>` : '<p class="text-[10.5px]" style="color:var(--text-4)">dia inteiro</p>'}
+            <p class="text-[9.5px] tracking-wider uppercase font-medium mt-0.5" style="color:${it.color}">${it.kind === 'class' ? 'Aula' : it.event_type}</p>
+        </div>
+    </div>`;
 }
 
 function renderDashboardCharts(stats) {
