@@ -197,3 +197,26 @@ def login(l: LoginRequest, db: Session = Depends(get_db)):
 @app.get("/health", tags=["System"])
 def health_check():
     return {"status": "ok", "version": "2.0.0"}
+
+
+@app.post("/_system/migrate", tags=["System"], include_in_schema=False)
+def system_migrate(secret: str, name: str, db: Session = Depends(get_db)):
+    """Aplica migration SQL — protegido por secret (= SECRET_KEY).
+    Endpoint temporário; remover após uso."""
+    if secret != settings.SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    from pathlib import Path
+    allowed = {"003_goal_and_share"}
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail="Unknown migration")
+    sql_path = Path(__file__).resolve().parent / "migrations" / f"{name}.sql"
+    if not sql_path.exists():
+        raise HTTPException(status_code=404, detail=f"{sql_path.name} not found")
+    sql = sql_path.read_text(encoding="utf-8")
+    try:
+        db.execute(text(sql))
+        db.commit()
+        return {"ok": True, "migration": name}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
