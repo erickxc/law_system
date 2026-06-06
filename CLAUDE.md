@@ -12,7 +12,7 @@ Sistema de gerenciamento de estudos jurídicos. Backend FastAPI + PostgreSQL, fr
 |--------|-----------|
 | Backend | Python 3.11+, FastAPI 0.129, SQLAlchemy 2.0 |
 | Banco | PostgreSQL 14+ (local) / Supabase (produção) |
-| Auth | OAuth2PasswordBearer + JWT (python-jose) + bcrypt |
+| Auth | OAuth2PasswordBearer + JWT (PyJWT) + bcrypt |
 | Frontend | HTML5, Tailwind CSS (CDN), Vanilla JS ES6+, Chart.js |
 | Deploy | Vercel (`api/index.py` como handler) |
 

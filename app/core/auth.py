@@ -1,8 +1,8 @@
 import uuid
+import jwt
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
-from jose import JWTError, jwt
 
 from app.database import get_db
 from app.models.user import User
@@ -34,5 +34,5 @@ def get_current_user(
 
         return user
 
-    except (JWTError, ValueError):
+    except (jwt.PyJWTError, ValueError):
         raise HTTPException(status_code=401, detail="Token inválido")
