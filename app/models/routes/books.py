@@ -58,6 +58,7 @@ class HighlightCreate(BaseModel):
     page_number: int
     selected_text: str
     color: str = "yellow"
+    rects: Optional[List[dict]] = None  # [{x,y,w,h} em % do wrap]
 
 
 def _book_dict(b: Book) -> dict:
@@ -96,6 +97,7 @@ def _highlight_dict(h: BookHighlight) -> dict:
         "page_number": h.page_number,
         "selected_text": h.selected_text,
         "color": h.color,
+        "rects": h.rects or [],
         "created_at": h.created_at.isoformat(),
     }
 
@@ -323,6 +325,7 @@ def create_highlight(
         page_number=data.page_number,
         selected_text=data.selected_text,
         color=data.color,
+        rects=data.rects or [],
     )
     db.add(h)
     db.commit()

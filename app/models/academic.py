@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import String, ForeignKey, text, Integer, DateTime, Boolean, Float, Text, JSON
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
@@ -132,6 +132,7 @@ class BookHighlight(Base):
     page_number: Mapped[int] = mapped_column(Integer, nullable=False)
     selected_text: Mapped[str] = mapped_column(Text, nullable=False)
     color: Mapped[str] = mapped_column(String(20), default="yellow")
+    rects: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     book: Mapped["Book"] = relationship("Book", back_populates="highlights")
