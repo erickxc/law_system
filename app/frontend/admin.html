@@ -7,154 +7,159 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 :root {
-    --paper:       #f6f1e7;
-    --paper-soft:  #ede5d2;
-    --paper-warm:  #fbf7ee;
-    --ink:         #0d1117;
-    --ink-soft:    #4a5160;
-    --ink-faint:   #6b6f7a;
-    --line:        #d8cfb8;
-    --line-soft:   #e7dfc8;
-    --line-strong: #b9ad8f;
-    --gold:        #b08b3e;
-    --gold-soft:   #d4b76a;
-    --gold-bg:     #f1e8cf;
-    --emerald:     #1f5d3a;
-    --emerald-bg:  #e0ebe1;
-    --crimson:     #8b1538;
-    --crimson-bg:  #f5dadf;
-    --amber-bg:    #f7e8c4;
-    --amber-ink:   #6b4f15;
+    --bg:         #fafafa;
+    --bg-2:       #f4f4f5;
+    --surface:    #ffffff;
+    --border:     #e4e4e7;
+    --border-2:   #d4d4d8;
+    --text:       #18181b;
+    --text-2:     #3f3f46;
+    --text-3:     #52525b;
+    --text-4:     #71717a;
+    --text-5:     #a1a1aa;
+    --accent:     #2563eb;
+    --accent-h:   #1d4ed8;
+    --accent-bg:  #eff6ff;
+    --danger:     #dc2626;
+    --danger-bg:  #fef2f2;
+    --warning:    #d97706;
+    --warning-bg: #fffbeb;
+    --success:    #16a34a;
+    --success-bg: #f0fdf4;
+    --side:       #18181b;
+    --side-text:  #a1a1aa;
+    --side-active:#ffffff;
 }
-* { font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; }
-body { background: var(--paper); color: var(--ink); }
-.serif { font-family: 'Fraunces', Georgia, serif; }
-.mono  { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
+* { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--text); font-size: 13.5px; }
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
 
-.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
+aside.sidebar { background: var(--side); color: var(--side-text); border-right: 1px solid #27272a; width: 224px; flex-shrink: 0; }
+.sidebar-section { font-size: 10.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: #71717a; padding: 14px 14px 4px; }
+.nav-btn { display: flex; align-items: center; gap: 9px; padding: 6px 12px; margin: 1px 6px; font-size: 13px; color: var(--side-text); background: none; border: none; cursor: pointer; text-align: left; border-radius: 4px; transition: background .12s, color .12s; width: calc(100% - 12px); }
+.nav-btn i { width: 14px; text-align: center; font-size: 11.5px; opacity: .85; }
+.nav-btn:hover { background: rgba(255,255,255,.05); color: var(--side-active); }
+.nav-btn.active { background: rgba(255,255,255,.08); color: var(--side-active); }
 
-aside.sidebar { background: var(--ink); color: var(--paper); border-right: 1px solid #1f2533; }
-.sidebar-section { font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: #62687a; padding: 22px 18px 8px; }
-.nav-btn {
-    display: flex; align-items: center; gap: 12px;
-    padding: 9px 14px; margin: 0 6px; width: calc(100% - 12px);
-    font-size: 13.5px; color: #a8aab6; background: none; border: none;
-    cursor: pointer; text-align: left; transition: color .15s, background .15s;
-    border-left: 2px solid transparent;
-}
-.nav-btn i { width: 18px; text-align: center; font-size: 13px; opacity: .75; }
-.nav-btn:hover { color: var(--paper); background: rgba(255,255,255,.04); }
-.nav-btn.active { color: var(--paper); background: rgba(176,139,62,.10); border-left-color: var(--gold); margin-left: 0; padding-left: 18px; }
-.nav-btn.active i { color: var(--gold-soft); opacity: 1; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
+.crumb { font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text); font-weight: 500; }
 
-.app-header { background: var(--paper-warm); border-bottom: 1px solid var(--line); }
-.surface { background: var(--paper-warm); border: 1px solid var(--line); }
+.page-shell { padding: 20px 24px; }
+.page-title { font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: var(--text); }
+.page-sub { font-size: 12.5px; color: var(--text-4); margin-top: 2px; }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-       font-size: 13px; font-weight: 500; padding: 10px 18px; cursor: pointer;
-       transition: background .15s; border: 1px solid transparent; }
-.btn-ink { background: var(--ink); color: var(--paper); }
-.btn-ink:hover { background: #1a1f2b; }
-.btn-gold { background: var(--gold); color: #1d1404; }
-.btn-gold:hover { background: var(--gold-soft); }
-.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
-.btn-ghost:hover { background: var(--paper-soft); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+.card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.card-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.card-sub { font-size: 11.5px; color: var(--text-4); }
+.card-body { padding: 16px; }
 
-.form-input, .form-select {
-    width: 100%; padding: 11px 14px;
-    border: 1px solid var(--line-strong); background: var(--paper);
-    color: var(--ink); font-size: 13.5px; outline: none;
-}
-.form-input:focus, .form-select:focus { border-color: var(--ink); }
-.form-select { cursor: pointer; }
-.form-label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; border-radius: 6px; }
+.kpi-label { font-size: 11px; font-weight: 500; color: var(--text-4); }
+.kpi-value { font-size: 22px; font-weight: 600; color: var(--text); letter-spacing: -.02em; margin-top: 6px; line-height: 1.1; font-feature-settings: 'tnum' 1; }
+.kpi-value .unit { font-size: 12px; font-weight: 500; color: var(--text-4); margin-left: 4px; }
 
-.section-head { display: flex; align-items: baseline; gap: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
-.section-head .title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; letter-spacing: -.01em; color: var(--ink); }
-.section-head .sub { font-size: 12px; color: var(--ink-faint); }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; font-size: 12.5px; font-weight: 500; line-height: 1; border: 1px solid var(--border-2); background: var(--surface); color: var(--text); border-radius: 4px; cursor: pointer; transition: background .12s, border-color .12s; white-space: nowrap; }
+.btn:hover { background: var(--bg-2); border-color: var(--text-5); }
+.btn-primary { background: var(--text); color: white; border-color: var(--text); }
+.btn-primary:hover { background: #27272a; border-color: #27272a; }
+.btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-accent:hover { background: var(--accent-h); border-color: var(--accent-h); }
+.btn-danger { background: var(--surface); color: var(--danger); border-color: var(--border-2); }
+.btn-danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+.btn-success { background: var(--success); color: white; border-color: var(--success); }
+.btn-success:hover { background: #15803d; }
+.btn-sm { padding: 4px 8px; font-size: 11.5px; }
+.btn-icon { padding: 5px 8px; }
 
-.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.tbl th { text-align: left; padding: 12px 16px; font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
-.tbl td { padding: 14px 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink); vertical-align: middle; }
-.tbl tr:last-child td { border-bottom: none; }
-.tbl tr:hover td { background: rgba(176,139,62,.05); }
+.input { width: 100%; padding: 7px 10px; font-size: 13px; background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: 4px; outline: none; transition: border-color .12s, box-shadow .12s; line-height: 1.4; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.input::placeholder { color: var(--text-5); }
+select.input { cursor: pointer; padding-right: 28px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2371717a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; }
+.label { font-size: 11.5px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 5px; }
 
-.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; padding: 4px 10px; line-height: 1; border: 1px solid; }
-.badge-pago         { background: var(--emerald-bg); color: var(--emerald);   border-color: #b4cdb6; }
-.badge-pendente     { background: var(--amber-bg);   color: var(--amber-ink); border-color: #e1cd99; }
-.badge-inadimplente { background: var(--crimson-bg); color: var(--crimson);   border-color: #e3b7c1; }
-.badge-ativo        { background: var(--emerald-bg); color: var(--emerald);   border-color: #b4cdb6; }
-.badge-inativo      { background: var(--paper-soft); color: var(--ink-faint); border-color: var(--line); }
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl thead th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: var(--text-4); text-transform: uppercase; letter-spacing: .04em; background: var(--bg-2); border-bottom: 1px solid var(--border); }
+.tbl tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text-2); vertical-align: middle; }
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover td { background: var(--bg); }
+.tbl .num { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; color: var(--text); }
+.tbl .id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-4); }
+.tbl .actions { text-align: right; white-space: nowrap; }
 
-.avatar { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: var(--gold-bg); color: var(--ink); font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px; border: 1px solid var(--gold-soft); }
+.badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; font-size: 11px; font-weight: 500; border-radius: 3px; border: 1px solid; }
+.badge .dot { width: 5px; height: 5px; border-radius: 50%; }
+.badge-pago         { background: var(--success-bg); color: var(--success); border-color: #bbf7d0; }
+.badge-pendente     { background: var(--warning-bg); color: var(--warning); border-color: #fde68a; }
+.badge-inadimplente { background: var(--danger-bg);  color: var(--danger);  border-color: #fecaca; }
+.badge-active       { background: var(--success-bg); color: var(--success); border-color: #bbf7d0; }
+.badge-inactive     { background: var(--bg-2);       color: var(--text-4);  border-color: var(--border); }
 
-.paper-grain-bg {
-    background-color: var(--paper);
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 .025 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
+.avatar { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--bg-2); color: var(--text-2); font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border); }
+.brand-mark { width: 24px; height: 24px; background: var(--accent); color: white; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 11px; }
 
-.user-pill { display: block; width: 100%; padding: 12px 14px; cursor: pointer; transition: background .15s, border-left-color .15s; border-left: 2px solid transparent; background: none; border-top: none; border-right: none; border-bottom: 1px solid var(--line-soft); text-align: left; }
-.user-pill:hover { background: rgba(176,139,62,.05); }
-.user-pill.active { background: var(--paper-warm); border-left-color: var(--gold); }
+.user-list-item { display: block; width: 100%; padding: 10px 12px; cursor: pointer; transition: background .12s; border: none; border-bottom: 1px solid var(--border); background: none; text-align: left; }
+.user-list-item:hover { background: var(--bg); }
+.user-list-item.active { background: var(--accent-bg); border-left: 2px solid var(--accent); padding-left: 10px; }
 
-#toast { transition: opacity .3s; }
-.form-panel { transition: opacity .25s ease, max-height .25s ease; max-height: 600px; overflow: hidden; }
-.form-panel.hidden-panel { opacity: 0; max-height: 0; pointer-events: none; }
+.filterbar { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.filterbar input.input { width: 240px; padding: 6px 10px 6px 30px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><circle cx='6' cy='6' r='5' stroke='%2371717a' fill='none' stroke-width='1.4'/><path d='M10 10l3 3' stroke='%2371717a' stroke-width='1.4' stroke-linecap='round'/></svg>"); background-repeat: no-repeat; background-position: 10px center; background-size: 12px; }
+
+.empty { text-align: center; padding: 36px 20px; }
+.empty i { font-size: 22px; color: var(--text-5); margin-bottom: 10px; }
+.empty .title { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.empty .sub { font-size: 12px; color: var(--text-4); margin-top: 4px; }
+
+#toast { transition: opacity .25s, transform .25s; }
+
+.form-panel { transition: opacity .2s ease, max-height .25s ease; max-height: 500px; overflow: hidden; }
+.form-panel.hidden-panel { opacity: 0; max-height: 0; pointer-events: none; padding: 0; border: none; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
-<body class="paper-grain-bg flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden">
 
-<aside class="sidebar w-60 flex flex-col shrink-0">
-    <div class="px-5 py-7" style="border-bottom: 1px solid #1f2533;">
-        <div class="flex items-center gap-3">
-            <div style="width:36px;height:36px;border:1px solid var(--gold-soft);color:var(--gold-soft);display:flex;align-items:center;justify-content:center;">
-                <i class="fa-solid fa-scale-balanced text-sm"></i>
-            </div>
-            <div>
-                <p class="serif text-[15px] font-semibold tracking-tight" style="color:var(--paper)">Law System</p>
-                <p class="eyebrow mt-0.5" style="color:var(--gold-soft)">Painel admin</p>
-            </div>
+<aside class="sidebar flex flex-col">
+    <div class="px-4 py-3 flex items-center gap-2" style="border-bottom: 1px solid #27272a;">
+        <div class="brand-mark"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div>
+            <p class="text-[13px] font-semibold" style="color: white">Law System</p>
+            <p class="text-[10px] mono" style="color: #71717a">admin</p>
         </div>
     </div>
 
-    <nav class="flex-1 py-3">
-        <p class="sidebar-section">Gestão</p>
+    <nav class="flex-1 py-2">
+        <p class="sidebar-section">Administração</p>
         <button onclick="setTab('acessos')" id="nav-acessos" class="nav-btn">
-            <i class="fa-solid fa-users-gear"></i> Controle de acessos
+            <i class="fa-solid fa-users-gear"></i> Acessos
         </button>
         <button onclick="setTab('cobrancas')" id="nav-cobrancas" class="nav-btn">
             <i class="fa-solid fa-file-invoice-dollar"></i> Cobranças
         </button>
     </nav>
 
-    <div class="px-4 py-4" style="border-top: 1px solid #1f2533;">
-        <a href="dash.html" class="flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 transition-colors mb-1" style="color:#a8aab6">
-            <i class="fa-solid fa-arrow-left text-[11px]"></i>
-            <span class="eyebrow">Voltar ao dashboard</span>
-        </a>
-        <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 transition-colors" style="color:#a8aab6">
-            <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i>
-            <span class="eyebrow">Sair</span>
-        </button>
+    <div class="px-3 py-2" style="border-top: 1px solid #27272a;">
+        <a href="dash.html" class="nav-btn"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+        <button onclick="logout()" class="nav-btn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sair</button>
     </div>
 </aside>
 
 <main class="flex-1 flex flex-col overflow-hidden">
 
-    <header class="app-header px-10 py-5 flex items-center justify-between shrink-0">
-        <div>
-            <p class="eyebrow" id="pageEyebrow">/ Painel admin</p>
-            <h1 id="pageTitle" class="serif text-[28px] font-medium mt-0.5" style="color:var(--ink); letter-spacing:-.01em; line-height:1;">Controle de acessos</h1>
-            <p id="pageSubtitle" class="text-[12.5px] mt-1.5" style="color:var(--ink-faint)">Gerencie solicitações e usuários do sistema</p>
+    <header class="topbar">
+        <div class="crumb">
+            <span>Admin</span>
+            <span class="mx-1.5" style="color:var(--text-5)">/</span>
+            <b id="crumb-page">Acessos</b>
         </div>
         <div class="flex items-center gap-3">
-            <span id="adminName" class="text-[13px] font-medium" style="color:var(--ink)"></span>
+            <span id="adminName" class="text-[12.5px] font-medium" style="color:var(--text-2)"></span>
             <div class="avatar" id="adminInitial">A</div>
         </div>
     </header>
@@ -162,139 +167,116 @@ aside.sidebar { background: var(--ink); color: var(--paper); border-right: 1px s
     <div class="flex-1 overflow-y-auto">
 
         <!-- ═══ TAB: ACESSOS ═══ -->
-        <div id="tab-acessos" class="px-10 py-8 space-y-10">
+        <div id="tab-acessos" class="page-shell space-y-6">
+            <div class="mb-2">
+                <h1 class="page-title">Controle de acessos</h1>
+                <p class="page-sub">Aprove solicitações, gerencie usuários e permissões.</p>
+            </div>
 
             <section>
-                <div class="section-head">
-                    <h2 class="title">Solicitações pendentes</h2>
-                    <span class="sub">/ aguardando aprovação</span>
-                    <span id="pendingCount" class="ml-auto eyebrow" style="color:var(--amber-ink)">0 pendentes</span>
+                <div class="flex items-baseline justify-between mb-3">
+                    <h2 class="text-[14px] font-semibold" style="color:var(--text)">Solicitações pendentes <span class="text-[12px] font-normal mono" style="color:var(--text-4)" id="pendingCount">— pendentes</span></h2>
                 </div>
-                <div id="pendingList" class="space-y-3">
-                    <p class="text-[13px]" style="color:var(--ink-faint)">Carregando…</p>
+                <div id="pendingList" class="space-y-2">
+                    <div class="card"><div class="card-body"><p class="text-[12.5px]" style="color:var(--text-4)">Carregando…</p></div></div>
                 </div>
             </section>
 
             <section>
-                <div class="section-head">
-                    <h2 class="title">Usuários do sistema</h2>
-                    <span class="sub">/ todos os cadastrados</span>
-                    <div class="ml-auto relative">
-                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[11px]" style="color:var(--ink-faint)"></i>
-                        <input id="userSearch" oninput="filterUsers()" type="text" placeholder="Buscar…" class="form-input mono" style="padding-left:32px; width:240px;">
-                    </div>
+                <div class="filterbar">
+                    <h2 class="text-[14px] font-semibold mr-auto" style="color:var(--text)">Usuários cadastrados</h2>
+                    <input id="userSearch" oninput="filterUsers()" type="text" placeholder="Buscar nome ou e-mail…" class="input">
                 </div>
 
-                <div class="surface">
+                <div class="card">
                     <table class="tbl">
                         <thead>
                             <tr>
                                 <th style="width:32px">#</th>
                                 <th>Nome</th>
                                 <th>E-mail</th>
-                                <th>Curso</th>
-                                <th>Cadastro</th>
-                                <th>Status</th>
-                                <th></th>
+                                <th style="width:140px">Curso</th>
+                                <th style="width:120px">Cadastro</th>
+                                <th style="width:100px">Status</th>
+                                <th style="width:90px" class="actions">Ações</th>
                             </tr>
                         </thead>
                         <tbody id="usersTable"></tbody>
                     </table>
-                    <div id="usersEmpty" class="hidden text-center py-10" style="color:var(--ink-faint)">
-                        <p class="text-[13px]">Nenhum usuário encontrado.</p>
-                    </div>
+                    <div id="usersEmpty" class="hidden"><div class="card-body">${''/* placeholder */}</div></div>
                 </div>
             </section>
         </div>
 
         <!-- ═══ TAB: COBRANÇAS ═══ -->
-        <div id="tab-cobrancas" class="hidden px-10 py-8">
-            <div class="flex gap-8 h-full">
+        <div id="tab-cobrancas" class="hidden page-shell">
+            <div class="mb-5">
+                <h1 class="page-title">Cobranças</h1>
+                <p class="page-sub">Histórico financeiro por usuário.</p>
+            </div>
 
-                <div class="w-72 shrink-0 flex flex-col">
-                    <div class="section-head">
-                        <h2 class="title">Usuários</h2>
+            <div class="flex gap-4">
+                <!-- Lista de usuários -->
+                <div class="w-72 shrink-0">
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Usuários</span>
+                            <span class="card-sub mono" id="billingUserCount">—</span>
+                        </div>
+                        <div class="p-2" style="border-bottom: 1px solid var(--border)">
+                            <input id="billingSearch" oninput="filterBillingUsers()" type="text" placeholder="Buscar…" class="input" style="padding-left:30px; background-image: url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2214%22 height=%2214%22 viewBox=%220 0 14 14%22><circle cx=%226%22 cy=%226%22 r=%225%22 stroke=%22%2371717a%22 fill=%22none%22 stroke-width=%221.4%22/><path d=%22M10 10l3 3%22 stroke=%22%2371717a%22 stroke-width=%221.4%22 stroke-linecap=%22round%22/></svg>'); background-repeat: no-repeat; background-position: 10px center; background-size: 12px;">
+                        </div>
+                        <div id="billingUserList" style="max-height: calc(100vh - 280px); overflow-y: auto;"></div>
                     </div>
-                    <div class="relative mb-4">
-                        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[11px]" style="color:var(--ink-faint)"></i>
-                        <input id="billingSearch" oninput="filterBillingUsers()" type="text" placeholder="Buscar usuário…" class="form-input mono" style="padding-left:32px;">
-                    </div>
-                    <div id="billingUserList" class="surface flex-1 overflow-y-auto" style="max-height: calc(100vh - 280px);"></div>
                 </div>
 
+                <!-- Painel de cobranças -->
                 <div class="flex-1 min-w-0">
+                    <div id="billingEmpty" class="card"><div class="card-body"><div class="empty"><i class="fa-solid fa-file-invoice-dollar"></i><p class="title">Selecione um usuário</p><p class="sub">Veja o histórico de cobranças à direita.</p></div></div></div>
 
-                    <div id="billingEmpty" class="surface flex flex-col items-center justify-center text-center py-16" style="color:var(--ink-faint)">
-                        <i class="fa-solid fa-file-invoice-dollar text-[32px] mb-4" style="opacity:.35"></i>
-                        <p class="serif text-[20px] font-medium" style="color:var(--ink)">Selecione um usuário</p>
-                        <p class="text-[12.5px] mt-1.5">Veja o histórico de cobranças à direita.</p>
-                    </div>
+                    <div id="billingContent" class="hidden space-y-3">
 
-                    <div id="billingContent" class="hidden space-y-6">
-
-                        <div class="surface px-7 py-5 flex justify-between items-center">
-                            <div>
-                                <p id="selectedUserName" class="serif text-[20px] font-medium" style="color:var(--ink); letter-spacing:-.01em;"></p>
-                                <p id="selectedUserEmail" class="text-[12.5px] mt-1" style="color:var(--ink-faint)"></p>
-                            </div>
-                            <button onclick="openPaymentForm()" class="btn btn-ink">
-                                <i class="fa-solid fa-plus text-[11px]"></i> Novo lançamento
-                            </button>
-                        </div>
-
-                        <div id="paymentForm" class="surface form-panel hidden-panel px-7 py-6" style="border-color: var(--gold);">
-                            <div class="section-head">
-                                <h3 class="title">Novo lançamento</h3>
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
+                        <div class="card">
+                            <div class="card-body flex justify-between items-center">
                                 <div>
-                                    <label class="form-label">Descrição</label>
-                                    <input id="pDesc" type="text" placeholder="Ex.: Mensalidade Junho" class="form-input">
+                                    <p id="selectedUserName" class="text-[15px] font-semibold" style="color:var(--text)"></p>
+                                    <p id="selectedUserEmail" class="text-[12px] mt-0.5 mono" style="color:var(--text-4)"></p>
                                 </div>
-                                <div>
-                                    <label class="form-label">Valor (R$)</label>
-                                    <input id="pAmount" type="number" step="0.01" placeholder="0,00" class="form-input mono">
-                                </div>
-                                <div>
-                                    <label class="form-label">Data</label>
-                                    <input id="pDate" type="date" class="form-input mono">
-                                </div>
-                                <div>
-                                    <label class="form-label">Status</label>
-                                    <select id="pStatus" class="form-select">
-                                        <option value="pendente">Pendente</option>
-                                        <option value="pago">Pago</option>
-                                        <option value="inadimplente">Inadimplente</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="flex justify-end gap-2 mt-5">
-                                <button onclick="closePaymentForm()" class="btn btn-ghost">Cancelar</button>
-                                <button onclick="savePayment()" class="btn btn-ink">Salvar lançamento</button>
+                                <button onclick="openPaymentForm()" class="btn btn-primary"><i class="fa-solid fa-plus text-[10px]"></i> Novo lançamento</button>
                             </div>
                         </div>
 
-                        <div id="billingSummary" class="grid grid-cols-3 gap-0" style="border:1px solid var(--line);"></div>
-
-                        <div class="surface">
-                            <div class="px-5 py-4" style="border-bottom: 1px solid var(--line);">
-                                <p class="eyebrow">Histórico de lançamentos</p>
+                        <div id="paymentForm" class="card form-panel hidden-panel">
+                            <div class="card-header"><span class="card-title">Novo lançamento</span></div>
+                            <div class="card-body space-y-3">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="label">Descrição</label><input id="pDesc" type="text" placeholder="Ex.: Mensalidade Junho" class="input"></div>
+                                    <div><label class="label">Valor (R$)</label><input id="pAmount" type="number" step="0.01" placeholder="0,00" class="input mono"></div>
+                                    <div><label class="label">Data</label><input id="pDate" type="date" class="input mono"></div>
+                                    <div><label class="label">Status</label>
+                                        <select id="pStatus" class="input">
+                                            <option value="pendente">Pendente</option>
+                                            <option value="pago">Pago</option>
+                                            <option value="inadimplente">Inadimplente</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex justify-end gap-2 pt-2">
+                                    <button onclick="closePaymentForm()" class="btn">Cancelar</button>
+                                    <button onclick="savePayment()" class="btn btn-primary">Salvar</button>
+                                </div>
                             </div>
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-3" id="billingSummary"></div>
+
+                        <div class="card">
+                            <div class="card-header"><span class="card-title">Lançamentos</span></div>
                             <table class="tbl">
-                                <thead>
-                                    <tr>
-                                        <th>Descrição</th>
-                                        <th>Data</th>
-                                        <th class="text-right">Valor</th>
-                                        <th>Status</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
+                                <thead><tr><th>Descrição</th><th style="width:120px">Data</th><th style="width:110px" class="text-right">Valor</th><th style="width:140px">Status</th><th style="width:50px" class="actions"></th></tr></thead>
                                 <tbody id="paymentsTable"></tbody>
                             </table>
-                            <div id="paymentsEmpty" class="hidden text-center py-10" style="color:var(--ink-faint)">
-                                <p class="text-[13px]">Nenhum lançamento registrado.</p>
-                            </div>
+                            <div id="paymentsEmpty" class="hidden"><div class="card-body"><div class="empty"><i class="fa-solid fa-receipt"></i><p class="title">Nenhum lançamento</p><p class="sub">Clique em "Novo lançamento" para registrar.</p></div></div></div>
                         </div>
                     </div>
                 </div>
@@ -305,9 +287,9 @@ aside.sidebar { background: var(--ink); color: var(--paper); border-right: 1px s
 </main>
 
 <!-- Toast -->
-<div id="toast" class="fixed bottom-6 right-6 surface px-5 py-3 text-[13px] font-medium opacity-0 pointer-events-none flex items-center gap-3 z-50" style="border-left-width: 3px;">
-    <i id="toastIcon" class="fa-solid fa-check" style="color:var(--emerald)"></i>
-    <span id="toastMsg"></span>
+<div id="toast" class="fixed bottom-5 right-5 card opacity-0 pointer-events-none flex items-center gap-3 px-4 py-2.5 z-50" style="border-left-width: 3px;">
+    <i id="toastIcon" class="fa-solid fa-check text-[12px]" style="color:var(--success)"></i>
+    <span id="toastMsg" class="text-[12.5px]"></span>
 </div>
 
 <script src="config.js"></script>
@@ -326,24 +308,18 @@ async function init() {
 
 function getInitials(name) {
     if (!name) return 'A';
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return 'A';
-    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
-    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+    const p = name.trim().split(/\s+/).filter(Boolean);
+    if (!p.length) return 'A';
+    if (p.length === 1) return p[0].slice(0,2).toUpperCase();
+    return (p[0][0] + p[p.length-1][0]).toUpperCase();
 }
 
 function redirect() { window.location.href = 'index.html'; }
 function logout() { localStorage.clear(); redirect(); }
 
 async function api(path, opts = {}) {
-    const r = await fetch(`${API_BASE}${path}`, {
-        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...opts.headers },
-        ...opts
-    });
-    if (!r.ok) {
-        const err = await r.json().catch(() => ({}));
-        throw new Error(err.detail || 'Erro na requisição');
-    }
+    const r = await fetch(`${API_BASE}${path}`, { headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', ...opts.headers }, ...opts });
+    if (!r.ok) { const err = await r.json().catch(() => ({})); throw new Error(err.detail || 'Erro na requisição'); }
     if (r.status === 204) return null;
     return r.json();
 }
@@ -352,11 +328,12 @@ function toast(msg, ok = true) {
     const el = document.getElementById('toast');
     document.getElementById('toastMsg').textContent = msg;
     const icon = document.getElementById('toastIcon');
-    icon.className = ok ? 'fa-solid fa-check' : 'fa-solid fa-xmark';
-    icon.style.color = ok ? 'var(--emerald)' : 'var(--crimson)';
-    el.style.borderLeftColor = ok ? 'var(--emerald)' : 'var(--crimson)';
+    icon.className = ok ? 'fa-solid fa-check text-[12px]' : 'fa-solid fa-xmark text-[12px]';
+    icon.style.color = ok ? 'var(--success)' : 'var(--danger)';
+    el.style.borderLeftColor = ok ? 'var(--success)' : 'var(--danger)';
     el.style.opacity = '1';
-    setTimeout(() => el.style.opacity = '0', 3000);
+    el.style.transform = 'translateY(0)';
+    setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(8px)'; }, 3000);
 }
 
 let allUsers = [];
@@ -366,14 +343,7 @@ function setTab(tab) {
         document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
         document.getElementById(`nav-${t}`).classList.toggle('active', t === tab);
     });
-    const titles = {
-        acessos: ['Controle de acessos', 'Gerencie solicitações e usuários do sistema'],
-        cobrancas: ['Cobranças', 'Registre e acompanhe lançamentos por usuário']
-    };
-    document.getElementById('pageEyebrow').textContent = `/ ${titles[tab][0]}`;
-    document.getElementById('pageTitle').textContent = titles[tab][0];
-    document.getElementById('pageSubtitle').textContent = titles[tab][1];
-
+    document.getElementById('crumb-page').textContent = tab === 'acessos' ? 'Acessos' : 'Cobranças';
     if (tab === 'cobrancas' && allUsers.length === 0) loadBillingUsers();
 }
 
@@ -382,36 +352,32 @@ async function loadPending() {
     try {
         const users = await api('/admin/pending');
         document.getElementById('pendingCount').textContent = `${users.length} pendente${users.length !== 1 ? 's' : ''}`;
-
         if (!users.length) {
-            list.innerHTML = `<div class="surface px-7 py-6 text-center"><p class="text-[13px]" style="color:var(--ink-faint)">Nenhuma solicitação pendente.</p></div>`;
+            list.innerHTML = `<div class="card"><div class="card-body"><div class="empty"><i class="fa-solid fa-circle-check" style="color:var(--success)"></i><p class="title">Nenhuma solicitação pendente</p><p class="sub">Todas as solicitações foram processadas.</p></div></div></div>`;
             return;
         }
-
-        list.innerHTML = users.map(u => `
-        <div id="pending-${u.id}" class="surface px-6 py-4 flex items-center gap-5">
-            <div class="avatar" style="background:var(--amber-bg); border-color:#e1cd99;">${getInitials(u.full_name)}</div>
-            <div class="flex-1 min-w-0">
-                <p class="serif text-[16px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${u.full_name}</p>
-                <p class="text-[12.5px] mt-0.5" style="color:var(--ink-faint)">${u.email}${u.curso ? ` · ${u.curso}` : ''}</p>
-                <p class="mono text-[10.5px] mt-1" style="color:var(--ink-faint); opacity:.7">${formatDate(u.created_at)}</p>
-            </div>
-            <div class="flex gap-2 shrink-0">
-                <button onclick="approveUser('${u.id}')" class="btn btn-ink">Aprovar</button>
-                <button onclick="rejectUser('${u.id}')" class="btn btn-ghost">Rejeitar</button>
-            </div>
-        </div>`).join('');
-    } catch(e) { list.innerHTML = `<div class="text-[13px]" style="color:var(--crimson)">${e.message}</div>`; }
+        list.innerHTML = `<div class="card"><table class="tbl">
+            <thead><tr><th>Nome</th><th>E-mail</th><th>Curso</th><th style="width:140px">Solicitado em</th><th style="width:160px" class="actions">Ações</th></tr></thead>
+            <tbody>${users.map(u => `
+                <tr id="pending-${u.id}">
+                    <td style="color:var(--text); font-weight:500;">${u.full_name}</td>
+                    <td class="mono text-[12px]" style="color:var(--text-3)">${u.email}</td>
+                    <td style="color:var(--text-3)">${u.curso || '—'}</td>
+                    <td class="num text-[12px]">${formatDate(u.created_at)}</td>
+                    <td class="actions">
+                        <button onclick="approveUser('${u.id}')" class="btn btn-success btn-sm"><i class="fa-solid fa-check text-[10px]"></i> Aprovar</button>
+                        <button onclick="rejectUser('${u.id}')" class="btn btn-sm" style="color:var(--danger)">Recusar</button>
+                    </td>
+                </tr>`).join('')}</tbody>
+        </table></div>`;
+    } catch(e) { list.innerHTML = `<p class="text-[13px]" style="color:var(--danger)">${e.message}</p>`; }
 }
 
 async function approveUser(id) {
     try {
         await api(`/admin/approve/${id}`, { method: 'POST' });
-        document.getElementById(`pending-${id}`)?.remove();
-        const remaining = document.querySelectorAll('[id^="pending-"]').length;
-        document.getElementById('pendingCount').textContent = `${remaining} pendente${remaining !== 1 ? 's' : ''}`;
-        if (remaining === 0) loadPending();
         toast('Usuário aprovado');
+        await loadPending();
         loadUsers();
     } catch(e) { toast(e.message, false); }
 }
@@ -420,11 +386,8 @@ async function rejectUser(id) {
     if (!confirm('Recusar e remover esta solicitação?')) return;
     try {
         await api(`/admin/users/${id}`, { method: 'DELETE' });
-        document.getElementById(`pending-${id}`)?.remove();
-        const remaining = document.querySelectorAll('[id^="pending-"]').length;
-        document.getElementById('pendingCount').textContent = `${remaining} pendente${remaining !== 1 ? 's' : ''}`;
-        if (remaining === 0) loadPending();
         toast('Solicitação removida');
+        await loadPending();
     } catch(e) { toast(e.message, false); }
 }
 
@@ -433,27 +396,30 @@ async function loadUsers() {
         const users = await api('/admin/users');
         allUsers = users;
         renderUsersTable(users);
-    } catch(e) {
-        document.getElementById('usersTable').innerHTML = `<tr><td colspan="7" class="text-center" style="color:var(--crimson); padding: 20px;">${e.message}</td></tr>`;
-    }
+    } catch(e) { toast(e.message, false); }
 }
 
 function renderUsersTable(users) {
     const tbody = document.getElementById('usersTable');
     const empty = document.getElementById('usersEmpty');
-    if (!users.length) { tbody.innerHTML = ''; empty.classList.remove('hidden'); return; }
+    if (!users.length) {
+        tbody.innerHTML = '';
+        empty.innerHTML = `<div class="card-body"><div class="empty"><i class="fa-solid fa-users"></i><p class="title">Nenhum usuário</p><p class="sub">Não há usuários cadastrados.</p></div></div>`;
+        empty.classList.remove('hidden');
+        return;
+    }
     empty.classList.add('hidden');
     tbody.innerHTML = users.map((u, i) => `
     <tr>
-        <td class="mono text-[11px]" style="color:var(--ink-faint)">${String(i+1).padStart(2,'0')}</td>
-        <td class="serif text-[14.5px]" style="color:var(--ink); font-weight: 500;">${u.full_name}</td>
-        <td class="mono text-[12px]" style="color:var(--ink-soft)">${u.email}</td>
-        <td style="color:var(--ink-soft)">${u.curso || '—'}</td>
-        <td class="mono text-[11.5px]" style="color:var(--ink-faint)">${formatDate(u.created_at)}</td>
-        <td><span class="badge badge-${u.is_active ? 'ativo' : 'inativo'}">${u.is_active ? 'Ativo' : 'Inativo'}</span></td>
-        <td class="text-right">
-            <button onclick="toggleUser('${u.id}', ${u.is_active})" title="${u.is_active ? 'Desativar' : 'Ativar'}" class="hover:opacity-100" style="color:var(--ink-faint); opacity:.6; padding: 4px 8px;">
-                <i class="fa-solid ${u.is_active ? 'fa-ban' : 'fa-circle-check'}"></i>
+        <td class="id">${String(i+1).padStart(2,'0')}</td>
+        <td style="color:var(--text); font-weight: 500;">${u.full_name}</td>
+        <td class="mono text-[12px]" style="color:var(--text-3)">${u.email}</td>
+        <td style="color:var(--text-3)">${u.curso || '—'}</td>
+        <td class="num text-[12px]">${formatDate(u.created_at)}</td>
+        <td><span class="badge badge-${u.is_active ? 'active' : 'inactive'}"><span class="dot" style="background:currentColor"></span>${u.is_active ? 'Ativo' : 'Inativo'}</span></td>
+        <td class="actions">
+            <button onclick="toggleUser('${u.id}', ${u.is_active})" class="btn btn-icon btn-sm" title="${u.is_active ? 'Desativar' : 'Ativar'}">
+                <i class="fa-solid ${u.is_active ? 'fa-ban' : 'fa-circle-check'} text-[11px]"></i>
             </button>
         </td>
     </tr>`).join('');
@@ -461,9 +427,7 @@ function renderUsersTable(users) {
 
 function filterUsers() {
     const q = document.getElementById('userSearch').value.toLowerCase();
-    renderUsersTable(allUsers.filter(u =>
-        u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-    ));
+    renderUsersTable(allUsers.filter(u => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
 }
 
 async function toggleUser(id, isActive) {
@@ -474,41 +438,33 @@ async function toggleUser(id, isActive) {
     } catch(e) { toast(e.message, false); }
 }
 
-// ── Cobranças ────────────────────────────────────────────
+// Cobranças
 let billingUsers = [];
 let selectedUser = null;
 
 async function loadBillingUsers() {
-    try {
-        billingUsers = await api('/admin/users');
-        renderBillingList(billingUsers);
-    } catch(e) { toast(e.message, false); }
+    try { billingUsers = await api('/admin/users'); renderBillingList(billingUsers); document.getElementById('billingUserCount').textContent = `${billingUsers.length}`; }
+    catch(e) { toast(e.message, false); }
 }
 
 function renderBillingList(users) {
-    if (!users.length) {
-        document.getElementById('billingUserList').innerHTML = `<p class="text-[13px] text-center py-6" style="color:var(--ink-faint)">Nenhum usuário.</p>`;
-        return;
-    }
+    if (!users.length) { document.getElementById('billingUserList').innerHTML = `<p class="text-[12px] text-center py-6" style="color:var(--text-4)">Nenhum.</p>`; return; }
     document.getElementById('billingUserList').innerHTML = users.map(u => `
-    <button onclick="selectUser('${u.id}','${esc(u.full_name)}','${esc(u.email)}')" id="billing-user-${u.id}" class="user-pill">
-        <p class="serif text-[14.5px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${u.full_name}</p>
-        <p class="mono text-[11px] truncate mt-0.5" style="color:var(--ink-faint)">${u.email}</p>
+    <button onclick="selectUser('${u.id}','${esc(u.full_name)}','${esc(u.email)}')" id="billing-user-${u.id}" class="user-list-item">
+        <p class="text-[13px] font-medium" style="color:var(--text)">${u.full_name}</p>
+        <p class="mono text-[11px] truncate mt-0.5" style="color:var(--text-4)">${u.email}</p>
     </button>`).join('');
 }
 
 function filterBillingUsers() {
     const q = document.getElementById('billingSearch').value.toLowerCase();
-    renderBillingList(billingUsers.filter(u =>
-        u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
-    ));
+    renderBillingList(billingUsers.filter(u => u.full_name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)));
 }
 
 async function selectUser(id, name, email) {
     selectedUser = id;
-    document.querySelectorAll('.user-pill').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.user-list-item').forEach(b => b.classList.remove('active'));
     document.getElementById(`billing-user-${id}`)?.classList.add('active');
-
     document.getElementById('selectedUserName').textContent = name;
     document.getElementById('selectedUserEmail').textContent = email;
     document.getElementById('billingEmpty').classList.add('hidden');
@@ -531,16 +487,13 @@ function renderSummary(payments) {
     const paid = payments.filter(p => p.status === 'pago').reduce((s, p) => s + p.amount, 0);
     const pending = payments.filter(p => p.status !== 'pago').reduce((s, p) => s + p.amount, 0);
     document.getElementById('billingSummary').innerHTML = `
-        ${summaryCard('Total lançado', total, 'var(--ink)')}
-        ${summaryCard('Total recebido', paid, 'var(--emerald)')}
-        ${summaryCard('Em aberto', pending, pending > 0 ? 'var(--amber-ink)' : 'var(--ink-faint)')}`;
+        ${summaryKpi('Total lançado', total, 'var(--text)')}
+        ${summaryKpi('Total recebido', paid, 'var(--success)')}
+        ${summaryKpi('Em aberto', pending, pending > 0 ? 'var(--warning)' : 'var(--text-4)')}`;
 }
 
-function summaryCard(label, value, color) {
-    return `<div style="padding: 20px 22px; background: var(--paper-warm); border-right: 1px solid var(--line); margin:-1px;">
-        <p class="eyebrow">${label}</p>
-        <p class="serif mt-3" style="font-size: 28px; font-weight: 400; line-height: 1; letter-spacing: -.02em; color: ${color}; font-variation-settings: 'opsz' 144;">${formatMoney(value)}</p>
-    </div>`;
+function summaryKpi(label, value, color) {
+    return `<div class="kpi"><p class="kpi-label">${label}</p><p class="kpi-value mono" style="color:${color}">${formatMoney(value)}</p></div>`;
 }
 
 function renderPayments(payments) {
@@ -550,20 +503,18 @@ function renderPayments(payments) {
     empty.classList.add('hidden');
     tbody.innerHTML = payments.map(p => `
     <tr>
-        <td class="serif text-[14.5px]" style="color:var(--ink); font-weight: 500;">${p.description}</td>
-        <td class="mono text-[11.5px]" style="color:var(--ink-faint)">${formatDate(p.payment_date)}</td>
-        <td class="mono text-[13.5px] text-right" style="color:var(--ink); font-weight: 500;">${formatMoney(p.amount)}</td>
+        <td style="color:var(--text); font-weight: 500;">${p.description}</td>
+        <td class="num text-[12px]">${formatDate(p.payment_date)}</td>
+        <td class="num text-right" style="font-weight: 500;">${formatMoney(p.amount)}</td>
         <td>
-            <select onchange="updatePaymentStatus('${p.id}', this.value)" class="mono text-[11px] cursor-pointer" style="border:1px solid var(--line-strong); background:var(--paper); padding: 4px 8px;">
+            <select onchange="updatePaymentStatus('${p.id}', this.value)" class="input mono text-[11px]" style="padding: 3px 22px 3px 8px; width: auto; display: inline-block;">
                 <option value="pago"     ${p.status==='pago'?'selected':''}>Pago</option>
                 <option value="pendente" ${p.status==='pendente'?'selected':''}>Pendente</option>
                 <option value="inadimplente" ${p.status==='inadimplente'?'selected':''}>Inadimplente</option>
             </select>
         </td>
-        <td class="text-right">
-            <button onclick="deletePayment('${p.id}')" title="Remover" style="color:var(--ink-faint);opacity:.5; padding: 4px 8px;">
-                <i class="fa-solid fa-trash-can text-[11px]"></i>
-            </button>
+        <td class="actions">
+            <button onclick="deletePayment('${p.id}')" class="btn btn-icon btn-sm" title="Remover"><i class="fa-solid fa-trash text-[10px]"></i></button>
         </td>
     </tr>`).join('');
 }
@@ -586,10 +537,7 @@ async function savePayment() {
     const status = document.getElementById('pStatus').value;
     if (!desc || !amount || !date) { toast('Preencha todos os campos', false); return; }
     try {
-        await api(`/admin/users/${selectedUser}/payments`, {
-            method: 'POST',
-            body: JSON.stringify({ description: desc, amount, payment_date: date, status })
-        });
+        await api(`/admin/users/${selectedUser}/payments`, { method: 'POST', body: JSON.stringify({ description: desc, amount, payment_date: date, status }) });
         toast('Lançamento salvo');
         closePaymentForm();
         loadPayments();
@@ -597,38 +545,24 @@ async function savePayment() {
 }
 
 async function updatePaymentStatus(id, status) {
-    try {
-        await api(`/admin/payments/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) });
-        toast('Status atualizado');
-        loadPayments();
-    } catch(e) { toast(e.message, false); }
+    try { await api(`/admin/payments/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }); toast('Status atualizado'); loadPayments(); }
+    catch(e) { toast(e.message, false); }
 }
 
 async function deletePayment(id) {
     if (!confirm('Remover este lançamento?')) return;
-    try {
-        await api(`/admin/payments/${id}`, { method: 'DELETE' });
-        toast('Lançamento removido');
-        loadPayments();
-    } catch(e) { toast(e.message, false); }
+    try { await api(`/admin/payments/${id}`, { method: 'DELETE' }); toast('Lançamento removido'); loadPayments(); }
+    catch(e) { toast(e.message, false); }
 }
 
 function formatDate(iso) {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
-
-function formatMoney(v) {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
-}
-
+function formatMoney(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v); }
 function esc(s) { return (s || '').replace(/'/g, "\\'"); }
 
-init().then(() => {
-    setTab('acessos');
-    loadPending();
-    loadUsers();
-});
+init().then(() => { setTab('acessos'); loadPending(); loadUsers(); });
 </script>
 </body>
 </html>

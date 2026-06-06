@@ -8,242 +8,257 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-/* ── Design tokens ────────────────────────────────────────── */
 :root {
-    --paper:       #f6f1e7;
-    --paper-soft:  #ede5d2;
-    --paper-warm:  #fbf7ee;
-    --ink:         #0d1117;
-    --ink-1:       #1a1f2b;
-    --ink-2:       #2a2f3a;
-    --ink-soft:    #4a5160;
-    --ink-faint:   #6b6f7a;
-    --line:        #d8cfb8;
-    --line-soft:   #e7dfc8;
-    --line-strong: #b9ad8f;
-    --gold:        #b08b3e;
-    --gold-soft:   #d4b76a;
-    --gold-bg:     #f1e8cf;
-    --emerald:     #1f5d3a;
-    --emerald-bg:  #e0ebe1;
-    --crimson:     #8b1538;
-    --crimson-bg:  #f5dadf;
-    --amber-bg:    #f7e8c4;
-    --amber-ink:   #6b4f15;
-    --plum:        #4a2a5c;
-    --plum-bg:     #ecdef0;
+    --bg:         #fafafa;
+    --bg-2:       #f4f4f5;
+    --bg-hover:   #f5f5f4;
+    --surface:    #ffffff;
+    --border:     #e4e4e7;
+    --border-2:   #d4d4d8;
+    --text:       #18181b;
+    --text-2:     #3f3f46;
+    --text-3:     #52525b;
+    --text-4:     #71717a;
+    --text-5:     #a1a1aa;
+    --accent:     #2563eb;
+    --accent-h:   #1d4ed8;
+    --accent-bg:  #eff6ff;
+    --danger:     #dc2626;
+    --danger-bg:  #fef2f2;
+    --warning:    #d97706;
+    --warning-bg: #fffbeb;
+    --success:    #16a34a;
+    --success-bg: #f0fdf4;
+    --purple:     #7c3aed;
+    --purple-bg:  #f5f3ff;
+    /* sidebar */
+    --side:       #18181b;
+    --side-2:     #27272a;
+    --side-text:  #a1a1aa;
+    --side-hover: #e4e4e7;
+    --side-active:#ffffff;
 }
-* { font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; }
-body {
-    background: var(--paper);
-    color: var(--ink);
-    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
-}
-.serif { font-family: 'Fraunces', Georgia, serif; }
-.mono  { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
+* { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--text); font-size: 13.5px; line-height: 1.5; }
+.mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
 
-/* Editorial display */
-.h-display { font-family: 'Fraunces', serif; font-weight: 400; letter-spacing: -.02em; line-height: 1.05; font-variation-settings: 'opsz' 144; }
-.h-display em { font-style: italic; font-weight: 500; font-variation-settings: 'opsz' 144, 'WONK' 1; }
-.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
-
-/* Sidebar */
-aside.sidebar {
-    background: var(--ink);
-    color: var(--paper);
-    border-right: 1px solid #1f2533;
-}
-.sidebar-section { font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: #62687a; padding: 22px 18px 8px; }
+/* ── Sidebar ── */
+aside.sidebar { background: var(--side); color: var(--side-text); border-right: 1px solid #27272a; width: 224px; flex-shrink: 0; }
+.sidebar-section { font-size: 10.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: #71717a; padding: 14px 14px 4px; }
 .sidebar-link {
-    display: flex; align-items: center; gap: 12px;
-    padding: 9px 14px; margin: 0 6px; border-radius: 6px;
-    font-size: 13.5px; font-weight: 400; color: #a8aab6;
-    transition: color .15s, background .15s;
+    display: flex; align-items: center; gap: 9px;
+    padding: 6px 12px; margin: 1px 6px;
+    font-size: 13px; color: var(--side-text);
+    border-radius: 4px; transition: background .12s, color .12s;
     text-decoration: none;
-    border-left: 2px solid transparent;
 }
-.sidebar-link i { width: 18px; text-align: center; font-size: 13px; opacity: .75; }
-.sidebar-link:hover { color: var(--paper); background: rgba(255,255,255,.04); }
-.sidebar-active {
-    color: var(--paper) !important;
-    background: rgba(176,139,62,.10) !important;
-    border-left-color: var(--gold) !important;
-    margin-left: 0 !important;
-    padding-left: 18px !important;
-}
-.sidebar-active i { color: var(--gold-soft); opacity: 1; }
+.sidebar-link i { width: 14px; text-align: center; font-size: 11.5px; opacity: .85; }
+.sidebar-link:hover { background: rgba(255,255,255,.05); color: var(--side-active); }
+.sidebar-active { background: rgba(255,255,255,.08) !important; color: var(--side-active) !important; }
+.sidebar-active i { opacity: 1; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Header */
-.app-header { background: var(--paper-warm); border-bottom: 1px solid var(--line); }
+/* ── Topbar (breadcrumb) ── */
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
+.crumb { font-size: 13px; color: var(--text-3); }
+.crumb b { color: var(--text); font-weight: 500; }
 
-/* Surfaces (paper-on-paper) */
-.surface { background: var(--paper-warm); border: 1px solid var(--line); }
-.surface-soft { background: rgba(255,255,255,.55); border: 1px solid var(--line-soft); }
-.surface-ink { background: var(--ink); color: var(--paper); }
+/* ── Page header ── */
+.page-shell { padding: 20px 24px; }
+.page-title { font-size: 19px; font-weight: 600; letter-spacing: -.01em; color: var(--text); }
+.page-sub { font-size: 12.5px; color: var(--text-4); margin-top: 2px; }
 
-/* Toasts */
-#toast-container { position:fixed; top:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-.toast { pointer-events:all; display:flex; align-items:flex-start; gap:12px; min-width:300px; max-width:420px; padding:14px 18px; font-size:13px; font-weight:500;
-         background: var(--paper-warm); border:1px solid var(--line); border-left-width: 3px;
-         box-shadow: 0 6px 28px rgba(13,17,23,.08); animation:slideIn .3s cubic-bezier(.34,1.56,.64,1); transition:opacity .35s, transform .35s; }
-.toast.hide { opacity:0; transform:translateX(40px); }
-.toast-success { border-left-color: var(--emerald); }
-.toast-error   { border-left-color: var(--crimson); }
-.toast-warning { border-left-color: var(--gold); }
-.toast-info    { border-left-color: var(--plum); }
-.toast-close { background:none; border:none; cursor:pointer; opacity:.45; font-size:14px; color:inherit; padding:0; margin-left:auto; }
-.toast-close:hover { opacity:1; }
-@keyframes slideIn { from { opacity:0; transform:translateX(36px); } to { opacity:1; transform:translateX(0); } }
+/* ── Cards ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+.card-header { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; }
+.card-title { font-size: 12.5px; font-weight: 600; color: var(--text); }
+.card-sub { font-size: 11.5px; color: var(--text-4); }
+.card-body { padding: 16px; }
 
-/* Stat card (editorial: number first, label second, no border-radius) */
-.stat-card {
-    background: var(--paper-warm);
-    border: 1px solid var(--line);
-    padding: 20px 22px 22px;
-    transition: border-color .2s;
-    position: relative;
+/* ── KPI / Stat ── */
+.kpi { background: var(--surface); border: 1px solid var(--border); padding: 14px 16px; border-radius: 6px; }
+.kpi-label { font-size: 11px; font-weight: 500; color: var(--text-4); display: flex; align-items: center; gap: 6px; }
+.kpi-label i { font-size: 10px; opacity: .7; }
+.kpi-value { font-size: 24px; font-weight: 600; color: var(--text); letter-spacing: -.02em; margin-top: 8px; line-height: 1.1; font-feature-settings: 'tnum' 1; }
+.kpi-value .unit { font-size: 13px; font-weight: 500; color: var(--text-4); margin-left: 4px; }
+.kpi-delta { font-size: 11.5px; color: var(--text-4); margin-top: 4px; }
+
+/* ── Buttons ── */
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 6px 12px; font-size: 12.5px; font-weight: 500; line-height: 1;
+    border: 1px solid var(--border-2); background: var(--surface); color: var(--text);
+    border-radius: 4px; cursor: pointer; transition: background .12s, border-color .12s;
+    white-space: nowrap;
 }
-.stat-card:hover { border-color: var(--line-strong); }
-.stat-card .stat-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
-.stat-card .stat-value {
-    font-family: 'Fraunces', serif;
-    font-weight: 400;
-    font-size: 36px;
-    line-height: 1;
-    letter-spacing: -.02em;
-    color: var(--ink);
-    margin-top: 12px;
-    font-variation-settings: 'opsz' 144;
+.btn:hover { background: var(--bg-2); border-color: var(--text-5); }
+.btn:active { background: var(--border); }
+.btn-primary { background: var(--text); color: white; border-color: var(--text); }
+.btn-primary:hover { background: #27272a; border-color: #27272a; }
+.btn-accent { background: var(--accent); color: white; border-color: var(--accent); }
+.btn-accent:hover { background: var(--accent-h); border-color: var(--accent-h); }
+.btn-danger { background: var(--surface); color: var(--danger); border-color: var(--border-2); }
+.btn-danger:hover { background: var(--danger-bg); border-color: var(--danger); }
+.btn-icon { padding: 5px 8px; }
+.btn-sm { padding: 4px 8px; font-size: 11.5px; }
+.btn-lg { padding: 9px 16px; font-size: 13px; }
+
+/* ── Forms ── */
+.input {
+    width: 100%; padding: 7px 10px; font-size: 13px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    outline: none; transition: border-color .12s, box-shadow .12s;
+    line-height: 1.4;
 }
-.stat-card .stat-value em { font-style: italic; font-weight: 500; font-variation-settings: 'opsz' 144, 'WONK' 1; }
-.stat-card .stat-icon { position: absolute; top: 18px; right: 18px; font-size: 14px; color: var(--ink-faint); opacity: .35; }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.input::placeholder { color: var(--text-5); }
+.input:disabled { background: var(--bg-2); color: var(--text-4); cursor: not-allowed; }
+select.input { cursor: pointer; padding-right: 28px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2371717a' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>"); background-repeat: no-repeat; background-position: right 10px center; appearance: none; }
+textarea.input { line-height: 1.5; padding: 9px 10px; resize: vertical; }
+.label { font-size: 11.5px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 5px; }
+.help { font-size: 11px; color: var(--text-4); margin-top: 4px; }
 
-/* Section heading */
-.section-head {
-    display: flex; align-items: baseline; gap: 16px;
-    padding-bottom: 12px; border-bottom: 1px solid var(--line);
-    margin-bottom: 18px;
+/* ── Tables ── */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl thead th {
+    text-align: left; padding: 8px 12px;
+    font-size: 11px; font-weight: 500; color: var(--text-4);
+    text-transform: uppercase; letter-spacing: .04em;
+    background: var(--bg-2); border-bottom: 1px solid var(--border);
 }
-.section-head .title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; letter-spacing: -.01em; color: var(--ink); }
-.section-head .sub { font-size: 12px; color: var(--ink-faint); letter-spacing: .04em; }
+.tbl tbody td { padding: 9px 12px; border-bottom: 1px solid var(--border); color: var(--text-2); vertical-align: middle; }
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover td { background: var(--bg); }
+.tbl .num { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; color: var(--text); }
+.tbl .id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-4); }
+.tbl .actions { white-space: nowrap; text-align: right; }
+.tbl tr.is-due td { background: var(--warning-bg); }
 
-/* Modal */
-.modal-backdrop { position:fixed; inset:0; background:rgba(13,17,23,.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter: blur(3px); }
-.modal-box { background: var(--paper-warm); border:1px solid var(--line-strong); padding:30px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
-
-/* Forms */
-.form-input, .form-select {
-    width: 100%; padding: 11px 14px;
-    border: 1px solid var(--line-strong); background: var(--paper);
-    color: var(--ink); font-size: 14px; outline: none;
-    transition: border-color .15s, box-shadow .15s;
-}
-.form-input:focus, .form-select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(13,17,23,.08); }
-.form-select { cursor: pointer; }
-.form-label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
-.form-group { margin-bottom: 18px; }
-
-/* Buttons */
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-       font-size: 13px; font-weight: 500; padding: 10px 18px; cursor: pointer;
-       transition: background .15s, transform .12s, border-color .15s;
-       border: 1px solid transparent; }
-.btn:active { transform: translateY(1px); }
-.btn-ink { background: var(--ink); color: var(--paper); }
-.btn-ink:hover { background: var(--ink-1); }
-.btn-gold { background: var(--gold); color: #1d1404; }
-.btn-gold:hover { background: var(--gold-soft); }
-.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
-.btn-ghost:hover { background: var(--paper-soft); }
-.btn-danger { background: transparent; color: var(--crimson); border-color: var(--crimson); }
-.btn-danger:hover { background: var(--crimson-bg); }
-
-/* Badges (editorial: small caps + thin underline accent) */
+/* ── Badges ── */
 .badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
-    padding: 4px 10px; line-height: 1;
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 7px; font-size: 11px; font-weight: 500;
+    border-radius: 3px; line-height: 1.4;
     border: 1px solid;
 }
-.badge-pendente   { background: var(--amber-bg);   color: var(--amber-ink); border-color: #e1cd99; }
-.badge-em-curso   { background: var(--plum-bg);    color: var(--plum);      border-color: #d6b8df; }
-.badge-concluida  { background: var(--emerald-bg); color: var(--emerald);   border-color: #b4cdb6; }
-.badge-alta       { background: var(--crimson-bg); color: var(--crimson);   border-color: #e3b7c1; }
-.badge-media      { background: var(--amber-bg);   color: var(--amber-ink); border-color: #e1cd99; }
-.badge-baixa      { background: var(--emerald-bg); color: var(--emerald);   border-color: #b4cdb6; }
+.badge .dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; }
+.badge-default     { background: var(--bg-2);     color: var(--text-3);   border-color: var(--border); }
+.badge-pendente    { background: var(--warning-bg); color: var(--warning); border-color: #fde68a; }
+.badge-em-curso    { background: var(--accent-bg); color: var(--accent);  border-color: #bfdbfe; }
+.badge-concluida   { background: var(--success-bg); color: var(--success); border-color: #bbf7d0; }
+.badge-alta        { background: var(--danger-bg); color: var(--danger);  border-color: #fecaca; }
+.badge-media       { background: var(--warning-bg); color: var(--warning); border-color: #fde68a; }
+.badge-baixa       { background: var(--bg-2); color: var(--text-3);     border-color: var(--border); }
+.badge-pago        { background: var(--success-bg); color: var(--success); border-color: #bbf7d0; }
+.badge-inadimplente{ background: var(--danger-bg); color: var(--danger);   border-color: #fecaca; }
+.badge-active      { background: var(--success-bg); color: var(--success); border-color: #bbf7d0; }
+.badge-inactive    { background: var(--bg-2);     color: var(--text-4);  border-color: var(--border); }
+.badge-due         { background: var(--warning-bg); color: var(--warning); border-color: #fde68a; }
 
-/* Flashcard flip */
-.card-scene { perspective:1200px; }
-.card-flip { position:relative; width:100%; transition:transform .55s cubic-bezier(.22,1,.36,1); transform-style:preserve-3d; }
+/* ── Section ── */
+.section { margin-bottom: 24px; }
+.section-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.section-toolbar h2 { font-size: 14px; font-weight: 600; color: var(--text); }
+.section-toolbar .meta { font-size: 12px; color: var(--text-4); }
+
+/* ── Toasts ── */
+#toast-container { position: fixed; top: 60px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { pointer-events: all; display: flex; align-items: flex-start; gap: 10px; min-width: 280px; max-width: 380px; padding: 10px 14px; font-size: 12.5px;
+         background: var(--surface); border: 1px solid var(--border); border-left-width: 3px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,.04);
+         animation: toastIn .25s ease; transition: opacity .25s, transform .25s; }
+.toast.hide { opacity: 0; transform: translateX(20px); }
+.toast-success { border-left-color: var(--success); }
+.toast-error   { border-left-color: var(--danger); }
+.toast-warning { border-left-color: var(--warning); }
+.toast-info    { border-left-color: var(--accent); }
+.toast-close { background: none; border: none; cursor: pointer; opacity: .5; font-size: 12px; color: inherit; padding: 0; margin-left: auto; }
+.toast-close:hover { opacity: 1; }
+@keyframes toastIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }
+
+/* ── Modal ── */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.4); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal-box { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 20px; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 40px rgba(0,0,0,.15); }
+.modal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.modal-head h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.modal-close { background: none; border: none; cursor: pointer; color: var(--text-4); padding: 4px; font-size: 14px; }
+.modal-close:hover { color: var(--text); }
+
+/* ── Empty state ── */
+.empty { text-align: center; padding: 36px 20px; }
+.empty i { font-size: 22px; color: var(--text-5); margin-bottom: 10px; }
+.empty .title { font-size: 13px; font-weight: 500; color: var(--text-2); }
+.empty .sub { font-size: 12px; color: var(--text-4); margin-top: 4px; }
+
+/* ── Avatar / pill ── */
+.avatar { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: var(--bg-2); color: var(--text-2); font-size: 11px; font-weight: 600; border-radius: 4px; border: 1px solid var(--border); }
+.brand-mark { width: 24px; height: 24px; background: var(--accent); color: white; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; font-size: 11px; }
+
+/* ── Progress ── */
+.bar { height: 4px; background: var(--bg-2); border-radius: 99px; overflow: hidden; }
+.bar > div { height: 100%; background: var(--accent); border-radius: 99px; transition: width .4s ease; }
+
+/* ── Tabs (in-page) ── */
+.tab-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.tab-btn { padding: 8px 14px; font-size: 12.5px; font-weight: 500; color: var(--text-3); border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.tab-btn:hover { color: var(--text-2); }
+.tab-btn.active { color: var(--text); border-bottom-color: var(--text); }
+
+/* ── Filter bar ── */
+.filterbar { display: flex; align-items: center; gap: 8px; padding: 8px 0 16px; }
+.filterbar input.input { width: 240px; padding: 6px 10px 6px 30px; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><circle cx='6' cy='6' r='5' stroke='%2371717a' fill='none' stroke-width='1.4'/><path d='M10 10l3 3' stroke='%2371717a' stroke-width='1.4' stroke-linecap='round'/></svg>"); background-repeat: no-repeat; background-position: 10px center; background-size: 12px; }
+
+/* ── Flashcard flip ── */
+.card-scene { perspective: 1200px; }
+.card-flip { position: relative; width: 100%; transition: transform .5s; transform-style: preserve-3d; }
 .card-flip.flipped { transform: rotateY(180deg); }
-.card-face { position:absolute; inset:0; backface-visibility:hidden; display:flex; flex-direction: column; align-items:center; justify-content:center;
-             padding:28px; border:1px solid var(--line-strong); background: var(--paper-warm); }
-.card-back { transform: rotateY(180deg); background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.card-face { position: absolute; inset: 0; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px; border-radius: 6px; }
+.card-face.front { background: var(--surface); border: 1px solid var(--border); }
+.card-face.back { background: var(--text); color: white; transform: rotateY(180deg); }
 
-/* Progress bar */
-.progress-bar { height: 4px; background: var(--line-soft); }
-.progress-fill { height: 100%; background: var(--ink); transition: width .55s cubic-bezier(.65,0,.35,1); }
+/* ── Timer ── */
+.timer-display { font-family: 'JetBrains Mono', monospace; font-size: 56px; font-weight: 500; letter-spacing: -.02em; line-height: 1; color: var(--text); font-feature-settings: 'tnum' 1; }
 
-/* Timer */
-.timer-display { font-family:'JetBrains Mono', monospace; font-size: 4rem; font-weight: 500; line-height: 1; letter-spacing: -.02em; color: var(--ink); }
-
-/* Tabs */
-.section-tab { padding: 8px 0; margin-right: 28px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
-               cursor: pointer; color: var(--ink-faint); border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; background: none; border-top: none; border-left: none; border-right: none; }
-.section-tab.active { color: var(--ink); border-bottom-color: var(--gold); }
-
-/* Table */
-.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-.tbl th { text-align: left; padding: 12px 16px; font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
-.tbl td { padding: 14px 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink); }
-.tbl tr:last-child td { border-bottom: none; }
-.tbl tr:hover td { background: rgba(176,139,62,.05); }
-
-/* Avatar (initials) */
-.avatar {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 36px; height: 36px;
-    background: var(--gold-bg); color: var(--ink);
-    font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px;
-    border: 1px solid var(--gold-soft);
+/* ── Cover (book) ── */
+.cover {
+    aspect-ratio: 3/4; padding: 14px; display: flex; flex-direction: column;
+    justify-content: space-between; border-radius: 4px; cursor: pointer;
+    box-shadow: inset -6px 0 10px -8px rgba(0,0,0,.25), 0 1px 3px rgba(0,0,0,.06);
+    transition: transform .15s;
 }
+.cover:hover { transform: translateY(-2px); }
+.cover .ttl { font-size: 12.5px; font-weight: 600; color: white; line-height: 1.3; }
+.cover .meta { font-size: 10px; color: rgba(255,255,255,.7); display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; }
 
-/* Subtle paper grain on body */
-.paper-grain-bg {
-    background-color: var(--paper);
-    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 .025 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
+/* ── Misc ── */
+.divider-h { height: 1px; background: var(--border); }
+.text-mono { font-family: 'JetBrains Mono', monospace; }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
-<body class="paper-grain-bg flex h-screen overflow-hidden">
+<body class="flex h-screen overflow-hidden">
 
 <div id="toast-container"></div>
 
 <!-- SIDEBAR -->
-<aside class="sidebar w-60 flex flex-col flex-shrink-0">
-    <div class="px-5 py-7" style="border-bottom: 1px solid #1f2533;">
-        <div class="flex items-center gap-3">
-            <div style="width:36px;height:36px;border:1px solid var(--gold-soft);color:var(--gold-soft);display:flex;align-items:center;justify-content:center;">
-                <i class="fa-solid fa-scale-balanced text-sm"></i>
-            </div>
-            <div>
-                <p class="serif text-[15px] font-semibold tracking-tight" style="color: var(--paper)">Law System</p>
-                <p class="eyebrow mt-0.5" style="color:#62687a">Edição 2026</p>
-            </div>
+<aside class="sidebar flex flex-col">
+    <div class="px-4 py-3 flex items-center gap-2" style="border-bottom: 1px solid #27272a;">
+        <div class="brand-mark"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div>
+            <p class="text-[13px] font-semibold" style="color: white">Law System</p>
+            <p class="text-[10px] mono" style="color: #71717a">v2.0</p>
         </div>
     </div>
 
-    <nav class="flex-1 py-3 overflow-y-auto no-scrollbar">
-        <p class="sidebar-section">Visão geral</p>
+    <nav class="flex-1 py-2 overflow-y-auto no-scrollbar">
+        <p class="sidebar-section">Geral</p>
         <a href="#" onclick="showDashboard()" id="menu-dash" class="sidebar-link">
-            <i class="fa-solid fa-house"></i><span>Dashboard</span>
+            <i class="fa-solid fa-gauge-high"></i><span>Dashboard</span>
         </a>
 
         <p class="sidebar-section">Acervo</p>
@@ -260,61 +275,58 @@ aside.sidebar {
         <p class="sidebar-section">Estudo</p>
         <a href="#" onclick="showFlashcards()" id="menu-flashcards" class="sidebar-link">
             <i class="fa-solid fa-layer-group"></i><span>Flashcards</span>
-            <span id="fc-due-badge" class="hidden ml-auto mono" style="background:var(--gold);color:#1d1404;font-size:10px;font-weight:600;padding:2px 6px;letter-spacing:0;"></span>
+            <span id="fc-due-badge" class="hidden ml-auto mono text-[10px]" style="background:var(--warning);color:white;padding:1px 5px;border-radius:3px;"></span>
         </a>
         <a href="#" onclick="showSessions()" id="menu-sessoes" class="sidebar-link">
             <i class="fa-solid fa-stopwatch"></i><span>Sessões</span>
         </a>
         <a href="#" onclick="showHistory()" id="menu-historico" class="sidebar-link">
-            <i class="fa-solid fa-chart-line"></i><span>Histórico</span>
+            <i class="fa-solid fa-clock-rotate-left"></i><span>Histórico</span>
         </a>
 
         <p class="sidebar-section">Conta</p>
         <a href="#" onclick="showProfile()" id="menu-perfil" class="sidebar-link">
-            <i class="fa-solid fa-user"></i><span>Meu perfil</span>
+            <i class="fa-solid fa-user"></i><span>Perfil</span>
         </a>
         <div id="admin-menu" class="hidden">
-            <a href="admin.html" class="sidebar-link" style="color:var(--gold-soft)">
-                <i class="fa-solid fa-shield-halved" style="color:var(--gold-soft)"></i><span>Painel admin</span>
+            <a href="admin.html" class="sidebar-link">
+                <i class="fa-solid fa-shield-halved"></i><span>Painel admin</span>
             </a>
         </div>
     </nav>
 
-    <div class="px-4 py-4" style="border-top: 1px solid #1f2533;">
-        <div class="flex items-center gap-3 mb-3">
-            <div class="avatar" style="background:#1f2533;color:var(--gold-soft);border-color:#2a2f3a;">
+    <div class="px-3 py-2" style="border-top: 1px solid #27272a;">
+        <div class="flex items-center gap-2 px-2 py-1.5">
+            <div class="avatar" style="background:#27272a;color:#a1a1aa;border-color:#3f3f46;">
                 <span id="sidebar-initial">—</span>
             </div>
             <div class="min-w-0 flex-1">
-                <p id="sidebar-name" class="text-[13px] font-medium truncate" style="color:var(--paper)">—</p>
-                <p id="sidebar-role" class="eyebrow truncate mt-0.5" style="color:#62687a">Estudante</p>
+                <p id="sidebar-name" class="text-[12px] font-medium truncate" style="color: white">—</p>
+                <p id="sidebar-role" class="text-[10.5px] truncate" style="color: #71717a">—</p>
             </div>
+            <button onclick="logout()" class="text-[11px] hover:opacity-100" style="opacity:.6; color: #a1a1aa" title="Sair">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </button>
         </div>
-        <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 transition-colors" style="color:#a8aab6">
-            <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i>
-            <span class="eyebrow">Sair</span>
-        </button>
     </div>
 </aside>
 
 <!-- MAIN -->
 <main class="flex-1 flex flex-col overflow-hidden">
-    <header class="app-header px-10 py-5 flex items-center justify-between flex-shrink-0">
-        <div>
-            <p class="eyebrow" id="pageEyebrow">/ Visão geral</p>
-            <h1 id="pageTitle" class="serif text-[28px] font-medium mt-0.5" style="color:var(--ink); letter-spacing:-.01em; line-height:1;">Dashboard</h1>
-            <p id="pageSubtitle" class="text-[12.5px] mt-1.5" style="color:var(--ink-faint)">Bem-vindo de volta</p>
+
+    <header class="topbar">
+        <div class="crumb">
+            <span id="crumb-section">Geral</span>
+            <span class="mx-1.5" style="color:var(--text-5)">/</span>
+            <b id="crumb-page">Dashboard</b>
         </div>
         <div class="flex items-center gap-3">
-            <div class="text-right">
-                <p id="userDisplayName" class="text-[13px] font-medium" style="color:var(--ink)">—</p>
-                <p id="userCurso" class="eyebrow mt-0.5" style="color:var(--gold)"></p>
-            </div>
+            <span id="userDisplayName" class="text-[12.5px] font-medium" style="color: var(--text-2)">—</span>
             <div class="avatar" id="headerAvatar">—</div>
         </div>
     </header>
 
-    <section id="mainContent" class="flex-1 overflow-y-auto px-10 py-8 no-scrollbar"></section>
+    <section id="mainContent" class="flex-1 overflow-y-auto"></section>
 </main>
 
 <!-- MODAL -->
@@ -326,7 +338,9 @@ aside.sidebar {
 
 <script src="config.js"></script>
 <script>
-// ── State ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// State
+// ─────────────────────────────────────────────────────────────
 const token = localStorage.getItem('access_token');
 let me = null;
 let subjects = [];
@@ -339,23 +353,23 @@ let editingSubjectId = null;
 let editingBookId = null;
 let editingFlashcardId = null;
 let currentBookId = null;
-let currentBookPage = 1;
 let reviewQueue = [];
 let reviewIndex = 0;
 
 if (!token) location.href = 'index.html';
 
-// ── Toast ──────────────────────────────────────────
-function toast(msg, type = 'info', duration = 3500) {
+// ─────────────────────────────────────────────────────────────
+// Toast / Modal
+// ─────────────────────────────────────────────────────────────
+function toast(msg, type = 'info', duration = 3000) {
     const icons = { success:'circle-check', error:'circle-xmark', warning:'triangle-exclamation', info:'circle-info' };
     const el = document.createElement('div');
     el.className = `toast toast-${type}`;
-    el.innerHTML = `<i class="fa-solid fa-${icons[type]} text-base flex-shrink-0"></i><span class="flex-1">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    el.innerHTML = `<i class="fa-solid fa-${icons[type]} text-[13px]" style="margin-top:2px;color:var(--${type === 'info' ? 'accent' : type})"></i><span class="flex-1">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
     document.getElementById('toast-container').appendChild(el);
-    setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 400); }, duration);
+    setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 300); }, duration);
 }
 
-// ── Modal ──────────────────────────────────────────
 function openModal(html) {
     document.getElementById('modal-content').innerHTML = html;
     document.getElementById('modal').classList.remove('hidden');
@@ -364,7 +378,9 @@ function closeModal() {
     document.getElementById('modal').classList.add('hidden');
 }
 
-// ── API helpers ───────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// API
+// ─────────────────────────────────────────────────────────────
 async function api(path, opts = {}) {
     const res = await fetch(`${API_BASE}${path}`, {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...opts.headers },
@@ -375,32 +391,39 @@ async function api(path, opts = {}) {
     return res.json().then(d => { if (!res.ok) throw new Error(d.detail || `Erro ${res.status}`); return d; });
 }
 
+// ─────────────────────────────────────────────────────────────
+// Utils
+// ─────────────────────────────────────────────────────────────
 function setActive(id) {
     document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('sidebar-active'));
-    const el = document.getElementById(id);
-    if (el) el.classList.add('sidebar-active');
-    // ajusta page-eyebrow segundo a seção
-    const eyebrows = {
-        'menu-dash': '/ Visão geral',
-        'menu-materias': '/ Acervo',
-        'menu-docentes': '/ Acervo',
-        'menu-livros': '/ Acervo',
-        'menu-flashcards': '/ Estudo',
-        'menu-sessoes': '/ Estudo',
-        'menu-historico': '/ Estudo',
-        'menu-perfil': '/ Conta',
-    };
-    const eb = document.getElementById('pageEyebrow');
-    if (eb && eyebrows[id]) eb.textContent = eyebrows[id];
+    document.getElementById(id)?.classList.add('sidebar-active');
 }
 
-function setPage(title, subtitle = '', eyebrow = '') {
-    document.getElementById('pageTitle').textContent = title;
-    document.getElementById('pageSubtitle').textContent = subtitle;
-    const eb = document.getElementById('pageEyebrow');
-    if (eb) eb.textContent = eyebrow || `/ ${title}`;
+function setPage(title, section = '', sub = '') {
+    document.getElementById('crumb-section').textContent = section || 'Geral';
+    document.getElementById('crumb-page').textContent = title;
 }
 
+function fmtDuration(s) {
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60);
+    if (h > 0) return `${h}h${String(m).padStart(2,'0')}`;
+    return `${m}m`;
+}
+function fmtDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+function fmtShortDate(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso.length === 10 ? iso + 'T00:00:00' : iso);
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+function fmtDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return `${fmtDate(iso)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
 function getInitials(name) {
     if (!name) return '—';
     const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -408,19 +431,20 @@ function getInitials(name) {
     if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
     return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
 }
-
-function fmtDuration(s) {
-    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-    if (h > 0) return `${h}h ${m}m`;
-    if (m > 0) return `${m}m ${sec}s`;
-    return `${sec}s`;
+function emptyState(icon, title, sub) {
+    return `<div class="empty"><i class="fa-solid ${icon}"></i><p class="title">${title}</p><p class="sub">${sub || ''}</p></div>`;
 }
-function fmtDate(iso) {
-    if (!iso) return '—';
-    return new Date(iso).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+function loadingBlock() { return `<div class="empty"><i class="fa-solid fa-circle-notch fa-spin"></i><p class="sub">Carregando…</p></div>`; }
+function kpi(label, value, icon, unit) {
+    return `<div class="kpi">
+        <div class="kpi-label">${icon ? `<i class="fa-solid ${icon}"></i>` : ''}${label}</div>
+        <div class="kpi-value">${value}${unit ? `<span class="unit">${unit}</span>` : ''}</div>
+    </div>`;
 }
 
-// ── Init ──────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// Init
+// ─────────────────────────────────────────────────────────────
 async function init() {
     try {
         me = await api('/users/me');
@@ -429,59 +453,35 @@ async function init() {
         document.getElementById('sidebar-name').textContent = me.full_name;
         document.getElementById('sidebar-initial').textContent = initials;
         document.getElementById('headerAvatar').textContent = initials;
-        document.getElementById('userCurso').textContent = me.curso || '';
         document.getElementById('sidebar-role').textContent = me.role === 'admin' ? 'Administrador' : (me.curso || 'Estudante');
         if (me.role === 'admin') document.getElementById('admin-menu').classList.remove('hidden');
-        subjects = await api('/subjects/');
-        teachers = await api('/teachers/');
+        subjects = await api('/subjects/').catch(() => []);
+        teachers = await api('/teachers/').catch(() => []);
         loadFlashcardBadge();
         showDashboard();
-    } catch (e) {
-        toast('Erro ao carregar dados. ' + e.message, 'error');
-    }
+    } catch (e) { toast('Erro ao carregar dados. ' + e.message, 'error'); }
 }
 
 async function loadFlashcardBadge() {
     try {
         const due = await api('/flashcards/due');
         const badge = document.getElementById('fc-due-badge');
-        if (due.length > 0) {
-            badge.textContent = due.length > 99 ? '99+' : due.length;
-            badge.classList.remove('hidden');
-        }
+        if (due.length > 0) { badge.textContent = due.length > 99 ? '99+' : due.length; badge.classList.remove('hidden'); }
+        else badge.classList.add('hidden');
     } catch {}
 }
 
-function logout() {
-    localStorage.removeItem('access_token');
-    location.href = 'index.html';
-}
+function logout() { localStorage.removeItem('access_token'); location.href = 'index.html'; }
 
-async function exportHistoryPdf() {
-    try {
-        const res = await fetch(`${API_BASE}/sessions/report/pdf`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) { toast('Erro ao gerar PDF.', 'error'); return; }
-        const blob = await res.blob();
-        const disp = res.headers.get('content-disposition') || '';
-        const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
-        const fname = match ? decodeURIComponent(match[1]) : `Historico - ${me.full_name}.pdf`;
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = fname; a.click();
-        URL.revokeObjectURL(url);
-    } catch (e) { toast('Erro ao exportar PDF: ' + e.message, 'error'); }
-}
-
-// ── DASHBOARD ─────────────────────────────────────
-let _activityChart = null;
-let _subjectsChart = null;
+// ─────────────────────────────────────────────────────────────
+// DASHBOARD
+// ─────────────────────────────────────────────────────────────
+let _activityChart = null, _subjectsChart = null;
 
 async function showDashboard() {
     setActive('menu-dash');
-    setPage('Dashboard', 'O que aconteceu até aqui', '/ Visão geral');
-    document.getElementById('mainContent').innerHTML = loadingBlock();
+    setPage('Dashboard', 'Geral');
+    document.getElementById('mainContent').innerHTML = `<div class="page-shell">${loadingBlock()}</div>`;
 
     try {
         const [stats, history, fcStats] = await Promise.all([
@@ -489,106 +489,105 @@ async function showDashboard() {
             api('/sessions/history').catch(() => []),
             api('/flashcards/stats').catch(() => null),
         ]);
-
-        const totalMin = stats ? stats.total_minutes : 0;
-        const accuracy = stats ? stats.accuracy : 0;
-        const streak = stats ? stats.current_streak : 0;
-        const totalQ = stats ? stats.total_questions : 0;
-        const hoursStr = totalMin >= 60
-            ? `<span class="serif">${Math.floor(totalMin/60)}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">h</span> <span class="serif">${totalMin%60}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">m</span>`
-            : `<span class="serif">${totalMin}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">m</span>`;
+        const tot = stats || { total_minutes:0, accuracy:0, current_streak:0, total_questions:0, last_30_days:[], by_subject:[], best_day:null };
+        const hoursStr = tot.total_minutes >= 60
+            ? `${Math.floor(tot.total_minutes/60)}<span class="unit">h</span> ${tot.total_minutes%60}<span class="unit">m</span>`
+            : `${tot.total_minutes}<span class="unit">m</span>`;
 
         document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-6xl">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-0 mb-10" style="border:1px solid var(--line); border-collapse:collapse;">
-                ${editorialStat('fa-clock', 'Tempo estudado', totalMin > 0 ? hoursStr : '—')}
-                ${editorialStat('fa-fire', 'Sequência', streak > 0 ? `<span class="serif">${streak}</span><span class="mono text-[20px] ml-2" style="color:var(--ink-faint)">${streak === 1 ? 'dia' : 'dias'}</span>` : '—')}
-                ${editorialStat('fa-bullseye', 'Acerto', totalQ > 0 ? `<span class="serif">${accuracy}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">%</span>` : '—')}
-                ${editorialStat('fa-layer-group', 'Cards a revisar', fcStats ? `<span class="serif">${fcStats.due_today}</span><span class="mono text-[14px] ml-2" style="color:var(--ink-faint)">hoje</span>` : '—')}
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
-                <div class="lg:col-span-2 surface p-7">
-                    <div class="section-head mb-6">
-                        <h3 class="title">Atividade</h3>
-                        <span class="sub">/ últimos 30 dias</span>
-                        ${stats && stats.best_day ? `<span class="ml-auto eyebrow">melhor: ${fmtShortDate(stats.best_day.date)} · ${stats.best_day.minutes}m</span>` : ''}
-                    </div>
-                    <div class="h-56"><canvas id="activityChart"></canvas></div>
+        <div class="page-shell">
+            <div class="flex items-baseline justify-between mb-5">
+                <div>
+                    <h1 class="page-title">Dashboard</h1>
+                    <p class="page-sub">Visão geral do seu desempenho</p>
                 </div>
-
-                <div class="surface p-7">
-                    <div class="section-head mb-6">
-                        <h3 class="title">Por matéria</h3>
-                    </div>
-                    ${stats && stats.by_subject.length > 0
-                        ? `<div class="h-56"><canvas id="subjectsChart"></canvas></div>`
-                        : emptyState('fa-book-bookmark', 'Sem dados ainda', 'Estude alguma matéria pra ver a distribuição.')}
+                <div class="flex gap-2">
+                    <button onclick="showSessions()" class="btn"><i class="fa-solid fa-plus text-[10px]"></i> Sessão</button>
+                    <button onclick="showFlashcards()" class="btn"><i class="fa-solid fa-layer-group text-[10px]"></i> Cards</button>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 surface p-7">
-                    <div class="section-head mb-5">
-                        <h3 class="title">Sessões recentes</h3>
-                        ${history.length > 0 ? `<a href="#" onclick="showHistory();return false" class="ml-auto eyebrow hover:underline" style="color:var(--gold)">ver tudo →</a>` : ''}
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+                ${kpi('Tempo estudado', tot.total_minutes > 0 ? hoursStr : '—', 'fa-clock')}
+                ${kpi('Sequência atual', tot.current_streak > 0 ? `${tot.current_streak}` : '—', 'fa-fire', tot.current_streak > 0 ? (tot.current_streak === 1 ? 'dia' : 'dias') : '')}
+                ${kpi('Taxa de acerto', tot.total_questions > 0 ? tot.accuracy : '—', 'fa-bullseye', tot.total_questions > 0 ? '%' : '')}
+                ${kpi('Cards a revisar', fcStats ? fcStats.due_today : '—', 'fa-layer-group', fcStats && fcStats.due_today > 0 ? 'hoje' : '')}
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-5">
+                <div class="card lg:col-span-2">
+                    <div class="card-header">
+                        <span class="card-title">Atividade</span>
+                        <span class="card-sub">Últimos 30 dias</span>
+                        ${tot.best_day ? `<span class="card-sub ml-auto">Pico: <span class="mono">${fmtShortDate(tot.best_day.date)}</span> · ${tot.best_day.minutes}m</span>` : ''}
                     </div>
-                    ${history.length === 0 ? emptyState('fa-stopwatch', 'Nada por aqui ainda', 'Inicie uma sessão para registrar seu progresso.') :
-                    `<div class="divide-y" style="border-color: var(--line-soft)">
-                        ${history.slice(0,5).map(s => `
-                        <div class="flex items-baseline gap-5 py-4">
-                            <span class="mono text-[11px]" style="color:var(--ink-faint); width: 60px; flex-shrink: 0;">${fmtShortDate(s.start_time)}</span>
-                            <div class="flex-1 min-w-0">
-                                <p class="serif text-[16px] font-medium truncate" style="color:var(--ink)">${s.subject_name}</p>
-                                ${s.total_questions > 0 ? `<p class="text-[12px] mt-0.5" style="color:var(--ink-faint)">${s.correct_answers}/${s.total_questions} acertos</p>` : ''}
-                            </div>
-                            <span class="mono text-[13px] tabular-nums" style="color:var(--ink)">${fmtDuration(s.duration_seconds)}</span>
-                        </div>`).join('')}
-                    </div>`}
+                    <div class="card-body" style="height: 220px"><canvas id="activityChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Por matéria</span></div>
+                    <div class="card-body" style="height: 220px">
+                        ${tot.by_subject.length ? `<canvas id="subjectsChart"></canvas>` : emptyState('fa-book-bookmark','Sem dados','Estude para ver a distribuição.')}
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                <div class="card lg:col-span-2">
+                    <div class="card-header">
+                        <span class="card-title">Sessões recentes</span>
+                        ${history.length ? `<a href="#" onclick="showHistory();return false" class="card-sub ml-auto" style="color:var(--accent)">Ver tudo →</a>` : ''}
+                    </div>
+                    ${history.length === 0 ? emptyState('fa-stopwatch','Nenhuma sessão','Inicie uma sessão para registrar progresso.') :
+                    `<table class="tbl">
+                        <thead><tr><th>Matéria</th><th style="width:90px">Data</th><th style="width:70px" class="text-right">Duração</th><th style="width:90px" class="text-right">Acerto</th></tr></thead>
+                        <tbody>${history.slice(0,6).map(s => {
+                            const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
+                            return `<tr>
+                                <td style="color:var(--text)">${s.subject_name}</td>
+                                <td class="num text-[11.5px]">${fmtShortDate(s.start_time)}</td>
+                                <td class="num text-right">${fmtDuration(s.duration_seconds)}</td>
+                                <td class="num text-right" style="color:${a==null?'var(--text-5)':a>=70?'var(--success)':a>=50?'var(--warning)':'var(--danger)'}">${a!=null ? a+'%' : '—'}</td>
+                            </tr>`;
+                        }).join('')}</tbody>
+                    </table>`}
                 </div>
 
-                <div class="space-y-6">
-                    <div class="surface p-7">
-                        <div class="section-head mb-5">
-                            <h3 class="title">Matérias</h3>
+                <div class="space-y-3">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Matérias por status</span></div>
+                        <div class="card-body">
+                            ${subjects.length === 0 ? `<p class="text-[12px]" style="color:var(--text-4)">Nenhuma matéria.</p>` :
+                            `<div class="space-y-2">${Object.entries(subjects.reduce((acc, s) => { acc[s.status]=(acc[s.status]||0)+1; return acc; }, {})).map(([st, n]) => `
+                                <div class="flex items-center justify-between">
+                                    <span class="badge badge-${st.toLowerCase().replace(' ','-')}"><span class="dot" style="background:currentColor"></span>${st}</span>
+                                    <span class="mono text-[13px]" style="color:var(--text)">${String(n).padStart(2,'0')}</span>
+                                </div>`).join('')}</div>`}
                         </div>
-                        ${subjects.length === 0 ? `<p class="text-[13px]" style="color:var(--ink-faint)">Nenhuma matéria cadastrada.</p>` :
-                        `<div class="space-y-3">
-                            ${Object.entries(subjects.reduce((acc, s) => { acc[s.status]=(acc[s.status]||0)+1; return acc; }, {})).map(([st, n]) => `
-                            <div class="flex items-center justify-between">
-                                <span class="badge badge-${st.toLowerCase().replace(' ','-')}">${st}</span>
-                                <span class="mono text-[18px] tabular-nums" style="color:var(--ink)">${String(n).padStart(2,'0')}</span>
-                            </div>`).join('')}
-                        </div>`}
                     </div>
                     ${fcStats && fcStats.due_today > 0 ? `
-                    <div class="surface-ink p-7">
-                        <p class="eyebrow" style="color:var(--gold-soft)">/ Revisão pendente</p>
-                        <p class="serif text-[42px] mt-3 mb-3" style="font-variation-settings:'opsz' 144; line-height: 1;">
-                            ${fcStats.due_today} <span class="text-[16px] mono" style="color:#a8aab6">cards</span>
-                        </p>
-                        <p class="text-[13px] mb-5" style="color:#a8aab6">A repetição espaçada só funciona se for diária.</p>
-                        <button onclick="showFlashcards()" class="btn btn-gold w-full">
-                            Revisar agora <i class="fa-solid fa-arrow-right text-[11px]"></i>
-                        </button>
+                    <div class="card" style="border-color: var(--warning); border-left-width: 3px;">
+                        <div class="card-body">
+                            <p class="text-[11px] font-medium mb-1" style="color: var(--warning)">REVISÃO PENDENTE</p>
+                            <p class="text-[28px] font-semibold mono" style="color:var(--text); letter-spacing:-.02em;">${fcStats.due_today} <span class="text-[12px] font-normal" style="color:var(--text-4)">cards</span></p>
+                            <p class="text-[12px] mt-1 mb-3" style="color:var(--text-4)">Revise diariamente para fixar.</p>
+                            <button onclick="startReview()" class="btn btn-accent btn-sm w-full">Revisar agora →</button>
+                        </div>
                     </div>` : ''}
                 </div>
             </div>
         </div>`;
 
         if (stats) renderDashboardCharts(stats);
-
-    } catch (e) {
-        toast('Erro ao carregar dashboard: ' + e.message, 'error');
-    }
+    } catch (e) { toast('Erro ao carregar dashboard: ' + e.message, 'error'); }
 }
 
 function renderDashboardCharts(stats) {
     if (_activityChart) { _activityChart.destroy(); _activityChart = null; }
     if (_subjectsChart) { _subjectsChart.destroy(); _subjectsChart = null; }
 
-    const INK = '#0d1117', INK_FAINT = '#6b6f7a', LINE = '#e7dfc8';
-    Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+    const INK = '#18181b', INK_FAINT = '#a1a1aa', LINE = '#e4e4e7', ACCENT = '#2563eb';
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.font.size = 11;
     Chart.defaults.color = INK_FAINT;
 
     const actCanvas = document.getElementById('activityChart');
@@ -599,30 +598,13 @@ function renderDashboardCharts(stats) {
         });
         _activityChart = new Chart(actCanvas, {
             type: 'bar',
-            data: {
-                labels,
-                datasets: [{
-                    label: 'Minutos',
-                    data: stats.last_30_days.map(d => d.minutes),
-                    backgroundColor: '#0d1117',
-                    hoverBackgroundColor: '#b08b3e',
-                    borderRadius: 0,
-                    maxBarThickness: 10,
-                }]
-            },
+            data: { labels, datasets: [{ data: stats.last_30_days.map(d => d.minutes), backgroundColor: ACCENT, borderRadius: 2, maxBarThickness: 10 }] },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        backgroundColor: INK, titleFont: { weight: '500' }, padding: 10, borderRadius: 0,
-                        cornerRadius: 0,
-                        callbacks: { label: (c) => `${c.parsed.y} min` }
-                    }
-                },
+                plugins: { legend: { display: false }, tooltip: { backgroundColor: INK, padding: 8, cornerRadius: 4, displayColors: false, callbacks: { label: c => `${c.parsed.y} min` } } },
                 scales: {
-                    y: { beginAtZero: true, ticks: { font: { size: 10, family: "'JetBrains Mono', monospace" }, color: INK_FAINT }, grid: { color: LINE, drawTicks: false }, border: { display: false } },
-                    x: { ticks: { font: { size: 9, family: "'JetBrains Mono', monospace" }, color: INK_FAINT, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false }, border: { color: LINE } }
+                    y: { beginAtZero: true, ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 } }, grid: { color: LINE, drawTicks: false }, border: { display: false } },
+                    x: { ticks: { font: { family: "'JetBrains Mono', monospace", size: 10 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false }, border: { color: LINE } }
                 }
             }
         });
@@ -630,134 +612,81 @@ function renderDashboardCharts(stats) {
 
     const subjCanvas = document.getElementById('subjectsChart');
     if (subjCanvas && stats.by_subject.length > 0) {
-        // Paleta editorial: tons quentes de terra + ink. Evita o circo arco-íris.
-        const palette = ['#0d1117', '#b08b3e', '#8b1538', '#1f5d3a', '#4a2a5c', '#6b4f15', '#a8aab6', '#d4b76a'];
+        const palette = ['#2563eb', '#16a34a', '#d97706', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d'];
         _subjectsChart = new Chart(subjCanvas, {
             type: 'doughnut',
-            data: {
-                labels: stats.by_subject.map(b => b.name),
-                datasets: [{
-                    data: stats.by_subject.map(b => b.minutes),
-                    backgroundColor: stats.by_subject.map((_, i) => palette[i % palette.length]),
-                    borderWidth: 2, borderColor: '#fbf7ee',
-                }]
-            },
+            data: { labels: stats.by_subject.map(b => b.name), datasets: [{ data: stats.by_subject.map(b => b.minutes), backgroundColor: stats.by_subject.map((_, i) => palette[i % palette.length]), borderWidth: 2, borderColor: '#fff' }] },
             options: {
-                responsive: true, maintainAspectRatio: false, cutout: '64%',
+                responsive: true, maintainAspectRatio: false, cutout: '62%',
                 plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 11 }, color: INK, boxWidth: 8, boxHeight: 8, padding: 10, usePointStyle: true, pointStyle: 'rect' } },
-                    tooltip: {
-                        backgroundColor: INK, padding: 10, borderRadius: 0, cornerRadius: 0,
-                        callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.parsed} min` }
-                    }
+                    legend: { position: 'bottom', labels: { font: { size: 11 }, color: INK, boxWidth: 8, boxHeight: 8, padding: 8, usePointStyle: true, pointStyle: 'rect' } },
+                    tooltip: { backgroundColor: INK, padding: 8, cornerRadius: 4, displayColors: false, callbacks: { label: c => ` ${c.label}: ${c.parsed} min` } }
                 }
             }
         });
     }
 }
 
-function formatMinutes(min) {
-    const h = Math.floor(min/60);
-    const m = min % 60;
-    if (h >= 1) return `${h}h ${m}m`;
-    return `${m}m`;
-}
-
-function fmtShortDate(iso) {
-    const d = new Date(iso + 'T00:00:00');
-    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
-}
-
-/* Editorial stat card — number first, label second, no icon noise */
-function editorialStat(icon, label, valueHtml) {
-    return `<div class="stat-card" style="border-right:1px solid var(--line); border-bottom:1px solid var(--line); margin:-1px;">
-        <i class="fa-solid ${icon} stat-icon"></i>
-        <p class="stat-eyebrow">${label}</p>
-        <p class="stat-value">${valueHtml}</p>
-    </div>`;
-}
-
-/* Legacy statCard — wrapper pra compatibilidade com chamadas existentes */
-function statCard(icon, label, value) {
-    return editorialStat(icon, label, `<span class="serif">${value}</span>`);
-}
-
-function formatHours(secs) {
-    const h = Math.floor(secs/3600);
-    const m = Math.floor((secs%3600)/60);
-    if (h >= 1) return `${h}h ${m}m`;
-    return `${m}m`;
-}
-
-function emptyState(icon, title, msg) {
-    return `<div class="text-center py-12">
-        <i class="fa-solid ${icon} text-[28px] mb-4" style="color:var(--ink-faint); opacity:.35"></i>
-        <p class="serif text-[17px] font-medium" style="color:var(--ink)">${title}</p>
-        <p class="text-[12.5px] mt-1.5" style="color:var(--ink-faint)">${msg}</p>
-    </div>`;
-}
-
-function loadingBlock() {
-    return `<div class="flex items-center justify-center h-32"><i class="fa-solid fa-circle-notch fa-spin text-2xl" style="color:var(--ink-faint)"></i></div>`;
-}
-
-// ── SUBJECTS ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// SUBJECTS
+// ─────────────────────────────────────────────────────────────
 async function showSubjects() {
     setActive('menu-materias');
-    setPage('Matérias', 'Gerencie suas disciplinas');
+    setPage('Matérias', 'Acervo');
     subjects = await api('/subjects/').catch(() => []);
     renderSubjects();
 }
 
 function renderSubjects() {
-    const byPeriod = subjects.reduce((acc, s) => { (acc[s.period]=acc[s.period]||[]).push(s); return acc; }, {});
-    const totalLabel = subjects.length === 1 ? '1 matéria' : `${subjects.length} matérias`;
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-5xl">
-        <div class="flex items-baseline justify-between mb-8">
-            <p class="eyebrow">${totalLabel}</p>
-            <button onclick="openSubjectModal()" class="btn btn-ink">
-                <i class="fa-solid fa-plus text-[11px]"></i> Nova matéria
-            </button>
+    <div class="page-shell">
+        <div class="flex items-baseline justify-between mb-5">
+            <div>
+                <h1 class="page-title">Matérias</h1>
+                <p class="page-sub">${subjects.length} cadastrada${subjects.length !== 1 ? 's' : ''}</p>
+            </div>
+            <button onclick="openSubjectModal()" class="btn btn-primary"><i class="fa-solid fa-plus text-[10px]"></i> Nova matéria</button>
         </div>
-        ${subjects.length === 0 ? emptyState('fa-book-bookmark', 'Nenhuma matéria ainda', 'Adicione sua primeira matéria clicando em "Nova matéria".') :
-        Object.entries(byPeriod).sort(([a],[b])=>a-b).map(([period, items]) => `
-            <div class="mb-10">
-                <div class="flex items-baseline gap-4 mb-4">
-                    <span class="serif text-[28px] font-medium" style="color:var(--ink); letter-spacing:-.01em;">${String(period).padStart(2,'0')}</span>
-                    <span class="eyebrow" style="color:var(--gold)">/ período</span>
-                    <span class="flex-1 ml-2" style="height:1px;background:var(--line);"></span>
-                    <span class="eyebrow">${items.length === 1 ? '1 matéria' : items.length + ' matérias'}</span>
-                </div>
-                <div>
-                    ${items.map((s, i) => `
-                    <div class="flex items-baseline gap-5 py-4 group" style="border-bottom:1px solid var(--line-soft);">
-                        <span class="mono text-[11px]" style="color:var(--ink-faint); width: 28px;">${String(i+1).padStart(2,'0')}</span>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-baseline gap-3 flex-wrap">
-                                <p class="serif text-[18px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${s.name}</p>
-                                ${s.sigla ? `<span class="mono text-[10px]" style="color:var(--ink-faint)">${s.sigla}</span>` : ''}
-                                <span class="badge badge-${s.status.toLowerCase().replace(' ','-')}">${s.status}</span>
-                                <span class="badge badge-${s.priority.toLowerCase()}">${s.priority}</span>
-                            </div>
-                            <p class="text-[12.5px] mt-1" style="color:var(--ink-faint)">${s.no_teacher ? 'Sem professor designado' : (s.teacher_name || 'Prof. não informado')}</p>
-                        </div>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <select onchange="updateSubjectStatus('${s.id}',this.value)" class="text-[11px] mono border bg-transparent px-2 py-1 cursor-pointer" style="border-color:var(--line-strong); color:var(--ink);">
+
+        ${subjects.length === 0 ? `<div class="card"><div class="card-body">${emptyState('fa-book-bookmark','Nenhuma matéria cadastrada','Adicione sua primeira matéria.')}</div></div>` :
+        `<div class="card">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th style="width:32px">#</th>
+                        <th>Matéria</th>
+                        <th style="width:80px">Sigla</th>
+                        <th style="width:80px">Período</th>
+                        <th style="width:90px">Prioridade</th>
+                        <th style="width:120px">Status</th>
+                        <th>Professor</th>
+                        <th style="width:120px" class="actions">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${subjects.map((s, i) => `
+                    <tr>
+                        <td class="id">${String(i+1).padStart(2,'0')}</td>
+                        <td style="color:var(--text); font-weight: 500;">${s.name}</td>
+                        <td class="mono text-[11.5px]" style="color:var(--text-3)">${s.sigla || '—'}</td>
+                        <td class="num">${s.period}º</td>
+                        <td><span class="badge badge-${s.priority.toLowerCase()}">${s.priority}</span></td>
+                        <td>
+                            <select onchange="updateSubjectStatus('${s.id}',this.value)" class="input" style="padding: 3px 22px 3px 8px; font-size: 11.5px; width: auto; display: inline-block;">
                                 <option value="Pendente" ${s.status==='Pendente'?'selected':''}>Pendente</option>
                                 <option value="Em Curso" ${s.status==='Em Curso'?'selected':''}>Em Curso</option>
                                 <option value="Concluída" ${s.status==='Concluída'?'selected':''}>Concluída</option>
                             </select>
-                            <button onclick="openSubjectModal('${s.id}')" class="p-2 hover:bg-black/5 transition-colors" style="color:var(--ink-faint)">
-                                <i class="fa-solid fa-pen text-[11px]"></i>
-                            </button>
-                            <button onclick="deleteSubject('${s.id}','${s.name}')" class="p-2 hover:bg-black/5 transition-colors" style="color:var(--ink-faint)">
-                                <i class="fa-solid fa-trash text-[11px]"></i>
-                            </button>
-                        </div>
-                    </div>`).join('')}
-                </div>
-            </div>`).join('')}
+                        </td>
+                        <td style="color:var(--text-3)">${s.no_teacher ? '<span style="color:var(--text-5)">— sem prof.</span>' : (s.teacher_name || '<span style="color:var(--text-5)">n/d</span>')}</td>
+                        <td class="actions">
+                            <button onclick="openSubjectModal('${s.id}')" class="btn btn-icon btn-sm" title="Editar"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            <button onclick="deleteSubject('${s.id}','${s.name.replace(/'/g,"\\'")}')" class="btn btn-icon btn-sm" title="Excluir"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`}
     </div>`;
 }
 
@@ -776,49 +705,35 @@ function openSubjectModal(id = null) {
     const teacherOpts = teachers.map(t => `<option value="${t.id}" ${s && s.teacher_id === t.id ? 'selected' : ''}>${t.name}</option>`).join('');
 
     openModal(`
-    <div class="flex items-baseline justify-between mb-7">
-        <div>
-            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Nova'}</p>
-            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Matéria</h3>
-        </div>
-        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="modal-head">
+        <h3>${id ? 'Editar matéria' : 'Nova matéria'}</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
     </div>
-    <form onsubmit="saveSubject(event)">
-        <div class="form-group">
-            <label class="form-label">Nome</label>
-            <input class="form-input" id="s-name" value="${s?.name||''}" required placeholder="Ex.: Direito Civil">
+    <form onsubmit="saveSubject(event)" class="space-y-3">
+        <div><label class="label">Nome *</label><input class="input" id="s-name" value="${s?.name||''}" required placeholder="Ex.: Direito Civil"></div>
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="label">Sigla</label><input class="input" id="s-sigla" value="${s?.sigla||''}" placeholder="DIR_CIV"></div>
+            <div><label class="label">Período *</label><input type="number" class="input mono" id="s-period" value="${s?.period||1}" min="1" max="12" required></div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label">Sigla</label>
-                <input class="form-input" id="s-sigla" value="${s?.sigla||''}" placeholder="Ex.: DIR_CIV">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Período</label>
-                <input type="number" class="form-input" id="s-period" value="${s?.period||1}" min="1" max="12" required>
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label">Prioridade</label>
-                <select class="form-select" id="s-priority">
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="label">Prioridade</label>
+                <select class="input" id="s-priority">
                     <option value="Alta" ${s?.priority==='Alta'?'selected':''}>Alta</option>
                     <option value="Média" ${!s||s?.priority==='Média'?'selected':''}>Média</option>
                     <option value="Baixa" ${s?.priority==='Baixa'?'selected':''}>Baixa</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label class="form-label">Professor</label>
-                <select class="form-select" id="s-teacher" onchange="toggleNoTeacher(this.value)">
+            <div><label class="label">Professor</label>
+                <select class="input" id="s-teacher">
                     <option value="">Selecione…</option>
                     ${teacherOpts}
                     <option value="NONE" ${s?.no_teacher?'selected':''}>Sem professor</option>
                 </select>
             </div>
         </div>
-        <div class="flex gap-3 mt-6">
-            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
-            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
+        <div class="flex gap-2 justify-end pt-2">
+            <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
     </form>`);
 }
@@ -826,23 +741,21 @@ function openSubjectModal(id = null) {
 async function saveSubject(e) {
     e.preventDefault();
     const teacherVal = document.getElementById('s-teacher').value;
-    const no_teacher = teacherVal === 'NONE';
-    const teacher_id = (!no_teacher && teacherVal) ? teacherVal : null;
     const data = {
         name: document.getElementById('s-name').value.trim(),
         sigla: document.getElementById('s-sigla').value.trim() || null,
         period: parseInt(document.getElementById('s-period').value),
         priority: document.getElementById('s-priority').value,
-        no_teacher,
-        teacher_id,
+        no_teacher: teacherVal === 'NONE',
+        teacher_id: (teacherVal && teacherVal !== 'NONE') ? teacherVal : null,
     };
     try {
         if (editingSubjectId) {
             await api(`/subjects/${editingSubjectId}`, { method: 'PUT', body: JSON.stringify(data) });
-            toast('Matéria atualizada!', 'success');
+            toast('Matéria atualizada', 'success');
         } else {
             await api('/subjects/', { method: 'POST', body: JSON.stringify(data) });
-            toast('Matéria criada!', 'success');
+            toast('Matéria criada', 'success');
         }
         subjects = await api('/subjects/');
         closeModal();
@@ -851,50 +764,56 @@ async function saveSubject(e) {
 }
 
 async function deleteSubject(id, name) {
-    if (!confirm(`Excluir "${name}"? Esta ação não pode ser desfeita.`)) return;
+    if (!confirm(`Excluir "${name}"?`)) return;
     try {
         await api(`/subjects/${id}`, { method: 'DELETE' });
         subjects = subjects.filter(s => s.id !== id);
-        toast('Matéria excluída.', 'success');
         renderSubjects();
+        toast('Matéria excluída', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── TEACHERS ──────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// TEACHERS
+// ─────────────────────────────────────────────────────────────
 async function showTeachers() {
     setActive('menu-docentes');
-    setPage('Docentes', 'Professores das suas matérias');
+    setPage('Docentes', 'Acervo');
     teachers = await api('/teachers/').catch(() => []);
     renderTeachers();
 }
 
 function renderTeachers() {
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-4xl">
-        <div class="flex items-baseline justify-between mb-8">
-            <p class="eyebrow">${teachers.length === 1 ? '1 docente' : teachers.length + ' docentes'}</p>
-            <button onclick="openTeacherModal()" class="btn btn-ink">
-                <i class="fa-solid fa-plus text-[11px]"></i> Novo docente
-            </button>
+    <div class="page-shell">
+        <div class="flex items-baseline justify-between mb-5">
+            <div>
+                <h1 class="page-title">Docentes</h1>
+                <p class="page-sub">${teachers.length} cadastrado${teachers.length !== 1 ? 's' : ''}</p>
+            </div>
+            <button onclick="openTeacherModal()" class="btn btn-primary"><i class="fa-solid fa-plus text-[10px]"></i> Novo docente</button>
         </div>
-        ${teachers.length === 0 ? emptyState('fa-chalkboard-user', 'Nenhum docente cadastrado', 'Adicione os professores das suas disciplinas.') :
-        `<div>
-            ${teachers.map((t, i) => `
-            <div class="flex items-baseline gap-5 py-4 group" style="border-bottom:1px solid var(--line-soft);">
-                <span class="mono text-[11px]" style="color:var(--ink-faint); width: 28px;">${String(i+1).padStart(2,'0')}</span>
-                <div class="flex-1 min-w-0">
-                    <p class="serif text-[18px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${t.name}</p>
-                    <p class="text-[12.5px] mt-0.5" style="color:var(--ink-faint)">${[t.email, t.contact].filter(Boolean).join(' · ') || 'Sem contato cadastrado'}</p>
-                </div>
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openTeacherModal('${t.id}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
-                        <i class="fa-solid fa-pen text-[11px]"></i>
-                    </button>
-                    <button onclick="deleteTeacher('${t.id}','${t.name.replace(/'/g,"\\'")}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
-                        <i class="fa-solid fa-trash text-[11px]"></i>
-                    </button>
-                </div>
-            </div>`).join('')}
+
+        ${teachers.length === 0 ? `<div class="card"><div class="card-body">${emptyState('fa-chalkboard-user','Nenhum docente','Cadastre os professores das suas disciplinas.')}</div></div>` :
+        `<div class="card">
+            <table class="tbl">
+                <thead>
+                    <tr><th style="width:32px">#</th><th>Nome</th><th>E-mail</th><th>Contato</th><th style="width:90px" class="actions">Ações</th></tr>
+                </thead>
+                <tbody>
+                    ${teachers.map((t, i) => `
+                    <tr>
+                        <td class="id">${String(i+1).padStart(2,'0')}</td>
+                        <td style="color:var(--text); font-weight: 500;">${t.name}</td>
+                        <td class="mono text-[12px]" style="color:var(--text-3)">${t.email || '—'}</td>
+                        <td style="color:var(--text-3)">${t.contact || '—'}</td>
+                        <td class="actions">
+                            <button onclick="openTeacherModal('${t.id}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                            <button onclick="deleteTeacher('${t.id}','${t.name.replace(/'/g,"\\'")}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                        </td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
         </div>`}
     </div>`;
 }
@@ -902,51 +821,28 @@ function renderTeachers() {
 function openTeacherModal(id = null) {
     const t = id ? teachers.find(x => x.id === id) : null;
     openModal(`
-    <div class="flex items-baseline justify-between mb-7">
-        <div>
-            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Novo'}</p>
-            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Docente</h3>
-        </div>
-        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <form onsubmit="saveTeacher(event,'${id||''}')">
-        <div class="form-group">
-            <label class="form-label">Nome</label>
-            <input class="form-input" id="t-name" value="${t?.name||''}" required placeholder="Nome do professor">
-        </div>
-        <div class="form-group">
-            <label class="form-label">E-mail</label>
-            <input type="email" class="form-input" id="t-email" value="${t?.email||''}" placeholder="prof@email.com">
-        </div>
-        <div class="form-group">
-            <label class="form-label">Contato</label>
-            <input class="form-input" id="t-contact" value="${t?.contact||''}" placeholder="Telefone ou lattes">
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
-            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
+    <div class="modal-head"><h3>${id ? 'Editar docente' : 'Novo docente'}</h3><button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
+    <form onsubmit="saveTeacher(event,'${id||''}')" class="space-y-3">
+        <div><label class="label">Nome *</label><input class="input" id="t-name" value="${t?.name||''}" required></div>
+        <div><label class="label">E-mail</label><input type="email" class="input mono" id="t-email" value="${t?.email||''}"></div>
+        <div><label class="label">Contato</label><input class="input" id="t-contact" value="${t?.contact||''}" placeholder="Telefone ou lattes"></div>
+        <div class="flex gap-2 justify-end pt-2">
+            <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
     </form>`);
 }
 
 async function saveTeacher(e, id) {
     e.preventDefault();
-    const data = {
-        name: document.getElementById('t-name').value.trim(),
-        email: document.getElementById('t-email').value.trim() || null,
-        contact: document.getElementById('t-contact').value.trim() || null,
-    };
+    const data = { name: document.getElementById('t-name').value.trim(), email: document.getElementById('t-email').value.trim() || null, contact: document.getElementById('t-contact').value.trim() || null };
     try {
-        if (id) {
-            await api(`/teachers/${id}`, { method: 'PUT', body: JSON.stringify(data) });
-            toast('Docente atualizado!', 'success');
-        } else {
-            await api('/teachers/', { method: 'POST', body: JSON.stringify(data) });
-            toast('Docente cadastrado!', 'success');
-        }
+        if (id) await api(`/teachers/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+        else await api('/teachers/', { method: 'POST', body: JSON.stringify(data) });
         teachers = await api('/teachers/');
         closeModal();
         renderTeachers();
+        toast(id ? 'Docente atualizado' : 'Docente cadastrado', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -955,59 +851,56 @@ async function deleteTeacher(id, name) {
     try {
         await api(`/teachers/${id}`, { method: 'DELETE' });
         teachers = teachers.filter(t => t.id !== id);
-        toast('Docente excluído.', 'success');
         renderTeachers();
+        toast('Docente excluído', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── BOOKS ─────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// BOOKS
+// ─────────────────────────────────────────────────────────────
+const COVER_COLORS = ['#18181b','#2563eb','#dc2626','#16a34a','#d97706','#7c3aed','#0891b2'];
+
 async function showBooks() {
     setActive('menu-livros');
-    setPage('Livros', 'Sua biblioteca de estudo');
+    setPage('Livros', 'Acervo');
     const books = await api('/books/').catch(() => []);
     renderBooks(books);
 }
 
-/* Paleta editorial — tons de capa de livro encadernado */
-const COVER_COLORS = ['#0d1117','#8b1538','#1f5d3a','#4a2a5c','#b08b3e','#6b4f15','#1e3a52'];
-
 function renderBooks(books) {
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-5xl">
-        <div class="flex items-baseline justify-between mb-8">
-            <p class="eyebrow">${books.length === 1 ? '1 livro' : books.length + ' livros'}</p>
-            <button onclick="openBookModal()" class="btn btn-ink">
-                <i class="fa-solid fa-plus text-[11px]"></i> Adicionar livro
-            </button>
+    <div class="page-shell">
+        <div class="flex items-baseline justify-between mb-5">
+            <div>
+                <h1 class="page-title">Livros</h1>
+                <p class="page-sub">${books.length} no acervo</p>
+            </div>
+            <button onclick="openBookModal()" class="btn btn-primary"><i class="fa-solid fa-plus text-[10px]"></i> Adicionar</button>
         </div>
-        ${books.length === 0 ? emptyState('fa-book-open', 'Sua biblioteca está vazia', 'Adicione PDFs com URL pública e estude com grifos e anotações.') :
-        `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7">
+
+        ${books.length === 0 ? `<div class="card"><div class="card-body">${emptyState('fa-book-open','Acervo vazio','Adicione PDFs com URL pública.')}</div></div>` :
+        `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             ${books.map(b => {
-                const color = b.cover_color || '#0d1117';
+                const color = b.cover_color || '#18181b';
                 const pct = b.progress_pct || 0;
                 return `
-                <div class="group cursor-pointer" onclick="openBookReader('${b.id}')">
-                    <!-- Capa estilo lombada de livro -->
-                    <div class="relative" style="aspect-ratio: 3/4; background:${color}; box-shadow: inset -8px 0 12px -8px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.1);">
-                        <div class="absolute inset-0 flex items-center justify-center p-4 text-center">
-                            <p class="serif text-[15px] font-medium text-white/95 leading-tight" style="letter-spacing:-.01em;">${b.name}</p>
-                        </div>
-                        <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-                            <span class="mono text-[9px] tracking-widest text-white/60">${pct}%</span>
-                            <span class="mono text-[9px] text-white/60">${b.current_page}/${b.total_pages}</span>
-                        </div>
-                        <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
-                            <button onclick="openBookModal('${b.id}')" class="w-6 h-6 bg-white/90 flex items-center justify-center text-[10px]" style="color:var(--ink)">
+                <div class="group">
+                    <div class="cover" style="background: ${color}" onclick="openBookReader('${b.id}')">
+                        <div class="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
+                            <button onclick="openBookModal('${b.id}')" class="text-[10px]" style="width:22px;height:22px;background:rgba(255,255,255,.95);color:var(--text);display:inline-flex;align-items:center;justify-content:center;border-radius:3px">
                                 <i class="fa-solid fa-pen"></i>
                             </button>
-                            <button onclick="deleteBook('${b.id}','${b.name.replace(/'/g,"\\'")}',event)" class="w-6 h-6 bg-white/90 flex items-center justify-center text-[10px]" style="color:var(--crimson)">
+                            <button onclick="deleteBook('${b.id}','${b.name.replace(/'/g,"\\'")}',event)" class="text-[10px]" style="width:22px;height:22px;background:rgba(255,255,255,.95);color:var(--danger);display:inline-flex;align-items:center;justify-content:center;border-radius:3px">
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
+                        <p class="ttl">${b.name}</p>
+                        <div class="meta"><span>${b.current_page}/${b.total_pages}</span><span>${pct}%</span></div>
                     </div>
-                    <div class="mt-3">
-                        ${b.author ? `<p class="text-[12px] truncate" style="color:var(--ink-faint)">${b.author}</p>` : ''}
-                        <div class="progress-bar mt-2"><div class="progress-fill" style="width:${pct}%"></div></div>
+                    <div class="mt-2">
+                        ${b.author ? `<p class="text-[12px] truncate" style="color:var(--text-3)">${b.author}</p>` : '<p class="text-[12px]" style="color:var(--text-5)">—</p>'}
+                        <div class="bar mt-1.5"><div style="width:${pct}%"></div></div>
                     </div>
                 </div>`;
             }).join('')}
@@ -1018,67 +911,29 @@ function renderBooks(books) {
 function openBookModal(id = null) {
     editingBookId = id;
     const subjectOpts = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    const colorPicker = COVER_COLORS.map(c => `
-        <button type="button" onclick="selectColor('${c}',this)" data-color="${c}"
-            class="color-btn" style="width:28px;height:28px;background:${c};border:2px solid transparent;transition:transform .15s, border-color .15s;cursor:pointer;"></button>`).join('');
+    const colorPicker = COVER_COLORS.map(c => `<button type="button" onclick="selectColor('${c}',this)" data-color="${c}" class="color-btn" style="width:24px;height:24px;background:${c};border:2px solid transparent;border-radius:3px;cursor:pointer;transition:border-color .12s"></button>`).join('');
 
     openModal(`
-    <div class="flex items-baseline justify-between mb-7">
-        <div>
-            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Adicionar'}</p>
-            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Livro</h3>
+    <div class="modal-head"><h3>${id ? 'Editar livro' : 'Adicionar livro'}</h3><button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
+    <form onsubmit="saveBook(event)" class="space-y-3">
+        <div><label class="label">Título *</label><input class="input" id="b-name" required></div>
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="label">Autor</label><input class="input" id="b-author"></div>
+            <div><label class="label">Gênero</label><input class="input" id="b-genre" placeholder="Ex.: Doutrina"></div>
         </div>
-        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <form onsubmit="saveBook(event)">
-        <div class="form-group">
-            <label class="form-label">Título</label>
-            <input class="form-input" id="b-name" required placeholder="Título do livro">
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="label">Total páginas</label><input type="number" class="input mono" id="b-pages" value="1" min="1"></div>
+            <div><label class="label">Página atual</label><input type="number" class="input mono" id="b-curpage" value="0" min="0"></div>
         </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label">Autor</label>
-                <input class="form-input" id="b-author" placeholder="Autor">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Gênero</label>
-                <input class="form-input" id="b-genre" placeholder="Ex.: Doutrina">
-            </div>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label">Total de páginas</label>
-                <input type="number" class="form-input" id="b-pages" value="1" min="1">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Página atual</label>
-                <input type="number" class="form-input" id="b-curpage" value="0" min="0">
-            </div>
-        </div>
-        <div class="form-group">
-            <label class="form-label">URL do PDF</label>
-            <input type="url" class="form-input" id="b-url" placeholder="https://...">
-            <p class="text-[11px] mt-1.5" style="color:var(--ink-faint)">Link direto para um PDF público</p>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Matéria</label>
-            <select class="form-select" id="b-subject">
-                <option value="">Nenhuma</option>
-                ${subjectOpts}
-            </select>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Cor da capa</label>
-            <div class="flex gap-2 flex-wrap mt-1" id="color-picker">${colorPicker}</div>
-            <input type="hidden" id="b-color" value="${COVER_COLORS[0]}">
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
-            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
+        <div><label class="label">URL do PDF</label><input type="url" class="input mono" id="b-url" placeholder="https://..."><p class="help">Link direto para um PDF público.</p></div>
+        <div><label class="label">Matéria</label><select class="input" id="b-subject"><option value="">Nenhuma</option>${subjectOpts}</select></div>
+        <div><label class="label">Cor da capa</label><div class="flex gap-1.5 flex-wrap mt-1" id="color-picker">${colorPicker}</div><input type="hidden" id="b-color" value="${COVER_COLORS[0]}"></div>
+        <div class="flex gap-2 justify-end pt-2">
+            <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
     </form>`);
 
-    // Pre-select first color
     selectColor(COVER_COLORS[0], document.querySelector('.color-btn'));
 
     if (id) {
@@ -1099,9 +954,8 @@ function openBookModal(id = null) {
 }
 
 function selectColor(color, btn) {
-    document.querySelectorAll('.color-btn').forEach(b => { b.style.borderColor = 'transparent'; b.style.transform = ''; });
-    btn.style.borderColor = 'var(--gold)';
-    btn.style.transform = 'scale(1.15)';
+    document.querySelectorAll('.color-btn').forEach(b => b.style.borderColor = 'transparent');
+    btn.style.borderColor = 'var(--accent)';
     document.getElementById('b-color').value = color;
 }
 
@@ -1118,25 +972,21 @@ async function saveBook(e) {
         cover_color: document.getElementById('b-color').value,
     };
     try {
-        if (editingBookId) {
-            await api(`/books/${editingBookId}`, { method: 'PUT', body: JSON.stringify(data) });
-            toast('Livro atualizado!', 'success');
-        } else {
-            await api('/books/', { method: 'POST', body: JSON.stringify(data) });
-            toast('Livro adicionado!', 'success');
-        }
+        if (editingBookId) await api(`/books/${editingBookId}`, { method: 'PUT', body: JSON.stringify(data) });
+        else await api('/books/', { method: 'POST', body: JSON.stringify(data) });
         closeModal();
         showBooks();
+        toast(editingBookId ? 'Livro atualizado' : 'Livro adicionado', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
 async function deleteBook(id, name, ev) {
     ev.stopPropagation();
-    if (!confirm(`Excluir "${name}"? Grifos e anotações serão perdidos.`)) return;
+    if (!confirm(`Excluir "${name}"? Grifos e anotações serão removidos.`)) return;
     try {
         await api(`/books/${id}`, { method: 'DELETE' });
-        toast('Livro excluído.', 'success');
         showBooks();
+        toast('Livro excluído', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -1144,111 +994,93 @@ async function openBookReader(bookId) {
     currentBookId = bookId;
     const book = await api(`/books/${bookId}`).catch(() => null);
     if (!book) { toast('Livro não encontrado.', 'error'); return; }
-    currentBookPage = book.current_page || 1;
-
     setActive('menu-livros');
-    setPage(book.name, book.author || 'Leitor');
+    setPage(book.name, 'Acervo');
 
     const [annotations, highlights] = await Promise.all([
         api(`/books/${bookId}/annotations`).catch(() => []),
         api(`/books/${bookId}/highlights`).catch(() => []),
     ]);
 
-    const hlBg = { yellow:'#fcf2bf', green:'#d8ecd9', blue:'#d4e3f5', pink:'#f5d4dd' };
-    const hlIn = { yellow:'#7a5d00', green:'#1f5d3a', blue:'#1e3a52', pink:'#8b1538' };
+    const hlColors = { yellow:'#fef08a', green:'#bbf7d0', blue:'#bfdbfe', pink:'#fbcfe8' };
 
     document.getElementById('mainContent').innerHTML = `
     <div class="h-full flex flex-col">
-        <div class="flex items-center gap-5 mb-5">
-            <button onclick="showBooks()" class="hover:opacity-100" style="color:var(--ink-faint); opacity:.7">
-                <i class="fa-solid fa-arrow-left"></i>
-            </button>
-            <div class="flex-1">
-                <div class="flex justify-between mb-1.5">
-                    <span class="eyebrow">Leitura</span>
-                    <span class="mono text-[11px]" style="color:var(--ink-faint)">${book.progress_pct}% · pg. ${book.current_page}/${book.total_pages}</span>
+        <div class="topbar" style="border-top: none">
+            <div class="flex items-center gap-3">
+                <button onclick="showBooks()" class="btn btn-icon btn-sm"><i class="fa-solid fa-arrow-left text-[10px]"></i></button>
+                <div>
+                    <p class="text-[13px] font-medium" style="color:var(--text)">${book.name}</p>
+                    <p class="text-[11px] mono" style="color:var(--text-4)">pg. ${book.current_page}/${book.total_pages} · ${book.progress_pct}%</p>
                 </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${book.progress_pct}%"></div></div>
             </div>
-            <button onclick="openBookModal('${bookId}')" class="btn btn-ghost text-[11px] py-2 px-3">
-                <i class="fa-solid fa-gear text-[11px]"></i> Editar
-            </button>
+            <div class="flex items-center gap-2">
+                <div class="bar" style="width: 240px"><div style="width:${book.progress_pct}%"></div></div>
+                <button onclick="openBookModal('${bookId}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-gear text-[10px]"></i></button>
+            </div>
         </div>
 
-        <div class="flex gap-6 flex-1 min-h-0">
-            <div class="flex-1 surface overflow-hidden flex flex-col">
+        <div class="flex gap-3 flex-1 min-h-0 p-3">
+            <div class="card flex-1 flex flex-col overflow-hidden">
                 ${book.url ? `
-                <div class="px-4 py-2.5 flex items-center gap-3" style="border-bottom:1px solid var(--line); background:var(--paper-soft)">
-                    <span class="eyebrow">PDF externo</span>
-                    <a href="${book.url}" target="_blank" class="ml-auto text-[12px] hover:underline flex items-center gap-1.5" style="color:var(--gold)">
-                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Abrir em nova aba
-                    </a>
-                </div>
-                <iframe src="${book.url}" class="flex-1 w-full" style="border:none; background:white"></iframe>` :
-                `<div class="flex-1 flex flex-col items-center justify-center text-center p-10">
-                    <i class="fa-solid fa-link text-[32px] mb-4" style="color:var(--ink-faint); opacity:.4"></i>
-                    <p class="serif text-[20px] font-medium mb-1" style="color:var(--ink)">Nenhum PDF vinculado</p>
-                    <p class="text-[13px] mb-6" style="color:var(--ink-faint)">Edite o livro e cole a URL de um PDF público.</p>
-                    <button onclick="openBookModal('${bookId}')" class="btn btn-ink">
-                        <i class="fa-solid fa-link text-[11px]"></i> Vincular PDF
-                    </button>
-                </div>`}
+                <iframe src="${book.url}" class="flex-1" style="border:none;background:white"></iframe>` :
+                `<div class="card-body flex-1 flex items-center justify-center">${emptyState('fa-link','PDF não vinculado','Edite o livro e cole a URL.')}</div>`}
             </div>
 
-            <div class="w-80 flex-shrink-0 flex flex-col gap-4">
-                <div class="surface p-5">
-                    <p class="eyebrow mb-3">Página atual</p>
-                    <div class="flex items-center gap-3">
-                        <input type="number" id="book-page-input" value="${book.current_page}" min="0" max="${book.total_pages}"
-                            class="form-input mono text-center text-[16px]" style="width:90px; font-weight: 500;">
-                        <span class="mono text-[13px]" style="color:var(--ink-faint)">/ ${book.total_pages}</span>
-                        <button onclick="saveBookPage('${bookId}')" class="btn btn-ink ml-auto text-[11px] py-2 px-3">Salvar</button>
+            <div class="w-80 flex-shrink-0 flex flex-col gap-3">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Página atual</span></div>
+                    <div class="card-body flex items-center gap-2">
+                        <input type="number" id="book-page-input" value="${book.current_page}" min="0" max="${book.total_pages}" class="input mono text-center" style="width:80px">
+                        <span class="text-[12px] mono" style="color:var(--text-4)">/ ${book.total_pages}</span>
+                        <button onclick="saveBookPage('${bookId}')" class="btn btn-primary btn-sm ml-auto">Salvar</button>
                     </div>
                 </div>
 
-                <div class="surface p-5">
-                    <p class="eyebrow mb-3">Adicionar grifo</p>
-                    <textarea id="hl-text" rows="2" class="form-input resize-none mb-2" placeholder="Cole o trecho grifado…"></textarea>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="hl-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input mono" style="width:64px">
-                        <select id="hl-color" class="form-select flex-1">
-                            <option value="yellow">Amarelo</option>
-                            <option value="green">Verde</option>
-                            <option value="blue">Azul</option>
-                            <option value="pink">Rosa</option>
-                        </select>
-                        <button onclick="addHighlight('${bookId}')" class="btn btn-gold text-[11px] py-2 px-3">Grifar</button>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Adicionar grifo</span></div>
+                    <div class="card-body space-y-2">
+                        <textarea id="hl-text" rows="2" class="input" placeholder="Texto grifado…"></textarea>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="hl-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="input mono" style="width:64px">
+                            <select id="hl-color" class="input flex-1">
+                                <option value="yellow">Amarelo</option>
+                                <option value="green">Verde</option>
+                                <option value="blue">Azul</option>
+                                <option value="pink">Rosa</option>
+                            </select>
+                            <button onclick="addHighlight('${bookId}')" class="btn btn-primary btn-sm">Grifar</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="surface p-5">
-                    <p class="eyebrow mb-3">Anotação</p>
-                    <textarea id="ann-text" rows="3" class="form-input resize-none mb-2" placeholder="Sua anotação para esta página…"></textarea>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="ann-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input mono" style="width:64px">
-                        <button onclick="addAnnotation('${bookId}')" class="btn btn-ink ml-auto text-[11px] py-2 px-3">Salvar</button>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">Anotação</span></div>
+                    <div class="card-body space-y-2">
+                        <textarea id="ann-text" rows="3" class="input" placeholder="Sua anotação…"></textarea>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="ann-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="input mono" style="width:64px">
+                            <button onclick="addAnnotation('${bookId}')" class="btn btn-primary btn-sm ml-auto">Salvar</button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="surface p-5 flex-1 overflow-y-auto no-scrollbar">
-                    <p class="eyebrow mb-3">Salvos (${annotations.length + highlights.length})</p>
-                    ${[...highlights.map(h => ({...h,type:'highlight'})), ...annotations.map(a => ({...a,type:'annotation'}))]
-                        .sort((a,b) => a.page_number - b.page_number)
-                        .map(item => {
+                <div class="card flex-1 overflow-y-auto no-scrollbar">
+                    <div class="card-header"><span class="card-title">Salvos</span><span class="card-sub ml-auto">${annotations.length + highlights.length}</span></div>
+                    <div class="card-body space-y-2">
+                        ${[...highlights.map(h => ({...h,type:'highlight'})), ...annotations.map(a => ({...a,type:'annotation'}))]
+                            .sort((a,b) => a.page_number - b.page_number).map(item => {
                             const isHL = item.type === 'highlight';
-                            const bg = isHL ? (hlBg[item.color] || hlBg.yellow) : 'var(--paper-soft)';
-                            const ink = isHL ? (hlIn[item.color] || hlIn.yellow) : 'var(--ink)';
-                            return `
-                            <div id="item-${item.id}" class="p-3 mb-2" style="background:${bg}; border-left: 2px solid ${ink};">
-                                <div class="flex items-start justify-between gap-2 mb-1">
-                                    <span class="mono text-[10px] tracking-widest" style="color:${ink}">${isHL ? 'GRIFO' : 'NOTA'} · pg.${item.page_number}</span>
-                                    <button onclick="deleteNote('${item.id}','${isHL ? 'highlight' : 'annotation'}')" style="color:${ink};opacity:.5">
-                                        <i class="fa-solid fa-xmark text-[10px]"></i>
-                                    </button>
+                            const c = isHL ? (hlColors[item.color] || '#fef08a') : '#e4e4e7';
+                            return `<div id="item-${item.id}" class="p-2.5" style="background:var(--bg-2); border-left:2px solid ${c}; border-radius: 0 3px 3px 0;">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[10px] mono uppercase" style="color:var(--text-4); letter-spacing:.04em;">${isHL ? 'GRIFO' : 'NOTA'} · pg.${item.page_number}</span>
+                                    <button onclick="deleteNote('${item.id}','${isHL ? 'highlight' : 'annotation'}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>
                                 </div>
-                                <p class="text-[12.5px] leading-relaxed" style="color:var(--ink)">${isHL ? item.selected_text : item.note_text}</p>
+                                <p class="text-[12px]" style="color:var(--text)">${isHL ? item.selected_text : item.note_text}</p>
                             </div>`;
-                        }).join('') || '<p class="text-[12px]" style="color:var(--ink-faint)">Nenhum grifo ou anotação ainda.</p>'}
+                        }).join('') || `<p class="text-[12px]" style="color:var(--text-4)">Nenhum grifo ou anotação.</p>`}
+                    </div>
                 </div>
             </div>
         </div>
@@ -1257,21 +1089,18 @@ async function openBookReader(bookId) {
 
 async function saveBookPage(bookId) {
     const page = parseInt(document.getElementById('book-page-input').value);
-    try {
-        await api(`/books/${bookId}`, { method: 'PUT', body: JSON.stringify({ current_page: page }) });
-        toast('Progresso salvo!', 'success');
-    } catch (e) { toast(e.message, 'error'); }
+    try { await api(`/books/${bookId}`, { method: 'PUT', body: JSON.stringify({ current_page: page }) }); toast('Progresso salvo', 'success'); }
+    catch (e) { toast(e.message, 'error'); }
 }
 
 async function addHighlight(bookId) {
     const text = document.getElementById('hl-text').value.trim();
     const page = parseInt(document.getElementById('hl-page').value);
     const color = document.getElementById('hl-color').value;
-    if (!text) { toast('Insira o texto grifado.', 'warning'); return; }
+    if (!text) { toast('Digite o trecho.', 'warning'); return; }
     try {
-        const h = await api(`/books/${bookId}/highlights`, { method: 'POST', body: JSON.stringify({ page_number: page, selected_text: text, color }) });
-        document.getElementById('hl-text').value = '';
-        toast('Grifo salvo!', 'success');
+        await api(`/books/${bookId}/highlights`, { method: 'POST', body: JSON.stringify({ page_number: page, selected_text: text, color }) });
+        toast('Grifo salvo', 'success');
         openBookReader(bookId);
     } catch (e) { toast(e.message, 'error'); }
 }
@@ -1279,11 +1108,10 @@ async function addHighlight(bookId) {
 async function addAnnotation(bookId) {
     const text = document.getElementById('ann-text').value.trim();
     const page = parseInt(document.getElementById('ann-page').value);
-    if (!text) { toast('Insira a anotação.', 'warning'); return; }
+    if (!text) { toast('Digite a anotação.', 'warning'); return; }
     try {
         await api(`/books/${bookId}/annotations`, { method: 'POST', body: JSON.stringify({ page_number: page, note_text: text }) });
-        document.getElementById('ann-text').value = '';
-        toast('Anotação salva!', 'success');
+        toast('Anotação salva', 'success');
         openBookReader(bookId);
     } catch (e) { toast(e.message, 'error'); }
 }
@@ -1293,50 +1121,48 @@ async function deleteNote(id, type) {
         const path = type === 'highlight' ? `/books/highlights/${id}` : `/books/annotations/${id}`;
         await api(path, { method: 'DELETE' });
         document.getElementById(`item-${id}`)?.remove();
-        toast('Removido.', 'success');
+        toast('Removido', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── FLASHCARDS ────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// FLASHCARDS
+// ─────────────────────────────────────────────────────────────
 async function showFlashcards() {
     setActive('menu-flashcards');
-    setPage('Flashcards', 'Revisão espaçada');
-    const [cards, stats] = await Promise.all([
-        api('/flashcards/').catch(() => []),
-        api('/flashcards/stats').catch(() => null)
-    ]);
+    setPage('Flashcards', 'Estudo');
+    const [cards, stats] = await Promise.all([api('/flashcards/').catch(() => []), api('/flashcards/stats').catch(() => null)]);
     renderFlashcards(cards, stats);
 }
 
 function renderFlashcards(cards, stats) {
     const due = cards.filter(c => c.is_due);
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-5xl">
-        ${stats ? `<div class="grid grid-cols-2 md:grid-cols-4 gap-0 mb-10" style="border:1px solid var(--line); margin:0;">
-            ${editorialStat('fa-layer-group', 'Cards', `<span class="serif">${stats.total_cards}</span>`)}
-            ${editorialStat('fa-clock', 'Hoje', `<span class="serif">${stats.due_today}</span>`)}
-            ${editorialStat('fa-repeat', 'Revisões', `<span class="serif">${stats.total_reviews}</span>`)}
-            ${editorialStat('fa-bullseye', 'Acerto', stats.overall_accuracy_pct != null ? `<span class="serif">${stats.overall_accuracy_pct}</span><span class="mono text-[16px] ml-1" style="color:var(--ink-faint)">%</span>` : '—')}
-        </div>` : ''}
-
-        <div class="flex items-center justify-between mb-6">
-            <div class="flex">
-                <button id="tab-all" onclick="filterCards('all')" class="section-tab active">Todos · ${cards.length}</button>
-                <button id="tab-due" onclick="filterCards('due')" class="section-tab">Para revisar · ${due.length}</button>
+    <div class="page-shell">
+        <div class="flex items-baseline justify-between mb-5">
+            <div>
+                <h1 class="page-title">Flashcards</h1>
+                <p class="page-sub">Revisão espaçada (SM-2)</p>
             </div>
             <div class="flex gap-2">
-                ${due.length > 0 ? `<button onclick="startReview()" class="btn btn-gold">
-                    <i class="fa-solid fa-play text-[10px]"></i> Revisar ${due.length}
-                </button>` : ''}
-                <button onclick="openFlashcardModal()" class="btn btn-ink">
-                    <i class="fa-solid fa-plus text-[11px]"></i> Novo card
-                </button>
+                ${due.length > 0 ? `<button onclick="startReview()" class="btn btn-accent"><i class="fa-solid fa-play text-[10px]"></i> Revisar ${due.length}</button>` : ''}
+                <button onclick="openFlashcardModal()" class="btn btn-primary"><i class="fa-solid fa-plus text-[10px]"></i> Novo</button>
             </div>
         </div>
 
-        <div id="fc-list">
-            ${renderCardList(cards)}
+        ${stats ? `<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+            ${kpi('Total', stats.total_cards, 'fa-layer-group')}
+            ${kpi('A revisar hoje', stats.due_today, 'fa-clock')}
+            ${kpi('Revisões', stats.total_reviews, 'fa-repeat')}
+            ${kpi('Acerto geral', stats.overall_accuracy_pct != null ? stats.overall_accuracy_pct : '—', 'fa-bullseye', stats.overall_accuracy_pct != null ? '%' : '')}
+        </div>` : ''}
+
+        <div class="tab-bar">
+            <button id="tab-all" onclick="filterCards('all')" class="tab-btn active">Todos · ${cards.length}</button>
+            <button id="tab-due" onclick="filterCards('due')" class="tab-btn">A revisar · ${due.length}</button>
         </div>
+
+        <div id="fc-list">${renderCardList(cards)}</div>
     </div>`;
 
     window._fcAll = cards;
@@ -1350,76 +1176,44 @@ function filterCards(type) {
 }
 
 function renderCardList(cards) {
-    if (cards.length === 0) return emptyState('fa-layer-group', 'Nenhum flashcard', 'Crie cards para revisar conceitos com repetição espaçada.');
-    return cards.map((c, i) => {
-        const acc = c.accuracy_pct != null ? `${c.accuracy_pct}%` : '—';
-        const isDue = c.is_due;
-        return `
-        <div class="flex items-start gap-5 py-5 group" style="border-bottom:1px solid var(--line-soft);">
-            <span class="mono text-[11px]" style="color:var(--ink-faint); width:28px; padding-top:4px;">${String(i+1).padStart(2,'0')}</span>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5 flex-wrap">
-                    ${c.subject_name ? `<span class="eyebrow" style="color:var(--gold)">/ ${c.subject_name}</span>` : ''}
-                    ${isDue ? `<span class="badge badge-pendente">Revisar</span>` : ''}
-                    ${c.tags ? c.tags.split(',').map(t=>`<span class="mono text-[10px]" style="color:var(--ink-faint)">#${t.trim()}</span>`).join(' ') : ''}
-                </div>
-                <p class="serif text-[17px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${c.front}</p>
-                <p class="text-[13px] mt-1 leading-relaxed" style="color:var(--ink-soft)">${c.back}</p>
-            </div>
-            <div class="flex items-start gap-3 flex-shrink-0">
-                <div class="text-right">
-                    <p class="mono text-[16px]" style="color:var(--ink)">${acc}</p>
-                    <p class="text-[10px] mt-0.5 tracking-wider uppercase" style="color:var(--ink-faint)">${c.total_reviews} rev.</p>
-                </div>
-                <div class="flex items-start opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openFlashcardModal('${c.id}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
-                        <i class="fa-solid fa-pen text-[11px]"></i>
-                    </button>
-                    <button onclick="deleteFlashcard('${c.id}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
-                        <i class="fa-solid fa-trash text-[11px]"></i>
-                    </button>
-                </div>
-            </div>
-        </div>`;
-    }).join('');
+    if (cards.length === 0) return `<div class="card"><div class="card-body">${emptyState('fa-layer-group','Nenhum flashcard','Crie cards para revisar com repetição espaçada.')}</div></div>`;
+    return `<div class="card">
+        <table class="tbl">
+            <thead><tr><th style="width:32px">#</th><th>Pergunta</th><th>Matéria</th><th>Tags</th><th style="width:80px" class="text-right">Acerto</th><th style="width:60px" class="text-right">Rev.</th><th style="width:90px" class="actions">Ações</th></tr></thead>
+            <tbody>
+                ${cards.map((c, i) => `
+                <tr class="${c.is_due ? 'is-due' : ''}">
+                    <td class="id">${String(i+1).padStart(2,'0')}</td>
+                    <td><div style="max-width:480px"><p style="color:var(--text); font-weight: 500;">${c.front}</p><p class="text-[11.5px] mt-0.5 truncate" style="color:var(--text-4)">${c.back}</p></div></td>
+                    <td><span class="text-[11.5px]" style="color:var(--text-3)">${c.subject_name || '—'}</span></td>
+                    <td><span class="mono text-[10.5px]" style="color:var(--text-4)">${c.tags ? c.tags.split(',').map(t => '#'+t.trim()).join(' ') : '—'}</span></td>
+                    <td class="num text-right">${c.accuracy_pct != null ? c.accuracy_pct + '%' : '—'}</td>
+                    <td class="num text-right" style="color:var(--text-3)">${c.total_reviews}</td>
+                    <td class="actions">
+                        <button onclick="openFlashcardModal('${c.id}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                        <button onclick="deleteFlashcard('${c.id}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                    </td>
+                </tr>`).join('')}
+            </tbody>
+        </table>
+    </div>`;
 }
 
 function openFlashcardModal(id = null) {
     editingFlashcardId = id;
     const subjectOpts = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     openModal(`
-    <div class="flex items-baseline justify-between mb-7">
-        <div>
-            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Novo'}</p>
-            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Flashcard</h3>
+    <div class="modal-head"><h3>${id ? 'Editar flashcard' : 'Novo flashcard'}</h3><button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
+    <form onsubmit="saveFlashcard(event)" class="space-y-3">
+        <div><label class="label">Pergunta *</label><textarea id="fc-front" rows="3" class="input" required placeholder="O que é…? Defina…"></textarea></div>
+        <div><label class="label">Resposta *</label><textarea id="fc-back" rows="3" class="input" required placeholder="A resposta…"></textarea></div>
+        <div class="grid grid-cols-2 gap-3">
+            <div><label class="label">Matéria</label><select class="input" id="fc-subject"><option value="">Nenhuma</option>${subjectOpts}</select></div>
+            <div><label class="label">Tags</label><input class="input" id="fc-tags" placeholder="tag1, tag2"></div>
         </div>
-        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <form onsubmit="saveFlashcard(event)">
-        <div class="form-group">
-            <label class="form-label">Pergunta</label>
-            <textarea id="fc-front" rows="3" class="form-input resize-none" required placeholder="O que é…? Defina…"></textarea>
-        </div>
-        <div class="form-group">
-            <label class="form-label">Resposta</label>
-            <textarea id="fc-back" rows="3" class="form-input resize-none" required placeholder="A resposta ou definição…"></textarea>
-        </div>
-        <div class="grid grid-cols-2 gap-4">
-            <div class="form-group">
-                <label class="form-label">Matéria</label>
-                <select class="form-select" id="fc-subject">
-                    <option value="">Nenhuma</option>
-                    ${subjectOpts}
-                </select>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Tags</label>
-                <input class="form-input" id="fc-tags" placeholder="tag1, tag2">
-            </div>
-        </div>
-        <div class="flex gap-3 mt-6">
-            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
-            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
+        <div class="flex gap-2 justify-end pt-2">
+            <button type="button" onclick="closeModal()" class="btn">Cancelar</button>
+            <button type="submit" class="btn btn-primary">Salvar</button>
         </div>
     </form>`);
 
@@ -1442,43 +1236,41 @@ async function saveFlashcard(e) {
         tags: document.getElementById('fc-tags').value.trim() || null,
     };
     try {
-        if (editingFlashcardId) {
-            await api(`/flashcards/${editingFlashcardId}`, { method: 'PUT', body: JSON.stringify(data) });
-            toast('Flashcard atualizado!', 'success');
-        } else {
-            await api('/flashcards/', { method: 'POST', body: JSON.stringify(data) });
-            toast('Flashcard criado!', 'success');
-        }
+        if (editingFlashcardId) await api(`/flashcards/${editingFlashcardId}`, { method: 'PUT', body: JSON.stringify(data) });
+        else await api('/flashcards/', { method: 'POST', body: JSON.stringify(data) });
         closeModal();
         showFlashcards();
+        toast(editingFlashcardId ? 'Atualizado' : 'Criado', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
 async function deleteFlashcard(id) {
-    if (!confirm('Excluir este flashcard e todo o histórico de revisões?')) return;
-    try {
-        await api(`/flashcards/${id}`, { method: 'DELETE' });
-        toast('Flashcard excluído.', 'success');
-        showFlashcards();
-    } catch (e) { toast(e.message, 'error'); }
+    if (!confirm('Excluir este card e todo o histórico de revisões?')) return;
+    try { await api(`/flashcards/${id}`, { method: 'DELETE' }); toast('Excluído', 'success'); showFlashcards(); }
+    catch (e) { toast(e.message, 'error'); }
 }
 
-// Review mode
+// Review
 async function startReview() {
-    reviewQueue = [...window._fcDue];
+    const due = await api('/flashcards/due').catch(() => []);
+    reviewQueue = due;
     reviewIndex = 0;
-    if (reviewQueue.length === 0) { toast('Nenhum card para revisar!', 'info'); return; }
+    if (reviewQueue.length === 0) { toast('Nenhum card para revisar.', 'info'); return; }
     showReviewCard();
 }
 
 function showReviewCard() {
     if (reviewIndex >= reviewQueue.length) {
         document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-lg mx-auto text-center py-20">
-            <p class="eyebrow mb-3" style="color:var(--emerald)">/ Concluído</p>
-            <h3 class="serif text-[42px] font-medium mb-3" style="color:var(--ink); letter-spacing:-.015em;">Revisão encerrada</h3>
-            <p class="text-[14px] mb-10" style="color:var(--ink-soft)">Você revisou <span class="mono">${reviewQueue.length}</span> flashcard${reviewQueue.length>1?'s':''} nesta sessão.</p>
-            <button onclick="showFlashcards()" class="btn btn-ink">Ver todos os cards <i class="fa-solid fa-arrow-right text-[11px]"></i></button>
+        <div class="page-shell">
+            <div class="card" style="max-width: 480px; margin: 60px auto;">
+                <div class="card-body text-center" style="padding: 40px 20px;">
+                    <i class="fa-solid fa-circle-check text-[28px] mb-3" style="color:var(--success)"></i>
+                    <h2 class="text-[18px] font-semibold mb-1" style="color:var(--text)">Revisão concluída</h2>
+                    <p class="text-[12.5px] mb-5" style="color:var(--text-4)">${reviewQueue.length} card${reviewQueue.length>1?'s':''} revisado${reviewQueue.length>1?'s':''}.</p>
+                    <button onclick="showFlashcards()" class="btn btn-primary">Voltar →</button>
+                </div>
+            </div>
         </div>`;
         loadFlashcardBadge();
         return;
@@ -1488,79 +1280,73 @@ function showReviewCard() {
     const progress = Math.round((reviewIndex / reviewQueue.length) * 100);
 
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-2xl mx-auto">
-        <div class="flex items-center gap-5 mb-8">
-            <button onclick="showFlashcards()" style="color:var(--ink-faint)"><i class="fa-solid fa-arrow-left"></i></button>
+    <div class="page-shell">
+        <div class="flex items-center gap-3 mb-5">
+            <button onclick="showFlashcards()" class="btn btn-icon btn-sm"><i class="fa-solid fa-arrow-left text-[10px]"></i></button>
             <div class="flex-1">
-                <div class="flex justify-between mb-1.5">
-                    <span class="eyebrow">Card ${reviewIndex+1} / ${reviewQueue.length}</span>
-                    <span class="mono text-[11px]" style="color:var(--ink-faint)">${progress}%</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
+                <div class="flex justify-between mb-1.5"><span class="text-[12px]" style="color:var(--text-3)">Card ${reviewIndex+1} / ${reviewQueue.length}</span><span class="mono text-[11px]" style="color:var(--text-4)">${progress}%</span></div>
+                <div class="bar"><div style="width:${progress}%"></div></div>
             </div>
         </div>
 
-        ${card.subject_name ? `<p class="text-center eyebrow mb-4" style="color:var(--gold)">/ ${card.subject_name}</p>` : ''}
+        <div class="max-w-2xl mx-auto">
+            ${card.subject_name ? `<p class="text-center text-[11px] uppercase tracking-wider mb-3" style="color:var(--text-4); letter-spacing:.08em;">${card.subject_name}</p>` : ''}
 
-        <div class="card-scene mb-7" style="height:260px">
-            <div class="card-flip" id="review-card" style="height:100%">
-                <div class="card-face">
-                    <p class="eyebrow mb-5" style="color:var(--ink-faint)">Pergunta</p>
-                    <p class="serif text-[24px] font-medium text-center leading-tight" style="color:var(--ink); letter-spacing:-.01em;">${card.front}</p>
-                </div>
-                <div class="card-face card-back">
-                    <p class="eyebrow mb-5" style="color:var(--gold-soft)">Resposta</p>
-                    <p class="serif text-[22px] font-medium text-center leading-tight" style="color:var(--paper); letter-spacing:-.01em;">${card.back}</p>
+            <div class="card-scene mb-5" style="height:260px">
+                <div class="card-flip" id="review-card" style="height:100%">
+                    <div class="card-face front">
+                        <p class="text-[11px] uppercase tracking-wider mb-4" style="color:var(--text-4); letter-spacing:.1em;">Pergunta</p>
+                        <p class="text-[18px] font-medium text-center leading-snug" style="color:var(--text); max-width: 520px;">${card.front}</p>
+                    </div>
+                    <div class="card-face back">
+                        <p class="text-[11px] uppercase tracking-wider mb-4" style="color: rgba(255,255,255,.6); letter-spacing:.1em;">Resposta</p>
+                        <p class="text-[17px] font-medium text-center leading-snug" style="max-width: 520px;">${card.back}</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="text-center mb-7">
-            <button onclick="flipCard()" class="btn btn-ghost">
-                <i class="fa-solid fa-rotate text-[11px]"></i> Virar card
-            </button>
-        </div>
+            <div class="text-center mb-5">
+                <button onclick="flipCard()" class="btn"><i class="fa-solid fa-rotate text-[10px]"></i> Virar (mostrar resposta)</button>
+            </div>
 
-        <div id="confidence-section" class="hidden">
-            <p class="text-center eyebrow mb-4">Como foi?</p>
-            <div class="grid grid-cols-5 gap-2">
-                ${[
-                    {v:1, label:'Nada', bg:'var(--crimson)', fg:'#fff'},
-                    {v:2, label:'Pouco', bg:'#b87333', fg:'#fff'},
-                    {v:3, label:'Regular', bg:'var(--gold)', fg:'#1d1404'},
-                    {v:4, label:'Bem', bg:'#5d8a4e', fg:'#fff'},
-                    {v:5, label:'Perfeito', bg:'var(--emerald)', fg:'#fff'},
-                ].map(opt => `
-                <button onclick="submitReview('${card.id}',${opt.v})"
-                    class="py-3 transition-transform hover:-translate-y-0.5" style="background:${opt.bg}; color:${opt.fg}; font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;">
-                    ${opt.label}
-                </button>`).join('')}
+            <div id="confidence-section" class="hidden">
+                <p class="text-center text-[11px] uppercase tracking-wider mb-3" style="color:var(--text-3); letter-spacing:.1em;">Como foi?</p>
+                <div class="grid grid-cols-5 gap-2 max-w-xl mx-auto">
+                    ${[
+                        {v:1, label:'Nada',     color:'#dc2626'},
+                        {v:2, label:'Pouco',    color:'#ea580c'},
+                        {v:3, label:'Regular',  color:'#d97706'},
+                        {v:4, label:'Bem',      color:'#65a30d'},
+                        {v:5, label:'Perfeito', color:'#16a34a'},
+                    ].map(opt => `
+                    <button onclick="submitReview('${card.id}',${opt.v})" class="text-[11.5px] font-medium text-white py-2.5 px-2 rounded transition-opacity hover:opacity-90" style="background:${opt.color}">
+                        ${opt.label}<br><span class="text-[10px] mono opacity-70">${opt.v}</span>
+                    </button>`).join('')}
+                </div>
             </div>
         </div>
     </div>`;
 }
 
 function flipCard() {
-    const card = document.getElementById('review-card');
-    card.classList.toggle('flipped');
+    document.getElementById('review-card').classList.add('flipped');
     document.getElementById('confidence-section').classList.remove('hidden');
 }
 
-async function submitReview(cardId, confidence) {
+async function submitReview(id, confidence) {
     try {
-        await api(`/flashcards/${cardId}/review`, {
-            method: 'POST',
-            body: JSON.stringify({ is_correct: confidence >= 3, confidence })
-        });
+        await api(`/flashcards/${id}/review`, { method: 'POST', body: JSON.stringify({ confidence }) });
         reviewIndex++;
         showReviewCard();
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── STUDY SESSIONS ────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// SESSIONS
+// ─────────────────────────────────────────────────────────────
 async function showSessions() {
     setActive('menu-sessoes');
-    setPage('Sessão de Estudo', 'Registre seu tempo e atividades');
+    setPage('Sessão de estudo', 'Estudo');
 
     const subjectOpts = subjects.length === 0
         ? '<option value="">Nenhuma matéria cadastrada</option>'
@@ -1572,50 +1358,54 @@ async function showSessions() {
     sessionTasks = [];
 
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-2xl space-y-6">
-        <div class="surface-ink p-10 text-center">
-            <p class="eyebrow mb-4" style="color:var(--gold-soft)">/ Tempo de estudo</p>
-            <p class="timer-display" id="timer-display" style="color:var(--paper)">00:00:00</p>
-            <div class="flex justify-center gap-3 mt-8">
-                <button onclick="toggleTimer()" id="btn-timer" class="btn btn-gold" style="padding: 12px 28px;">
-                    <i class="fa-solid fa-play text-[11px]" id="timer-icon"></i><span id="timer-label">Iniciar</span>
-                </button>
-                <button onclick="resetTimer()" class="btn" style="background:rgba(255,255,255,.06); color:var(--paper); border:1px solid rgba(255,255,255,.15); padding: 12px 18px;">
-                    <i class="fa-solid fa-rotate-left text-[11px]"></i>
-                </button>
-            </div>
+    <div class="page-shell">
+        <div class="mb-5">
+            <h1 class="page-title">Nova sessão de estudo</h1>
+            <p class="page-sub">Cronômetro, questões e tarefas</p>
         </div>
 
-        <div class="surface p-7">
-            <div class="section-head mb-6"><h3 class="title">Configurar sessão</h3></div>
-            <div class="form-group">
-                <label class="form-label">Matéria</label>
-                <select class="form-select" id="session-subject">${subjectOpts}</select>
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <div class="form-group mb-0">
-                    <label class="form-label">Questões feitas</label>
-                    <input type="number" class="form-input mono" id="session-total" value="0" min="0">
-                </div>
-                <div class="form-group mb-0">
-                    <label class="form-label">Acertos</label>
-                    <input type="number" class="form-input mono" id="session-correct" value="0" min="0">
+        <div class="max-w-3xl space-y-3">
+            <div class="card">
+                <div class="card-header"><span class="card-title">Cronômetro</span></div>
+                <div class="card-body">
+                    <div class="text-center py-4">
+                        <p class="timer-display" id="timer-display">00:00:00</p>
+                    </div>
+                    <div class="flex justify-center gap-2">
+                        <button onclick="toggleTimer()" id="btn-timer" class="btn btn-primary btn-lg" style="min-width:140px">
+                            <i class="fa-solid fa-play text-[11px]" id="timer-icon"></i><span id="timer-label">Iniciar</span>
+                        </button>
+                        <button onclick="resetTimer()" class="btn btn-lg"><i class="fa-solid fa-rotate-left text-[11px]"></i> Zerar</button>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="surface p-7">
-            <div class="section-head mb-5"><h3 class="title">Tarefas da sessão</h3></div>
-            <div id="task-list" class="mb-4"></div>
-            <div class="flex gap-2">
-                <input class="form-input flex-1" id="task-input" placeholder="Adicionar tarefa…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTask()}">
-                <button onclick="addTask()" class="btn btn-ghost">Adicionar</button>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Dados da sessão</span></div>
+                <div class="card-body space-y-3">
+                    <div><label class="label">Matéria *</label><select class="input" id="session-subject">${subjectOpts}</select></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="label">Questões feitas</label><input type="number" class="input mono" id="session-total" value="0" min="0"></div>
+                        <div><label class="label">Acertos</label><input type="number" class="input mono" id="session-correct" value="0" min="0"></div>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <button onclick="saveSession()" class="btn btn-ink w-full" style="padding:16px;">
-            <i class="fa-solid fa-floppy-disk text-[11px]"></i> Salvar sessão
-        </button>
+            <div class="card">
+                <div class="card-header"><span class="card-title">Tarefas</span></div>
+                <div class="card-body">
+                    <div id="task-list" class="mb-3"></div>
+                    <div class="flex gap-2">
+                        <input class="input flex-1" id="task-input" placeholder="Adicionar tarefa…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTask()}">
+                        <button onclick="addTask()" class="btn">Adicionar</button>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="saveSession()" class="btn btn-primary btn-lg w-full">
+                <i class="fa-solid fa-floppy-disk text-[11px]"></i> Salvar sessão
+            </button>
+        </div>
     </div>`;
 }
 
@@ -1642,12 +1432,9 @@ function resetTimer() {
     clearInterval(timerInterval);
     timerRunning = false;
     timerSeconds = 0;
-    const td = document.getElementById('timer-display');
-    if (td) td.textContent = '00:00:00';
-    const ti = document.getElementById('timer-icon');
-    if (ti) ti.className = 'fa-solid fa-play text-[11px]';
-    const tl = document.getElementById('timer-label');
-    if (tl) tl.textContent = 'Iniciar';
+    document.getElementById('timer-display').textContent = '00:00:00';
+    document.getElementById('timer-icon').className = 'fa-solid fa-play text-[11px]';
+    document.getElementById('timer-label').textContent = 'Iniciar';
 }
 
 function addTask() {
@@ -1658,33 +1445,24 @@ function addTask() {
     inp.value = '';
     renderTaskList();
 }
-
-function toggleTask(i) {
-    sessionTasks[i].is_done = !sessionTasks[i].is_done;
-    renderTaskList();
-}
-
-function removeTask(i) {
-    sessionTasks.splice(i, 1);
-    renderTaskList();
-}
+function toggleTask(i) { sessionTasks[i].is_done = !sessionTasks[i].is_done; renderTaskList(); }
+function removeTask(i) { sessionTasks.splice(i, 1); renderTaskList(); }
 
 function renderTaskList() {
     document.getElementById('task-list').innerHTML = sessionTasks.map((t, i) => `
-    <div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--line-soft)">
-        <button onclick="toggleTask(${i})" class="w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors" style="border: 1.5px solid ${t.is_done ? 'var(--emerald)' : 'var(--line-strong)'}; background: ${t.is_done ? 'var(--emerald)' : 'transparent'}; color: var(--paper);">
+    <div class="flex items-center gap-2 py-2" style="border-bottom: 1px solid var(--border)">
+        <button onclick="toggleTask(${i})" class="w-4 h-4 flex items-center justify-center transition-colors" style="border: 1.5px solid ${t.is_done ? 'var(--success)' : 'var(--border-2)'}; background: ${t.is_done ? 'var(--success)' : 'transparent'}; color: white; border-radius: 3px;">
             ${t.is_done ? '<i class="fa-solid fa-check text-[8px]"></i>' : ''}
         </button>
-        <span class="flex-1 text-[13.5px]" style="color:${t.is_done ? 'var(--ink-faint)' : 'var(--ink)'}; ${t.is_done ? 'text-decoration: line-through;' : ''}">${t.description}</span>
-        <button onclick="removeTask(${i})" style="color:var(--ink-faint);opacity:.5"><i class="fa-solid fa-xmark text-[11px]"></i></button>
+        <span class="flex-1 text-[13px]" style="color:${t.is_done ? 'var(--text-5)' : 'var(--text)'}; ${t.is_done ? 'text-decoration: line-through;' : ''}">${t.description}</span>
+        <button onclick="removeTask(${i})" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[11px]"></i></button>
     </div>`).join('');
 }
 
 async function saveSession() {
     const subjectId = document.getElementById('session-subject').value;
     if (!subjectId) { toast('Selecione uma matéria.', 'warning'); return; }
-    if (timerSeconds === 0) { toast('Inicie o timer antes de salvar.', 'warning'); return; }
-
+    if (timerSeconds === 0) { toast('Inicie o timer.', 'warning'); return; }
     const data = {
         subject_id: subjectId,
         duration_seconds: timerSeconds,
@@ -1694,7 +1472,7 @@ async function saveSession() {
     };
     try {
         await api('/sessions/', { method: 'POST', body: JSON.stringify(data) });
-        toast('Sessão salva com sucesso!', 'success');
+        toast('Sessão salva', 'success');
         resetTimer();
         sessionTasks = [];
         renderTaskList();
@@ -1703,56 +1481,50 @@ async function saveSession() {
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── HISTORY ───────────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// HISTORY
+// ─────────────────────────────────────────────────────────────
 async function showHistory() {
     setActive('menu-historico');
-    setPage('Histórico', 'Registro de todas as sessões');
+    setPage('Histórico', 'Estudo');
     const history = await api('/sessions/history').catch(() => []);
 
-    const totalH = fmtDuration(history.reduce((a, s) => a + s.duration_seconds, 0));
+    const totalSec = history.reduce((a, s) => a + s.duration_seconds, 0);
     const totalQ = history.reduce((a, s) => a + s.total_questions, 0);
     const totalC = history.reduce((a, s) => a + s.correct_answers, 0);
     const acc = totalQ > 0 ? Math.round(totalC/totalQ*100) : 0;
 
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-4xl">
-        ${history.length > 0 ? `
-        <div class="flex justify-end mb-6">
-            <button onclick="exportHistoryPdf()" class="btn btn-ghost">
-                <i class="fa-solid fa-file-pdf text-[11px]"></i> Exportar PDF
-            </button>
-        </div>` : ''}
-
-        <div class="grid grid-cols-3 gap-0 mb-10" style="border:1px solid var(--line);">
-            ${editorialStat('fa-clock', 'Tempo total', `<span class="serif">${totalH}</span>`)}
-            ${editorialStat('fa-list', 'Sessões', `<span class="serif">${history.length}</span>`)}
-            ${editorialStat('fa-bullseye', 'Acerto', totalQ>0 ? `<span class="serif">${acc}</span><span class="mono text-[16px] ml-1" style="color:var(--ink-faint)">%</span>` : '—')}
+    <div class="page-shell">
+        <div class="flex items-baseline justify-between mb-5">
+            <div>
+                <h1 class="page-title">Histórico</h1>
+                <p class="page-sub">${history.length} sessão${history.length !== 1 ? 'ões' : ''} registrada${history.length !== 1 ? 's' : ''}</p>
+            </div>
+            ${history.length > 0 ? `<button onclick="exportHistoryPdf()" class="btn"><i class="fa-solid fa-file-pdf text-[10px]"></i> Exportar PDF</button>` : ''}
         </div>
 
-        ${history.length === 0 ? emptyState('fa-clock-rotate-left', 'Nenhuma sessão registrada', 'Registre sua primeira sessão de estudo.') :
-        `<div class="surface">
+        <div class="grid grid-cols-3 gap-3 mb-5">
+            ${kpi('Tempo total', fmtDuration(totalSec), 'fa-clock')}
+            ${kpi('Sessões', history.length, 'fa-list')}
+            ${kpi('Acerto', totalQ > 0 ? acc : '—', 'fa-bullseye', totalQ > 0 ? '%' : '')}
+        </div>
+
+        ${history.length === 0 ? `<div class="card"><div class="card-body">${emptyState('fa-clock-rotate-left','Nenhuma sessão','Registre sua primeira sessão.')}</div></div>` :
+        `<div class="card">
             <table class="tbl">
-                <thead>
-                    <tr>
-                        <th style="width:32px">#</th>
-                        <th>Matéria</th>
-                        <th>Data</th>
-                        <th class="text-right">Duração</th>
-                        <th class="text-right">Questões</th>
-                        <th class="text-right">Acerto</th>
-                    </tr>
-                </thead>
+                <thead><tr><th style="width:32px">#</th><th>Matéria</th><th style="width:120px">Data</th><th style="width:100px" class="text-right">Duração</th><th style="width:100px" class="text-right">Questões</th><th style="width:80px" class="text-right">Acerto</th></tr></thead>
                 <tbody>
                     ${history.map((s, i) => {
                         const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
-                        const accColor = a == null ? 'var(--ink-faint)' : a>=70 ? 'var(--emerald)' : a>=50 ? 'var(--amber-ink)' : 'var(--crimson)';
+                        const aColor = a == null ? 'var(--text-5)' : a>=70 ? 'var(--success)' : a>=50 ? 'var(--warning)' : 'var(--danger)';
                         return `<tr>
-                            <td class="mono text-[11px]" style="color:var(--ink-faint)">${String(i+1).padStart(2,'0')}</td>
-                            <td class="serif text-[15px]" style="color:var(--ink); font-weight:500;">${s.subject_name}</td>
-                            <td class="mono text-[12px]" style="color:var(--ink-soft)">${fmtDate(s.start_time)}</td>
-                            <td class="mono text-[13px] text-right" style="color:var(--ink)">${fmtDuration(s.duration_seconds)}</td>
-                            <td class="mono text-[13px] text-right" style="color:var(--ink-soft)">${s.total_questions > 0 ? `${s.correct_answers}/${s.total_questions}` : '—'}</td>
-                            <td class="mono text-[13px] text-right" style="color:${accColor}; font-weight: 500;">${a != null ? a+'%' : '—'}</td>
+                            <td class="id">${String(i+1).padStart(2,'0')}</td>
+                            <td style="color:var(--text); font-weight: 500;">${s.subject_name}</td>
+                            <td class="num text-[12px]">${fmtDateTime(s.start_time)}</td>
+                            <td class="num text-right">${fmtDuration(s.duration_seconds)}</td>
+                            <td class="num text-right" style="color:var(--text-3)">${s.total_questions > 0 ? `${s.correct_answers}/${s.total_questions}` : '—'}</td>
+                            <td class="num text-right" style="color:${aColor}">${a != null ? a+'%' : '—'}</td>
                         </tr>`;
                     }).join('')}
                 </tbody>
@@ -1761,96 +1533,96 @@ async function showHistory() {
     </div>`;
 }
 
-// ── PROFILE ───────────────────────────────────────
+async function exportHistoryPdf() {
+    try {
+        const res = await fetch(`${API_BASE}/sessions/report/pdf`, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) { toast('Erro ao gerar PDF.', 'error'); return; }
+        const blob = await res.blob();
+        const disp = res.headers.get('content-disposition') || '';
+        const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+        const fname = match ? decodeURIComponent(match[1]) : `Historico - ${me.full_name}.pdf`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fname; a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) { toast('Erro ao exportar: ' + e.message, 'error'); }
+}
+
+// ─────────────────────────────────────────────────────────────
+// PROFILE
+// ─────────────────────────────────────────────────────────────
 async function showProfile() {
     setActive('menu-perfil');
-    setPage('Meu Perfil', 'Informações e configurações');
+    setPage('Perfil', 'Conta');
     const u = me;
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-2xl space-y-6">
-        <div class="surface p-8">
-            <div class="flex items-start gap-6 mb-8 pb-6" style="border-bottom: 1px solid var(--line);">
-                <div class="relative group">
-                    ${u.photo_url
-                        ? `<img src="${u.photo_url}" style="width:84px;height:84px;object-fit:cover;border:1px solid var(--line-strong)" onerror="this.outerHTML='<div style=\\'width:84px;height:84px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;border:1px solid var(--gold-soft);font-family:Fraunces,serif;font-weight:500;font-size:32px;color:var(--ink);\\'>${getInitials(u.full_name)}</div>'">`
-                        : `<div style="width:84px;height:84px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;border:1px solid var(--gold-soft);font-family:Fraunces,serif;font-weight:500;font-size:32px;color:var(--ink);">${getInitials(u.full_name)}</div>`}
-                    <button onclick="openPhotoModal()" style="position:absolute;bottom:-8px;right:-8px;width:28px;height:28px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Alterar foto">
-                        <i class="fa-solid fa-camera text-[11px]"></i>
-                    </button>
-                </div>
-                <div class="pt-1">
-                    <p class="serif text-[26px] font-medium" style="color:var(--ink); letter-spacing:-.01em; line-height:1;">${u.full_name}</p>
-                    <p class="text-[13px] mt-1.5" style="color:var(--ink-soft)">${u.email}</p>
-                    <span class="badge ${u.role==='admin' ? 'badge-pendente' : 'badge-em-curso'} mt-3">${u.role==='admin'?'Administrador':'Estudante'}</span>
+    <div class="page-shell">
+        <div class="mb-5">
+            <h1 class="page-title">Perfil</h1>
+            <p class="page-sub">Informações da conta</p>
+        </div>
+
+        <div class="max-w-2xl space-y-3">
+            <div class="card">
+                <div class="card-body">
+                    <div class="flex items-start gap-4 pb-5 mb-5" style="border-bottom: 1px solid var(--border)">
+                        <div class="relative">
+                            ${u.photo_url
+                                ? `<img src="${u.photo_url}" style="width:64px;height:64px;object-fit:cover;border-radius:4px;border:1px solid var(--border)" onerror="this.outerHTML='<div class=\\'avatar\\' style=\\'width:64px;height:64px;font-size:22px\\'>${getInitials(u.full_name)}</div>'">`
+                                : `<div class="avatar" style="width:64px;height:64px;font-size:22px">${getInitials(u.full_name)}</div>`}
+                            <button onclick="openPhotoModal()" style="position:absolute;bottom:-4px;right:-4px;width:22px;height:22px;background:var(--text);color:white;display:flex;align-items:center;justify-content:center;border-radius:3px;cursor:pointer;">
+                                <i class="fa-solid fa-camera text-[9px]"></i>
+                            </button>
+                        </div>
+                        <div class="flex-1 pt-1">
+                            <p class="text-[16px] font-semibold" style="color:var(--text)">${u.full_name}</p>
+                            <p class="text-[12.5px] mt-0.5" style="color:var(--text-3)">${u.email}</p>
+                            <span class="badge ${u.role==='admin' ? 'badge-em-curso' : 'badge-default'} mt-2">${u.role==='admin'?'Administrador':'Estudante'}</span>
+                        </div>
+                    </div>
+
+                    <form onsubmit="saveProfile(event)" class="space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="label">Nome completo</label><input class="input" id="p-name" value="${u.full_name||''}"></div>
+                            <div><label class="label">Curso</label><input class="input" id="p-curso" value="${u.curso||''}" placeholder="Direito"></div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div><label class="label">Período atual</label><input type="number" class="input mono" id="p-period" value="${u.current_period||''}" min="1" max="12"></div>
+                            <div><label class="label">Total períodos</label><input type="number" class="input mono" id="p-total" value="${u.total_periods||''}" min="1" max="12"></div>
+                            <div><label class="label">Previsão</label><input class="input" id="p-estimate" value="${u.completion_estimate||''}" placeholder="Dez/2027"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div><label class="label">Telefone</label><input class="input mono" id="p-phone" value="${u.phone||''}" placeholder="(11) 99999-0000"></div>
+                            <div><label class="label">CPF</label><input class="input mono" id="p-cpf" value="${u.cpf||''}" placeholder="000.000.000-00" ${u.cpf ? 'disabled' : ''}>${u.cpf ? '<p class="help">CPF não pode ser alterado</p>' : ''}</div>
+                        </div>
+                        <div class="flex justify-end pt-2">
+                            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk text-[10px]"></i> Salvar</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
-            <form onsubmit="saveProfile(event)" class="space-y-5">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group mb-0">
-                        <label class="form-label">Nome completo</label>
-                        <input class="form-input" id="p-name" value="${u.full_name||''}">
+            <div class="card">
+                <div class="card-body flex items-center justify-between">
+                    <div>
+                        <p class="text-[12.5px] font-medium" style="color:var(--text)">Sair da conta</p>
+                        <p class="text-[11.5px] mt-0.5" style="color:var(--text-4)">Encerra a sessão neste navegador.</p>
                     </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label">Curso</label>
-                        <input class="form-input" id="p-curso" value="${u.curso||''}" placeholder="Ex.: Direito">
-                    </div>
+                    <button onclick="logout()" class="btn btn-danger"><i class="fa-solid fa-arrow-right-from-bracket text-[10px]"></i> Sair</button>
                 </div>
-                <div class="grid grid-cols-3 gap-4">
-                    <div class="form-group mb-0">
-                        <label class="form-label">Período atual</label>
-                        <input type="number" class="form-input mono" id="p-period" value="${u.current_period||''}" min="1" max="12">
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label">Total de períodos</label>
-                        <input type="number" class="form-input mono" id="p-total" value="${u.total_periods||''}" min="1" max="12">
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label">Conclusão</label>
-                        <input class="form-input" id="p-estimate" value="${u.completion_estimate||''}" placeholder="Ex.: Dez/2027">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group mb-0">
-                        <label class="form-label">Telefone</label>
-                        <input class="form-input mono" id="p-phone" value="${u.phone||''}" placeholder="(11) 99999-0000">
-                    </div>
-                    <div class="form-group mb-0">
-                        <label class="form-label">CPF</label>
-                        <input class="form-input mono" id="p-cpf" value="${u.cpf||''}" placeholder="000.000.000-00" ${u.cpf ? 'disabled' : ''}>
-                        ${u.cpf ? '<p class="text-[10.5px] mt-1.5" style="color:var(--ink-faint)">CPF não pode ser alterado</p>' : ''}
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-ink w-full mt-3">
-                    <i class="fa-solid fa-floppy-disk text-[11px]"></i> Salvar alterações
-                </button>
-            </form>
-        </div>
-
-        <div class="surface p-7">
-            <p class="eyebrow mb-1.5">Conta</p>
-            <p class="text-[13px] mb-5" style="color:var(--ink-soft)">${u.email}</p>
-            <button onclick="logout()" class="btn btn-danger">
-                <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i> Sair do sistema
-            </button>
+            </div>
         </div>
     </div>`;
 }
 
 function openPhotoModal() {
     openModal(`
-    <div class="flex items-baseline justify-between mb-6">
-        <div>
-            <p class="eyebrow" style="color:var(--gold)">/ Foto de perfil</p>
-            <h3 class="serif text-[24px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Atualizar imagem</h3>
-        </div>
-        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
-    </div>
-    <p class="text-[12.5px] mb-5" style="color:var(--ink-soft)">Cole a URL de uma imagem pública. Deixe em branco para remover.</p>
-    <input id="photo-url-input" class="form-input" placeholder="https://i.imgur.com/exemplo.jpg" value="${me.photo_url || ''}">
-    <div class="flex gap-3 mt-6">
-        <button onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
-        <button onclick="savePhoto()" class="btn btn-ink flex-1">Salvar</button>
+    <div class="modal-head"><h3>Foto de perfil</h3><button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button></div>
+    <p class="text-[12.5px] mb-3" style="color:var(--text-3)">URL pública (http/https). Deixe em branco para remover.</p>
+    <input id="photo-url-input" class="input mono" placeholder="https://..." value="${me.photo_url || ''}">
+    <div class="flex gap-2 justify-end mt-4">
+        <button onclick="closeModal()" class="btn">Cancelar</button>
+        <button onclick="savePhoto()" class="btn btn-primary">Salvar</button>
     </div>`);
 }
 
@@ -1861,7 +1633,7 @@ async function savePhoto() {
         me = { ...me, ...updated };
         closeModal();
         showProfile();
-        toast(url ? 'Foto atualizada!' : 'Foto removida.', 'success');
+        toast(url ? 'Foto atualizada' : 'Foto removida', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -1883,11 +1655,10 @@ async function saveProfile(e) {
         me = { ...me, ...updated };
         document.getElementById('userDisplayName').textContent = me.full_name;
         document.getElementById('sidebar-name').textContent = me.full_name;
-        toast('Perfil atualizado!', 'success');
+        toast('Perfil atualizado', 'success');
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// ── Start ──────────────────────────────────────────
 init();
 </script>
 </body>

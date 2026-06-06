@@ -3,270 +3,168 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Law System — Entrar</title>
+<title>Law System — Login</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
 :root {
-    --paper:       #f6f1e7;
-    --paper-soft:  #ede5d2;
-    --ink:         #0d1117;
-    --ink-soft:    #2a2f3a;
-    --ink-faint:   #6b6f7a;
-    --line:        #d8cfb8;
-    --line-strong: #b9ad8f;
-    --gold:        #b08b3e;
-    --gold-soft:   #d4b76a;
-    --gold-bg:     #f1e8cf;
-    --emerald:     #1f5d3a;
-    --crimson:     #8b1538;
+    --bg:        #fafafa;
+    --bg-2:      #f4f4f5;
+    --surface:   #ffffff;
+    --border:    #e4e4e7;
+    --border-2:  #d4d4d8;
+    --text:      #18181b;
+    --text-2:    #52525b;
+    --text-3:    #71717a;
+    --text-4:    #a1a1aa;
+    --accent:    #2563eb;
+    --accent-h:  #1d4ed8;
+    --danger:    #dc2626;
+    --warning:   #d97706;
+    --success:   #16a34a;
 }
-* { font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; }
-body {
-    background: var(--paper);
-    color: var(--ink);
-    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
-}
-.serif { font-family: 'Fraunces', Georgia, serif; font-feature-settings: 'ss01' 1; }
-.mono  { font-family: 'JetBrains Mono', monospace; }
+* { font-family: 'Inter', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--text); font-size: 14px; }
+.mono { font-family: 'JetBrains Mono', monospace; }
 
-/* Editorial type */
-.display-1 {
-    font-family: 'Fraunces', serif;
-    font-weight: 300;
-    font-size: clamp(3.5rem, 7vw, 6rem);
-    line-height: 0.92;
-    letter-spacing: -0.035em;
-    font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 0;
-}
-.display-1 em { font-style: italic; font-weight: 500; font-variation-settings: 'opsz' 144, 'WONK' 1; }
-.eyebrow {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-}
-.rule-decor {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-}
-.rule-decor::before {
-    content: '';
-    width: 32px;
-    height: 1px;
-    background: currentColor;
-}
-
-/* Left panel atmospherics */
-.paper-grain {
-    background-image:
-        radial-gradient(circle at 20% 10%, rgba(176,139,62,.08), transparent 60%),
-        radial-gradient(circle at 90% 80%, rgba(31,93,58,.06), transparent 50%),
-        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 .04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
-}
-
-/* Right panel form */
 .field {
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--line-strong);
-    color: var(--ink);
-    padding: 12px 0 10px;
-    font-size: 15px;
-    width: 100%;
-    transition: border-color .2s;
+    width: 100%; padding: 8px 10px; font-size: 13px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    outline: none; transition: border-color .12s, box-shadow .12s;
 }
-.field:focus {
-    outline: none;
-    border-bottom-color: var(--ink);
+.field:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
+.field::placeholder { color: var(--text-4); }
+.field-error { border-color: var(--danger); }
+
+.btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 8px 14px; font-size: 13px; font-weight: 500;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border-2); border-radius: 4px;
+    cursor: pointer; transition: background .12s, border-color .12s;
+    line-height: 1;
 }
-.field::placeholder { color: var(--ink-faint); opacity: .55; }
+.btn:hover { background: var(--bg-2); }
+.btn-primary { background: var(--text); color: white; border-color: var(--text); }
+.btn-primary:hover { background: #27272a; border-color: #27272a; }
+.btn:disabled { opacity: .5; cursor: wait; }
 
-.btn-primary {
-    background: var(--ink);
-    color: var(--paper);
-    padding: 14px 24px;
-    font-weight: 500;
-    font-size: 14px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    transition: background .2s, transform .15s;
-    width: 100%;
-    border: none;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
+.label { font-size: 11px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; display: block; }
+
+.tab {
+    padding: 0 0 8px; font-size: 13px; font-weight: 500; color: var(--text-3);
+    border: none; background: none; cursor: pointer; border-bottom: 2px solid transparent;
+    margin-right: 20px; transition: color .12s, border-color .12s;
 }
-.btn-primary:hover { background: var(--ink-soft); }
-.btn-primary:active { transform: translateY(1px); }
-.btn-primary:disabled { opacity: .55; cursor: wait; transform: none; }
+.tab.active { color: var(--text); border-bottom-color: var(--text); }
 
-.tab-pill {
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-    padding: 10px 0;
-    border-bottom: 1px solid transparent;
-    transition: color .15s, border-color .15s;
-    cursor: pointer;
-    background: none;
-    border-top: none; border-left: none; border-right: none;
+.alert { display: none; padding: 10px 12px; font-size: 12.5px; border-radius: 4px; margin-bottom: 14px; gap: 8px; align-items: flex-start; }
+.alert i { margin-top: 1px; }
+.alert-error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+.alert-success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+.alert-warning { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+
+.strength { height: 2px; background: var(--border); border-radius: 1px; }
+.strength.on-1 { background: var(--danger); }
+.strength.on-2 { background: #f59e0b; }
+.strength.on-3 { background: #eab308; }
+.strength.on-4 { background: var(--success); }
+
+.divider-h { height: 1px; background: var(--border); }
+
+.brand-mark {
+    width: 28px; height: 28px; background: var(--text); color: white;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 4px;
 }
-.tab-pill.active { color: var(--ink); border-bottom-color: var(--gold); }
+.brand-mark i { font-size: 13px; }
 
-.alert {
-    display: none;
-    padding: 12px 16px;
-    border-left: 3px solid;
-    font-size: 13px;
-    margin-bottom: 20px;
-    align-items: flex-start;
-    gap: 10px;
-    background: rgba(0,0,0,0.025);
-}
-.alert i { margin-top: 2px; }
-.alert-error   { border-color: var(--crimson); color: var(--crimson); }
-.alert-success { border-color: var(--emerald); color: var(--emerald); }
-.alert-warning { border-color: var(--gold);    color: #6b4f15; }
-
-@keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-.rise-in   { animation: riseIn .55s cubic-bezier(.22,1,.36,1) both; }
-.rise-in-d { animation: riseIn .55s .12s cubic-bezier(.22,1,.36,1) both; }
-
-.strength-bar { height: 2px; background: var(--line); }
-.strength-bar.on-1 { background: var(--crimson); }
-.strength-bar.on-2 { background: #b87333; }
-.strength-bar.on-3 { background: var(--gold); }
-.strength-bar.on-4 { background: var(--emerald); }
-
-.figure-mark {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    border: 1px solid var(--ink);
-    color: var(--ink);
-}
-.figure-mark i { font-size: 18px; }
-
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: 0.01ms !important; } }
 </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen flex items-center justify-center p-4">
 
-<div class="grid lg:grid-cols-12 min-h-screen">
+<div class="w-full max-w-[380px]">
 
-    <!-- LEFT — editorial -->
-    <section class="paper-grain lg:col-span-7 px-8 md:px-16 lg:px-24 py-12 lg:py-16 flex flex-col justify-between">
-        <header class="flex items-center gap-4 rise-in">
-            <div class="figure-mark"><i class="fa-solid fa-scale-balanced"></i></div>
+    <div class="flex items-center gap-2.5 mb-7">
+        <div class="brand-mark"><i class="fa-solid fa-scale-balanced"></i></div>
+        <div>
+            <p class="text-[14px] font-semibold leading-none">Law System</p>
+            <p class="text-[11px] mono mt-1" style="color:var(--text-3)">v2.0 · estudos jurídicos</p>
+        </div>
+    </div>
+
+    <div class="bg-white border rounded p-7" style="border-color: var(--border)">
+
+        <div class="flex border-b mb-6" style="border-color: var(--border)">
+            <button onclick="showTab('login')" id="tab-login" class="tab active">Entrar</button>
+            <button onclick="showTab('register')" id="tab-register" class="tab">Criar conta</button>
+        </div>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="form-login" onsubmit="handleLogin(event)" class="space-y-4">
             <div>
-                <p class="serif text-[20px] font-semibold tracking-tight" style="color:var(--ink)">Law System</p>
-                <p class="eyebrow" style="margin-top:2px">Estudos jurídicos · Edição 2026</p>
+                <label class="label">E-mail</label>
+                <input type="email" id="login-email" required placeholder="voce@exemplo.com" class="field">
             </div>
-        </header>
-
-        <div class="max-w-2xl rise-in-d">
-            <span class="eyebrow rule-decor" style="color:var(--gold)">A casa</span>
-            <h1 class="display-1 mt-6" style="color:var(--ink)">
-                Estudar Direito,<br>
-                como quem <em>constrói</em><br>
-                um repertório.
-            </h1>
-            <p class="mt-8 max-w-md text-[15px] leading-relaxed" style="color:var(--ink-soft)">
-                Tempo cronometrado, matérias por prioridade, flashcards com repetição espaçada e livros marcados pelo que importa. Tudo no seu nome, do seu jeito.
-            </p>
-        </div>
-
-        <footer class="flex items-end justify-between gap-6">
-            <p class="serif italic text-[15px] leading-relaxed max-w-sm" style="color:var(--ink-soft)">
-                "Quem deseja ser livre, primeiro precisa ser justo."
-                <span class="block eyebrow mt-2" style="color:var(--ink-faint)">— Voltaire</span>
-            </p>
-            <p class="eyebrow text-right" style="color:var(--ink-faint)">
-                v2.0<br>
-                <span class="mono normal-case tracking-normal" style="font-size:11px">/ acesso restrito</span>
-            </p>
-        </footer>
-    </section>
-
-    <!-- RIGHT — form -->
-    <section class="lg:col-span-5 bg-white border-l flex items-center justify-center px-8 md:px-12 py-12" style="border-color: var(--line)">
-        <div class="w-full max-w-sm rise-in-d">
-
-            <div class="flex gap-8 mb-10 border-b" style="border-color: var(--line)">
-                <button onclick="showTab('login')" id="tab-login" class="tab-pill active">Entrar</button>
-                <button onclick="showTab('register')" id="tab-register" class="tab-pill">Criar conta</button>
+            <div>
+                <label class="label">Senha</label>
+                <div class="relative">
+                    <input type="password" id="login-password" required placeholder="••••••••" class="field pr-9">
+                    <button type="button" onclick="togglePwd('login-password', this)" class="absolute right-2 top-1/2 -translate-y-1/2" style="color:var(--text-3)">
+                        <i class="fa-regular fa-eye text-xs"></i>
+                    </button>
+                </div>
             </div>
+            <button type="submit" id="btn-login" class="btn btn-primary w-full" style="padding: 10px;">
+                Entrar
+            </button>
+        </form>
 
-            <div id="alert" class="alert"></div>
+        <form id="form-register" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+            <div>
+                <label class="label">Nome completo</label>
+                <input type="text" id="reg-name" required placeholder="Seu nome" class="field">
+            </div>
+            <div>
+                <label class="label">E-mail</label>
+                <input type="email" id="reg-email" required placeholder="voce@exemplo.com" class="field">
+            </div>
+            <div>
+                <label class="label">Curso</label>
+                <input type="text" id="reg-curso" placeholder="Direito" class="field">
+            </div>
+            <div>
+                <label class="label">Senha</label>
+                <div class="relative">
+                    <input type="password" id="reg-password" required placeholder="Mínimo 8 caracteres" oninput="checkStrength(this.value)" class="field pr-9">
+                    <button type="button" onclick="togglePwd('reg-password', this)" class="absolute right-2 top-1/2 -translate-y-1/2" style="color:var(--text-3)">
+                        <i class="fa-regular fa-eye text-xs"></i>
+                    </button>
+                </div>
+                <div class="mt-2 grid grid-cols-4 gap-1">
+                    <div id="s1" class="strength"></div>
+                    <div id="s2" class="strength"></div>
+                    <div id="s3" class="strength"></div>
+                    <div id="s4" class="strength"></div>
+                </div>
+                <p id="strength-label" class="text-[11px] mt-1 h-3 mono" style="color:var(--text-3)"></p>
+            </div>
+            <button type="submit" id="btn-register" class="btn btn-primary w-full" style="padding: 10px;">
+                Criar conta
+            </button>
+        </form>
 
-            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-7">
-                <div>
-                    <p class="eyebrow mb-2">E-mail</p>
-                    <input type="email" id="login-email" required placeholder="você@exemplo.com" class="field">
-                </div>
-                <div>
-                    <p class="eyebrow mb-2">Senha</p>
-                    <div class="relative">
-                        <input type="password" id="login-password" required placeholder="••••••••" class="field pr-9">
-                        <button type="button" onclick="togglePwd('login-password', this)" class="absolute right-0 bottom-2.5" style="color:var(--ink-faint)">
-                            <i class="fa-regular fa-eye text-sm"></i>
-                        </button>
-                    </div>
-                </div>
-                <button type="submit" id="btn-login" class="btn-primary mt-2">
-                    Entrar <i class="fa-solid fa-arrow-right text-xs"></i>
-                </button>
-            </form>
+    </div>
 
-            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-7 hidden">
-                <div>
-                    <p class="eyebrow mb-2">Nome completo</p>
-                    <input type="text" id="reg-name" required placeholder="Como você assina" class="field">
-                </div>
-                <div>
-                    <p class="eyebrow mb-2">E-mail</p>
-                    <input type="email" id="reg-email" required placeholder="você@exemplo.com" class="field">
-                </div>
-                <div>
-                    <p class="eyebrow mb-2">Curso</p>
-                    <input type="text" id="reg-curso" placeholder="Ex.: Direito" class="field">
-                </div>
-                <div>
-                    <p class="eyebrow mb-2">Senha</p>
-                    <div class="relative">
-                        <input type="password" id="reg-password" required placeholder="Mínimo 8 caracteres" oninput="checkStrength(this.value)" class="field pr-9">
-                        <button type="button" onclick="togglePwd('reg-password', this)" class="absolute right-0 bottom-2.5" style="color:var(--ink-faint)">
-                            <i class="fa-regular fa-eye text-sm"></i>
-                        </button>
-                    </div>
-                    <div class="mt-3 grid grid-cols-4 gap-1">
-                        <div id="s1" class="strength-bar"></div>
-                        <div id="s2" class="strength-bar"></div>
-                        <div id="s3" class="strength-bar"></div>
-                        <div id="s4" class="strength-bar"></div>
-                    </div>
-                    <p id="strength-label" class="text-[11px] mt-1.5 h-4 mono" style="color:var(--ink-faint)"></p>
-                </div>
-                <button type="submit" id="btn-register" class="btn-primary mt-2">
-                    Criar conta <i class="fa-solid fa-arrow-right text-xs"></i>
-                </button>
-            </form>
-
-            <p class="text-[12px] mt-8 leading-relaxed" style="color:var(--ink-faint)">
-                Novo cadastro é liberado manualmente pelo administrador.<br>
-                Você receberá acesso quando aprovado.
-            </p>
-        </div>
-    </section>
+    <p class="text-[11px] mt-4 leading-relaxed text-center" style="color:var(--text-3)">
+        Novos cadastros aguardam aprovação do administrador.
+    </p>
 </div>
 
 <script src="config.js"></script>
@@ -296,7 +194,7 @@ function togglePwd(id, btn) {
     const inp = document.getElementById(id);
     const hide = inp.type === 'text';
     inp.type = hide ? 'password' : 'text';
-    btn.querySelector('i').className = `fa-regular fa-eye${hide ? '' : '-slash'} text-sm`;
+    btn.querySelector('i').className = `fa-regular fa-eye${hide ? '' : '-slash'} text-xs`;
 }
 
 function checkStrength(pwd) {
@@ -305,14 +203,11 @@ function checkStrength(pwd) {
     if (/[A-Z]/.test(pwd)) score++;
     if (/[0-9]/.test(pwd)) score++;
     if (/[^A-Za-z0-9]/.test(pwd)) score++;
-
     const labels = ['Fraca', 'Regular', 'Boa', 'Forte'];
     for (let i = 1; i <= 4; i++) {
-        const el = document.getElementById(`s${i}`);
-        el.className = `strength-bar${i <= score ? ' on-' + score : ''}`;
+        document.getElementById(`s${i}`).className = `strength${i <= score ? ' on-' + score : ''}`;
     }
-    const label = document.getElementById('strength-label');
-    label.textContent = pwd.length > 0 ? (labels[score-1] || '') : '';
+    document.getElementById('strength-label').textContent = pwd.length > 0 ? (labels[score-1] || '') : '';
 }
 
 async function handleLogin(e) {
@@ -339,7 +234,7 @@ async function handleLogin(e) {
             location.href = 'dash.html';
         }
     } catch {
-        showAlert('Erro de conexão. Verifique sua internet.');
+        showAlert('Erro de conexão.');
     } finally {
         btn.disabled = false;
         btn.innerHTML = orig;
@@ -350,7 +245,7 @@ async function handleRegister(e) {
     e.preventDefault();
     clearAlert();
     const pwd = document.getElementById('reg-password').value;
-    if (pwd.length < 8) { showAlert('A senha deve ter pelo menos 8 caracteres.'); return; }
+    if (pwd.length < 8) { showAlert('Senha deve ter pelo menos 8 caracteres.'); return; }
     const btn = document.getElementById('btn-register');
     const orig = btn.innerHTML;
     btn.disabled = true;
@@ -370,12 +265,12 @@ async function handleRegister(e) {
         if (!res.ok) {
             showAlert(data.detail || 'Erro ao criar conta.');
         } else {
-            showAlert('Conta criada. Aguarde a aprovação do administrador.', 'warning');
+            showAlert('Conta criada. Aguarde aprovação do administrador.', 'warning');
             document.getElementById('form-register').reset();
-            setTimeout(() => showTab('login'), 3500);
+            setTimeout(() => showTab('login'), 3000);
         }
     } catch {
-        showAlert('Erro de conexão. Verifique sua internet.');
+        showAlert('Erro de conexão.');
     } finally {
         btn.disabled = false;
         btn.innerHTML = orig;
