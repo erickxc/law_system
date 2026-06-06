@@ -34,10 +34,24 @@ class BookUpdate(BaseModel):
     subject_id: Optional[UUID] = None
 
 
+VALID_TAGS = {"check", "done", "review", "important", "question", "pin"}
+
+
 class AnnotationCreate(BaseModel):
     page_number: int
     note_text: str
     color: str = "yellow"
+    tag: Optional[str] = None
+    x_pct: Optional[float] = None
+    y_pct: Optional[float] = None
+
+
+class AnnotationUpdate(BaseModel):
+    note_text: Optional[str] = None
+    color: Optional[str] = None
+    tag: Optional[str] = None
+    x_pct: Optional[float] = None
+    y_pct: Optional[float] = None
 
 
 class HighlightCreate(BaseModel):
@@ -69,6 +83,9 @@ def _annotation_dict(a: BookAnnotation) -> dict:
         "page_number": a.page_number,
         "note_text": a.note_text,
         "color": a.color,
+        "tag": a.tag,
+        "x_pct": a.x_pct,
+        "y_pct": a.y_pct,
         "created_at": a.created_at.isoformat(),
     }
 
@@ -213,14 +230,41 @@ def create_annotation(
     if not book:
         raise HTTPException(status_code=404, detail="Livro não encontrado.")
 
+    if data.tag and data.tag not in VALID_TAGS:
+        raise HTTPException(400, f"tag inválida. Use uma de: {', '.join(VALID_TAGS)}")
+
     ann = BookAnnotation(
         book_id=book_id,
         user_id=current_user.id,
         page_number=data.page_number,
         note_text=data.note_text,
         color=data.color,
+        tag=data.tag,
+        x_pct=data.x_pct,
+        y_pct=data.y_pct,
     )
     db.add(ann)
+    db.commit()
+    db.refresh(ann)
+    return _annotation_dict(ann)
+
+
+@router.put("/annotations/{annotation_id}")
+def update_annotation(
+    annotation_id: UUID,
+    data: AnnotationUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    ann = db.query(BookAnnotation).filter(
+        BookAnnotation.id == annotation_id, BookAnnotation.user_id == current_user.id
+    ).first()
+    if not ann:
+        raise HTTPException(status_code=404, detail="Anotação não encontrada.")
+    if data.tag is not None and data.tag != "" and data.tag not in VALID_TAGS:
+        raise HTTPException(400, f"tag inválida. Use uma de: {', '.join(VALID_TAGS)}")
+    for k, v in data.model_dump(exclude_unset=True).items():
+        setattr(ann, k, v)
     db.commit()
     db.refresh(ann)
     return _annotation_dict(ann)

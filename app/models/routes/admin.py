@@ -247,6 +247,7 @@ def run_migration(
         "001_user_lockout_and_photo",
         "002_calendar_schedule_difficulty",
         "003_goal_and_share",
+        "004_sticky_notes",
     }
     if name not in allowed:
         raise HTTPException(status_code=404, detail=f"Migration '{name}' não existe")

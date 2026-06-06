@@ -109,6 +109,10 @@ class BookAnnotation(Base):
     page_number: Mapped[int] = mapped_column(Integer, nullable=False)
     note_text: Mapped[str] = mapped_column(Text, nullable=False)
     color: Mapped[str] = mapped_column(String(20), default="yellow")
+    # Sticky note: tag semântica (check, done, review, important, question, pin) + posição na página (% da largura/altura)
+    tag: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    x_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    y_pct: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     book: Mapped["Book"] = relationship("Book", back_populates="annotations")
