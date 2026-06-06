@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from pydantic import BaseModel
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
+from pathlib import Path
 
 from app.database import get_db
 from app.core.auth import get_current_user
@@ -229,3 +231,32 @@ def _payment_dict(p: Payment) -> dict:
         "status": p.status,
         "created_at": p.created_at.isoformat() if p.created_at else None,
     }
+
+
+# ── Migrations (admin-only, idempotente) ──────────────────────────────────
+
+@router.post("/migrations/{name}")
+def run_migration(
+    name: str,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Executa um arquivo SQL de migrations/. Idempotente — pode rodar várias vezes."""
+    # Whitelist — apenas migrations conhecidas
+    allowed = {"001_user_lockout_and_photo"}
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail=f"Migration '{name}' não existe")
+
+    sql_path = Path(__file__).resolve().parents[3] / "migrations" / f"{name}.sql"
+    if not sql_path.exists():
+        raise HTTPException(status_code=404, detail=f"Arquivo {sql_path.name} não encontrado")
+
+    sql = sql_path.read_text(encoding="utf-8")
+    try:
+        # DDL no PostgreSQL é transacional. Pode rodar dentro do scope normal.
+        db.execute(text(sql))
+        db.commit()
+        return {"ok": True, "migration": name, "size_bytes": len(sql)}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Erro ao executar migration: {e}")
