@@ -11,9 +11,7 @@ class Teacher(Base):
     __tablename__ = "teachers"
     __table_args__ = {"schema": "academic"}
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     contact: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
@@ -26,9 +24,7 @@ class Subject(Base):
     __table_args__ = {"schema": "academic"}
 
     id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True),
-        primary_key=True,
-        default=uuid.uuid4,
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4,
         server_default=text("gen_random_uuid()")
     )
     name: Mapped[str] = mapped_column(String(100), nullable=False)
@@ -53,6 +49,7 @@ class Subject(Base):
     contents: Mapped[List["Content"]] = relationship("Content", back_populates="subject", cascade="all, delete-orphan")
     books: Mapped[List["Book"]] = relationship("Book", back_populates="subject")
     grades: Mapped[List["Grade"]] = relationship("Grade", back_populates="subject", cascade="all, delete-orphan")
+    flashcards: Mapped[List["Flashcard"]] = relationship("Flashcard", back_populates="subject")
 
 
 class Content(Base):
@@ -73,14 +70,65 @@ class Book(Base):
     __table_args__ = {"schema": "academic"}
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
+    author: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     genre: Mapped[Optional[str]] = mapped_column(String(100))
-    total_pages: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_pages: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     current_page: Mapped[int] = mapped_column(Integer, default=0)
-    pdf_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    cover_color: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
 
-    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("academic.subjects.id", ondelete="SET NULL"))
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True
+    )
     subject: Mapped[Optional["Subject"]] = relationship("Subject", back_populates="books")
+    annotations: Mapped[List["BookAnnotation"]] = relationship(
+        "BookAnnotation", back_populates="book", cascade="all, delete-orphan"
+    )
+    highlights: Mapped[List["BookHighlight"]] = relationship(
+        "BookHighlight", back_populates="book", cascade="all, delete-orphan"
+    )
+
+
+class BookAnnotation(Base):
+    __tablename__ = "book_annotations"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    book_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("academic.books.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    note_text: Mapped[str] = mapped_column(Text, nullable=False)
+    color: Mapped[str] = mapped_column(String(20), default="yellow")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    book: Mapped["Book"] = relationship("Book", back_populates="annotations")
+
+
+class BookHighlight(Base):
+    __tablename__ = "book_highlights"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    book_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("academic.books.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    page_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    selected_text: Mapped[str] = mapped_column(Text, nullable=False)
+    color: Mapped[str] = mapped_column(String(20), default="yellow")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    book: Mapped["Book"] = relationship("Book", back_populates="highlights")
 
 
 class Grade(Base):
@@ -137,3 +185,64 @@ class PdfHighlight(Base):
     color: Mapped[str] = mapped_column(String(50), default="yellow")
 
     session: Mapped["StudySession"] = relationship("StudySession", back_populates="highlights")
+
+
+class Flashcard(Base):
+    __tablename__ = "flashcards"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True
+    )
+    front: Mapped[str] = mapped_column(Text, nullable=False)
+    back: Mapped[str] = mapped_column(Text, nullable=False)
+    tags: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    # Spaced repetition fields (SM-2)
+    interval_days: Mapped[float] = mapped_column(Float, default=1.0)
+    ease_factor: Mapped[float] = mapped_column(Float, default=2.5)
+    next_review_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    total_reviews: Mapped[int] = mapped_column(Integer, default=0)
+    correct_reviews: Mapped[int] = mapped_column(Integer, default=0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    subject: Mapped[Optional["Subject"]] = relationship("Subject", back_populates="flashcards")
+    reviews: Mapped[List["FlashcardReview"]] = relationship(
+        "FlashcardReview", back_populates="flashcard", cascade="all, delete-orphan"
+    )
+
+
+class FlashcardReview(Base):
+    __tablename__ = "flashcard_reviews"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    flashcard_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("academic.flashcards.id", ondelete="CASCADE"), nullable=False
+    )
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    confidence: Mapped[int] = mapped_column(Integer, default=3)  # 1..5
+    reviewed_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+    flashcard: Mapped["Flashcard"] = relationship("Flashcard", back_populates="reviews")
+
+
+class Payment(Base):
+    __tablename__ = "payments"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    amount: Mapped[float] = mapped_column(Float, nullable=False)
+    description: Mapped[str] = mapped_column(String(255), nullable=False)
+    payment_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pendente")  # pago | pendente | inadimplente
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
