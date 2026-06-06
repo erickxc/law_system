@@ -481,13 +481,15 @@ async function renderAllPages(scrollToPage) {
     // Pega a primeira página pra estimar dimensão base (todas similares na maioria dos PDFs)
     const firstPage = await _pdfDoc.getPage(1);
     const baseViewport = firstPage.getViewport({ scale: _readerScale });
+    const baseW = Math.floor(baseViewport.width);
+    const baseH = Math.floor(baseViewport.height);
 
     // Cria placeholders
     for (let p = 1; p <= _pdfDoc.numPages; p++) {
         const wrap = document.createElement('div');
         wrap.className = 'pdf-page-wrap';
-        wrap.style.width = `${baseViewport.width}px`;
-        wrap.style.height = `${baseViewport.height}px`;
+        wrap.style.width  = `${baseW}px`;
+        wrap.style.height = `${baseH}px`;
         wrap.dataset.page = p;
         wrap.dataset.rendered = '0';
 
@@ -495,6 +497,22 @@ async function renderAllPages(scrollToPage) {
         placeholder.className = 'pdf-placeholder';
         placeholder.innerHTML = `<span class="mono text-[11px]" style="color:var(--text-5)">pg. ${p}</span>`;
         wrap.appendChild(placeholder);
+
+        // Drop zone: aceita etiquetas arrastadas da toolbar
+        wrap.addEventListener('dragover', (e) => {
+            if (_draggingTag) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; wrap.classList.add('drop-target'); }
+        });
+        wrap.addEventListener('dragleave', () => wrap.classList.remove('drop-target'));
+        wrap.addEventListener('drop', (e) => {
+            wrap.classList.remove('drop-target');
+            const tag = e.dataTransfer.getData('text/x-sticky-tag') || _draggingTag;
+            if (!tag || !STICKY_TAGS[tag]) return;
+            e.preventDefault();
+            const wrapRect = wrap.getBoundingClientRect();
+            const xPct = ((e.clientX - wrapRect.left) / wrapRect.width)  * 100;
+            const yPct = ((e.clientY - wrapRect.top)  / wrapRect.height) * 100;
+            createStickyDirect(tag, parseInt(wrap.dataset.page), xPct, yPct);
+        });
 
         container.appendChild(wrap);
         _pageWraps.push(wrap);
@@ -583,35 +601,41 @@ async function renderPdfPage(pageNum) {
     const page = await _pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: _readerScale });
 
-    // Ajusta dimensão do wrap (algumas páginas podem ter tamanho diferente)
-    wrap.style.width = `${viewport.width}px`;
-    wrap.style.height = `${viewport.height}px`;
+    // Dimensões inteiras (evita sub-pixel rendering, principal causa de turvo)
+    const cssW = Math.floor(viewport.width);
+    const cssH = Math.floor(viewport.height);
 
-    // Limpa placeholder
+    wrap.style.width  = `${cssW}px`;
+    wrap.style.height = `${cssH}px`;
     wrap.innerHTML = '';
 
-    // Canvas com DPR (alta resolução em telas Retina/4K)
+    // Resolução do canvas = DPR × boost. Em zoom alto compensa qualquer
+    // perda de nitidez. Cap a 4x pra não estourar VRAM em zoom 300%.
     const dpr = window.devicePixelRatio || 1;
+    const outputScale = Math.min(4, Math.max(2, dpr * 1.5));
+
     const canvas = document.createElement('canvas');
-    canvas.width = Math.floor(viewport.width * dpr);
-    canvas.height = Math.floor(viewport.height * dpr);
-    canvas.style.width = `${viewport.width}px`;
-    canvas.style.height = `${viewport.height}px`;
-    const ctx = canvas.getContext('2d');
+    canvas.width  = Math.floor(viewport.width  * outputScale);
+    canvas.height = Math.floor(viewport.height * outputScale);
+    canvas.style.width  = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+    const ctx = canvas.getContext('2d', { alpha: false });
+    // Texto mais nítido em escala alta
+    ctx.imageSmoothingQuality = 'high';
     wrap.appendChild(canvas);
 
     // Text layer
     const textLayerDiv = document.createElement('div');
     textLayerDiv.className = 'pdf-textLayer';
-    textLayerDiv.style.width = `${viewport.width}px`;
-    textLayerDiv.style.height = `${viewport.height}px`;
+    textLayerDiv.style.width  = `${cssW}px`;
+    textLayerDiv.style.height = `${cssH}px`;
     wrap.appendChild(textLayerDiv);
 
-    // Render canvas com transform DPR
+    // Render com transform de outputScale
     await page.render({
         canvasContext: ctx,
         viewport,
-        transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null,
+        transform: outputScale !== 1 ? [outputScale, 0, 0, outputScale, 0, 0] : null,
     }).promise;
 
     // Text layer (PDF.js 4.x)
@@ -727,17 +751,8 @@ function renderOverlaysForPage(pageNum, wrap) {
     wrap.addEventListener('click', pageClickPostit);
 }
 
-function pageClickPostit(e) {
-    if (!_postitMode) return;
-    if (e.target.closest('.sticky-note')) return;
-    if (e.target.closest('.hl-overlay')) return;
-    const wrap = e.currentTarget;
-    const rect = wrap.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    const pageNum = parseInt(wrap.dataset.page);
-    openStickyCreateModal(_postitMode, pageNum, x, y);
-}
+// Click no PDF não cria mais sticky (criação é por drag-and-drop da toolbar)
+function pageClickPostit(e) { /* no-op: drag-and-drop é o caminho de criação */ }
 
 // Torna a etiqueta arrastável. Threshold de 5px distingue click (edita) de drag (move).
 function makeStickyDraggable(el, sticky, wrap) {
@@ -830,13 +845,13 @@ function enterPostitMode(initialTag) {
         btn.classList.add('btn-primary');
         btn.innerHTML = '<i class="fa-solid fa-circle-stop text-[10px]"></i> Sair etiquetas';
     }
-    // Cria toolbar
+    // Cria toolbar com botões DRAGGABLE
     if (!document.getElementById('postit-toolbar')) {
         const tb = document.createElement('div');
         tb.id = 'postit-toolbar';
         tb.className = 'postit-toolbar';
         tb.innerHTML = Object.entries(STICKY_TAGS).map(([k, v]) => `
-            <button class="pt-btn sticky-tag-${k}" data-tag="${k}" onclick="selectPostitTag('${k}')" title="${v.label}">
+            <button class="pt-btn sticky-tag-${k}" data-tag="${k}" draggable="true" title="${v.label} — arraste para o PDF">
                 <i class="fa-solid ${v.icon}"></i>
             </button>
         `).join('') + `
@@ -846,11 +861,30 @@ function enterPostitMode(initialTag) {
             </button>
         `;
         document.body.appendChild(tb);
+
+        // Listeners dragstart em cada botão da toolbar
+        tb.querySelectorAll('.pt-btn').forEach(b => {
+            b.addEventListener('dragstart', (e) => {
+                const tag = b.dataset.tag;
+                e.dataTransfer.effectAllowed = 'copy';
+                e.dataTransfer.setData('text/x-sticky-tag', tag);
+                e.dataTransfer.setData('text/plain', tag);
+                _draggingTag = tag;
+                document.body.classList.add('dragging-sticky');
+            });
+            b.addEventListener('dragend', () => {
+                _draggingTag = null;
+                document.body.classList.remove('dragging-sticky');
+            });
+            // Click ainda seleciona (uso visual: indica "esta é a etiqueta")
+            b.addEventListener('click', () => selectPostitTag(b.dataset.tag));
+        });
     }
     selectPostitTag(initialTag);
-    // Toast de instrução
-    toast('Modo etiquetas: clique no PDF para fixar uma etiqueta', 'info', 5000);
+    toast('Arraste qualquer etiqueta da barra inferior para o PDF', 'info', 5000);
 }
+
+let _draggingTag = null;
 
 function exitPostitMode() {
     _postitMode = null;
@@ -868,6 +902,32 @@ function selectPostitTag(tag) {
     document.querySelectorAll('#postit-toolbar .pt-btn').forEach(b => {
         b.classList.toggle('is-selected', b.dataset.tag === tag);
     });
+}
+
+// Cria etiqueta direto (sem modal) no local arrastado. Usuário pode clicar pra editar texto.
+async function createStickyDirect(tag, pageNum, x_pct, y_pct) {
+    try {
+        const result = await api(`/books/${currentBookId}/annotations`, {
+            method: 'POST',
+            body: JSON.stringify({
+                page_number: pageNum,
+                note_text: '',
+                color: 'yellow',
+                tag,
+                x_pct,
+                y_pct,
+            }),
+        });
+        _readerAnnotations.push(result);
+        const wrap = _pageWraps[pageNum - 1];
+        if (wrap) {
+            wrap.querySelectorAll('.sticky-note,.hl-overlay,.note-pin').forEach(el => el.remove());
+            renderOverlaysForPage(pageNum, wrap);
+        }
+        updateNotesCount();
+        renderNotesList();
+        toast(`Etiqueta "${STICKY_TAGS[tag].label}" fixada`, 'success', 1500);
+    } catch (e) { toast('Erro ao criar etiqueta: ' + e.message, 'error'); }
 }
 
 function openStickyCreateModal(tag, pageNum, x_pct, y_pct) {

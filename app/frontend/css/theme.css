@@ -179,12 +179,18 @@ aside.sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08
 .postit-toolbar .pt-exit:hover { opacity: 1; }
 
 /* Cursor PDF em modo post-it */
-body.postit-mode .pdf-page-wrap { cursor: crosshair; }
+body.postit-mode .pdf-page-wrap { cursor: default; }
+body.dragging-sticky .pdf-page-wrap { cursor: copy; }
+.pdf-page-wrap.drop-target { outline: 3px dashed var(--accent); outline-offset: -3px; background: rgba(59,130,246,.04); }
 
 /* Placeholder de página ainda não renderizada */
 .pdf-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; }
 [data-theme="dark"] .pdf-placeholder { background: #1a1a1a; }
-.pdf-page-wrap canvas { display: block; }
+.pdf-page-wrap canvas { display: block; image-rendering: -webkit-optimize-contrast; image-rendering: crisp-edges; }
+
+/* Botões da toolbar de etiquetas: cursor de grab quando draggable */
+.postit-toolbar .pt-btn[draggable="true"] { cursor: grab; }
+.postit-toolbar .pt-btn[draggable="true"]:active { cursor: grabbing; }
 
 /* ── Topbar / page header ────────────────────────────────────────────── */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
