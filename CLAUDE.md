@@ -217,11 +217,48 @@ python -m http.server 5500
 
 ## Segurança — Pontos de Atenção
 
-- **CORS:** allowlist explícita em [main.py:35](main.py#L35). Adicionar novos domínios de frontend lá. Não use `["*"]` com `allow_credentials=True`.
-- **`.env`:** nunca commitar credenciais reais
+### Defesas em camadas (defense-in-depth)
+
+- **CORS:** allowlist explícita em [main.py:35](main.py#L35). `allow_methods` e `allow_headers` específicos (não `*`). Adicionar novos domínios de frontend lá.
+- **Headers HTTP (OWASP):** middleware em [main.py:54](main.py#L54) aplica:
+  - `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload` — força HTTPS por 2 anos
+  - `X-Content-Type-Options: nosniff`
+  - `X-Frame-Options: DENY` — anti-clickjacking
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `Permissions-Policy: geolocation=(), microphone=(), camera=()` — bloqueia APIs sensíveis
+- **`/docs` e `/redoc`** desabilitados quando `ENVIRONMENT=production` (anti-reconnaissance)
 - **Bcrypt:** controlado por `BCRYPT_ROUNDS` (default 12). Startup falha se `<10` em produção
 - **SECRET_KEY:** startup falha se vazia ou `<32 chars`. Gere com `python -c "import secrets; print(secrets.token_urlsafe(48))"`
+- **JWT:** PyJWT 2.13+ com `cryptography` (HS256 atualmente). Migrado de `python-jose` por causa de CVEs em `ecdsa`.
 - **Brute-force protection:** após `MAX_LOGIN_ATTEMPTS` (default 5) falhas, conta bloqueia por `LOCKOUT_MINUTES` (default 15). Reset automático em login bem-sucedido. Estado em `core.users.failed_login_attempts` + `locked_until`.
+- **`.env`:** **nunca commitar**. Já está no `.gitignore`. Se acidentalmente commitar e a senha vazar pro histórico, [rotacionar imediatamente](#rotação-de-credenciais-emergência).
+
+### Auditoria com Snyk
+
+```bash
+snyk test --file=requirements.txt --severity-threshold=low
+```
+
+Manter zero CVEs nas dependências antes de cada deploy. As deps são pinadas (com `==`) para builds reproduzíveis; quando uma vulnerabilidade aparece, atualizar a versão pinada explicitamente e re-rodar `snyk test`.
+
+### Rotação de credenciais (emergência)
+
+Se o `.env` vazou ou houve incidente:
+
+1. **Gerar nova `SECRET_KEY`**:
+   ```bash
+   python -c "import secrets; print(secrets.token_urlsafe(48))"
+   ```
+   Atualizar na Vercel: dashboard → law_sys_back → Settings → Environment Variables → editar `SECRET_KEY`. Após salvar: `vercel deploy --prod --yes`. **Todos os tokens JWT existentes ficam inválidos** (usuários precisam fazer login de novo).
+
+2. **Rotacionar senha do banco** (Neon):
+   - Neon dashboard → Roles → study_app → Reset password
+   - Atualizar `POSTGRES_URL` / `DATABASE_URL` na Vercel
+   - Redeploy
+
+3. **Histórico do git ainda contém o segredo antigo**. Se o repo é público ou pode ser visto por outras pessoas:
+   - Usar `git filter-repo` ou BFG Repo-Cleaner para reescrever histórico
+   - **Aviso:** isso força reescrita de história e exige `git push --force-with-lease`. Coordene com qualquer pessoa que tenha clone local.
 - **Aprovação manual:** novos usuários têm `is_approved=False` por padrão — fluxo de aprovação pelo admin
 - **DELETE de usuário:** [admin.py](app/models/routes/admin.py) faz cleanup explícito em ordem (subjects → sessions → books → flashcards → user) — independente de o CASCADE estar configurado no DB. Aplicar [`migrations/001_*`](migrations/001_user_lockout_and_photo.sql) pra garantir CASCADE no banco também.
 
