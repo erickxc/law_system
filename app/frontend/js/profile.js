@@ -210,6 +210,7 @@ async function savePhoto() {
             body: JSON.stringify({ photo_url: photoUrl }),
         });
         me = { ...me, ...updated };
+        updateHeaderAvatar();
         closeModal();
         showProfile();
         toast(photoUrl ? 'Foto atualizada' : 'Foto removida', 'success');
@@ -221,6 +222,7 @@ async function removePhoto() {
     try {
         const updated = await api('/users/me/photo', { method: 'PUT', body: JSON.stringify({ photo_url: null }) });
         me = { ...me, ...updated };
+        updateHeaderAvatar();
         closeModal();
         showProfile();
         toast('Foto removida', 'success');

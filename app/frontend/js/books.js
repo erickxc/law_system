@@ -68,7 +68,26 @@ function openBookModal(id = null) {
             <div><label class="label">Total páginas</label><input type="number" class="input mono" id="b-pages" value="1" min="1"></div>
             <div><label class="label">Página atual</label><input type="number" class="input mono" id="b-curpage" value="0" min="0"></div>
         </div>
-        <div><label class="label">URL do PDF</label><input type="url" class="input mono" id="b-url" placeholder="https://..."><p class="help">Link direto para um PDF público.</p></div>
+        <div>
+            <label class="label">Fonte do PDF</label>
+            <div class="tab-bar" style="margin-bottom: 8px;">
+                <button type="button" id="bsrc-url-btn" onclick="switchBookSrc('url')" class="tab-btn active"><i class="fa-solid fa-link text-[10px]"></i> URL externa</button>
+                <button type="button" id="bsrc-file-btn" onclick="switchBookSrc('file')" class="tab-btn"><i class="fa-solid fa-cloud-arrow-up text-[10px]"></i> Arquivo local</button>
+            </div>
+            <div id="bsrc-url-tab">
+                <input type="url" class="input mono" id="b-url" placeholder="https://...">
+                <p class="help">Link direto para um PDF público (acessível por todos os dispositivos).</p>
+            </div>
+            <div id="bsrc-file-tab" class="hidden">
+                <label for="b-file" class="block cursor-pointer" style="border: 2px dashed var(--border-2); border-radius: 6px; padding: 16px; text-align: center; transition: all .12s;" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--accent-bg)'" onmouseout="this.style.borderColor='var(--border-2)';this.style.background=''">
+                    <i class="fa-solid fa-file-pdf text-[24px] mb-1" style="color:var(--text-4)"></i>
+                    <p class="text-[12px] font-medium" style="color:var(--text)" id="b-file-label">Clique para selecionar um PDF</p>
+                    <p class="text-[10.5px] mt-1" style="color:var(--text-4)">até 50MB · salvo localmente neste navegador</p>
+                </label>
+                <input type="file" id="b-file" accept="application/pdf,.pdf" style="display:none" onchange="handleLocalPdf(this.files[0])">
+                <p class="help"><i class="fa-solid fa-circle-info text-[10px]"></i> PDFs locais ficam apenas neste navegador (não sincronizam entre dispositivos).</p>
+            </div>
+        </div>
         <div><label class="label">Matéria</label><select class="input" id="b-subject"><option value="">Nenhuma</option>${subjectOpts}</select></div>
         <div><label class="label">Cor da capa</label><div class="flex gap-1.5 flex-wrap mt-1" id="color-picker">${colorPicker}</div><input type="hidden" id="b-color" value="${COVER_COLORS[0]}"></div>
         <div class="flex gap-2 justify-end pt-2">
@@ -78,6 +97,8 @@ function openBookModal(id = null) {
     </form>`);
 
     selectColor(COVER_COLORS[0], document.querySelector('.color-btn'));
+    _bookSrc = 'url';
+    _pendingLocalPdf = null;
 
     if (id) {
         api(`/books/${id}`).then(b => {
@@ -86,8 +107,17 @@ function openBookModal(id = null) {
             document.getElementById('b-genre').value = b.genre || '';
             document.getElementById('b-pages').value = b.total_pages;
             document.getElementById('b-curpage').value = b.current_page;
-            document.getElementById('b-url').value = b.url || '';
             document.getElementById('b-subject').value = b.subject_id || '';
+
+            const isLocal = b.url && b.url.startsWith(LOCAL_PDF_PREFIX);
+            if (isLocal) {
+                switchBookSrc('file');
+                const lbl = document.getElementById('b-file-label');
+                if (lbl) lbl.textContent = '📄 PDF local salvo · selecione outro para substituir';
+            } else {
+                document.getElementById('b-url').value = b.url || '';
+            }
+
             if (b.cover_color) {
                 const btn = document.querySelector(`.color-btn[data-color="${b.cover_color}"]`);
                 if (btn) selectColor(b.cover_color, btn);
@@ -102,21 +132,82 @@ function selectColor(color, btn) {
     document.getElementById('b-color').value = color;
 }
 
+// ─── Toggle entre URL externa e arquivo local no modal de book ────────────
+let _bookSrc = 'url';
+let _pendingLocalPdf = null;   // Blob aguardando salvar (após editingBookId existir)
+
+function switchBookSrc(src) {
+    _bookSrc = src;
+    document.getElementById('bsrc-url-btn').classList.toggle('active', src === 'url');
+    document.getElementById('bsrc-file-btn').classList.toggle('active', src === 'file');
+    document.getElementById('bsrc-url-tab').classList.toggle('hidden', src !== 'url');
+    document.getElementById('bsrc-file-tab').classList.toggle('hidden', src !== 'file');
+}
+
+async function handleLocalPdf(file) {
+    if (!file) return;
+    if (file.size > 50 * 1024 * 1024) {
+        toast('Arquivo muito grande (máx 50MB).', 'warning');
+        return;
+    }
+    if (file.type && !file.type.includes('pdf')) {
+        toast('Selecione um arquivo PDF.', 'warning');
+        return;
+    }
+    _pendingLocalPdf = file;
+    const lbl = document.getElementById('b-file-label');
+    if (lbl) lbl.textContent = `✓ ${file.name} (${Math.round(file.size/1024)}KB)`;
+    // Estimar pages: usar PDF.js
+    try {
+        const pdfjs = await loadPdfJs();
+        const arrayBuf = await file.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: arrayBuf }).promise;
+        document.getElementById('b-pages').value = pdf.numPages;
+        toast(`PDF: ${pdf.numPages} páginas detectadas`, 'info', 2500);
+    } catch {}
+}
+
 async function saveBook(e) {
     e.preventDefault();
+    let urlValue = null;
+    if (_bookSrc === 'url') {
+        urlValue = document.getElementById('b-url').value.trim() || null;
+    } else if (_bookSrc === 'file' && _pendingLocalPdf) {
+        urlValue = LOCAL_PDF_PREFIX + 'pending'; // placeholder, será atualizado abaixo
+    } else if (_bookSrc === 'file' && editingBookId) {
+        // Editando, sem novo arquivo: manter url atual
+        const cur = await api(`/books/${editingBookId}`);
+        urlValue = cur.url;
+    }
+
     const data = {
         name: document.getElementById('b-name').value.trim(),
         author: document.getElementById('b-author').value.trim() || null,
         genre: document.getElementById('b-genre').value.trim() || null,
         total_pages: parseInt(document.getElementById('b-pages').value) || 1,
         current_page: parseInt(document.getElementById('b-curpage').value) || 0,
-        url: document.getElementById('b-url').value.trim() || null,
+        url: urlValue,
         subject_id: document.getElementById('b-subject').value || null,
         cover_color: document.getElementById('b-color').value,
     };
     try {
-        if (editingBookId) await api(`/books/${editingBookId}`, { method: 'PUT', body: JSON.stringify(data) });
-        else await api('/books/', { method: 'POST', body: JSON.stringify(data) });
+        let book;
+        if (editingBookId) {
+            book = await api(`/books/${editingBookId}`, { method: 'PUT', body: JSON.stringify(data) });
+        } else {
+            book = await api('/books/', { method: 'POST', body: JSON.stringify(data) });
+        }
+
+        // Se tem arquivo local pendente, salva no IndexedDB e atualiza url com o id real
+        if (_pendingLocalPdf && book.id) {
+            await savePdfLocal(book.id, _pendingLocalPdf);
+            const finalUrl = LOCAL_PDF_PREFIX + book.id;
+            if (data.url !== finalUrl) {
+                await api(`/books/${book.id}`, { method: 'PUT', body: JSON.stringify({ url: finalUrl }) });
+            }
+            _pendingLocalPdf = null;
+        }
+
         closeModal();
         showBooks();
         toast(editingBookId ? 'Livro atualizado' : 'Livro adicionado', 'success');
@@ -128,6 +219,7 @@ async function deleteBook(id, name, ev) {
     if (!confirm(`Excluir "${name}"? Grifos e anotações serão removidos.`)) return;
     try {
         await api(`/books/${id}`, { method: 'DELETE' });
+        await deletePdfLocal(id);  // limpa IndexedDB se houver
         showBooks();
         toast('Livro excluído', 'success');
     } catch (e) { toast(e.message, 'error'); }
@@ -139,6 +231,60 @@ async function deleteBook(id, name, ev) {
 
 const PDFJS_URL  = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs';
 const PDFJS_WORK = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+
+// ─── Local PDF storage (IndexedDB) ───────────────────────────────────────
+const LOCAL_PDF_PREFIX = 'local:';
+const IDB_NAME = 'law_system_pdfs';
+const IDB_STORE = 'pdfs';
+
+function openIDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function savePdfLocal(bookId, blob) {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(blob, bookId);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+}
+async function getPdfLocal(bookId) {
+    const db = await openIDB();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readonly');
+        const req = tx.objectStore(IDB_STORE).get(bookId);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+    });
+}
+async function deletePdfLocal(bookId) {
+    try {
+        const db = await openIDB();
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).delete(bookId);
+    } catch {}
+}
+
+// Tipos de sticky notes
+const STICKY_TAGS = {
+    check:     { label: 'Check',      icon: 'fa-circle-check' },
+    done:      { label: 'Concluído',  icon: 'fa-flag-checkered' },
+    review:    { label: 'Revisar',    icon: 'fa-rotate' },
+    important: { label: 'Importante', icon: 'fa-star' },
+    question:  { label: 'Dúvida',     icon: 'fa-circle-question' },
+    pin:       { label: 'Marcar',     icon: 'fa-thumbtack' },
+};
+let _postitMode = null;       // null OU 'check'/'done'/etc
+let _postitClickHandler = null;
 let _pdfjs = null;
 let _pdfDoc = null;
 let _currentBook = null;
@@ -188,6 +334,7 @@ async function openBookReader(bookId) {
                 <span id="reader-zoom" class="mono text-[11px]" style="color:var(--text-3); width:36px; text-align:center;">100%</span>
                 <button onclick="readerZoom(0.2)" class="btn btn-icon btn-sm" title="Ampliar"><i class="fa-solid fa-plus text-[10px]"></i></button>
                 <span style="width:1px; height:20px; background:var(--border); margin: 0 6px;"></span>
+                <button onclick="togglePostitMode()" class="btn btn-sm" id="btn-postit"><i class="fa-solid fa-note-sticky text-[10px]"></i> Etiquetas</button>
                 <button onclick="toggleNotesPanel()" class="btn btn-sm" id="btn-notes-toggle"><i class="fa-solid fa-bookmark text-[10px]"></i> Notas (<span id="notes-count">${highlights.length + annotations.length}</span>)</button>
             </div>
         </div>
@@ -253,7 +400,21 @@ async function openBookReader(bookId) {
 async function renderReader(book) {
     try {
         const pdfjs = await loadPdfJs();
-        _pdfDoc = await pdfjs.getDocument({ url: book.url, cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/cmaps/', cMapPacked: true }).promise;
+        const docOpts = { cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/cmaps/', cMapPacked: true };
+
+        // PDF local (IndexedDB) vs URL externa
+        if (book.url && book.url.startsWith(LOCAL_PDF_PREFIX)) {
+            const blob = await getPdfLocal(book.id);
+            if (!blob) {
+                throw new Error('Arquivo local não encontrado neste navegador. Use outro dispositivo? Re-suba o PDF.');
+            }
+            const arrayBuf = await blob.arrayBuffer();
+            docOpts.data = arrayBuf;
+        } else {
+            docOpts.url = book.url;
+        }
+
+        _pdfDoc = await pdfjs.getDocument(docOpts).promise;
 
         // Ajustar total_pages se diferir
         if (_pdfDoc.numPages !== book.total_pages) {
@@ -365,9 +526,26 @@ function readerPrevPage() { readerGoToPage((_renderedPage || 1) - 1); }
 function readerNextPage() { readerGoToPage((_renderedPage || 1) + 1); }
 
 function renderOverlaysForPage(pageNum, wrap) {
-    // Overlay de highlights — sobrepostos no canvas
+    // Sticky notes posicionadas (x_pct, y_pct) — etiquetas visuais
+    const stickies = _readerAnnotations.filter(a => a.page_number === pageNum && a.tag && a.x_pct != null && a.y_pct != null);
+    stickies.forEach(s => {
+        const tag = STICKY_TAGS[s.tag] || STICKY_TAGS.pin;
+        const el = document.createElement('div');
+        el.className = `sticky-note sticky-tag-${s.tag}`;
+        el.style.left = `${s.x_pct}%`;
+        el.style.top  = `${s.y_pct}%`;
+        el.innerHTML = `<i class="fa-solid ${tag.icon}"></i><span>${s.note_text || tag.label}</span>`;
+        el.title = `Clique para editar · ${tag.label}`;
+        el.onclick = (e) => {
+            e.stopPropagation();
+            if (_postitMode) return; // não abre detalhe em modo post-it
+            openStickyEditModal(s);
+        };
+        wrap.appendChild(el);
+    });
+
+    // Pins na margem para highlights (sem coordenadas) e anotações antigas (sem tag/posição)
     const hls = _readerHighlights.filter(h => h.page_number === pageNum);
-    // Por simplicidade, mostrar como pins na borda esquerda (não posicionamos por coordenadas de seleção pq não as guardamos)
     hls.forEach((h, i) => {
         const pin = document.createElement('div');
         pin.className = 'note-pin';
@@ -380,8 +558,9 @@ function renderOverlaysForPage(pageNum, wrap) {
         wrap.appendChild(pin);
     });
 
-    const anns = _readerAnnotations.filter(a => a.page_number === pageNum);
-    anns.forEach((a, i) => {
+    // Anotações antigas (sem tag/coords) → pins normais
+    const oldAnns = _readerAnnotations.filter(a => a.page_number === pageNum && !(a.tag && a.x_pct != null));
+    oldAnns.forEach((a, i) => {
         const pin = document.createElement('div');
         pin.className = 'note-pin';
         pin.style.left = '-28px';
@@ -392,6 +571,198 @@ function renderOverlaysForPage(pageNum, wrap) {
         pin.onclick = () => showNoteDetail(a, 'annotation');
         wrap.appendChild(pin);
     });
+
+    // Click handler na pagina pra colocar sticky no modo post-it
+    wrap.addEventListener('click', pageClickPostit);
+}
+
+function pageClickPostit(e) {
+    if (!_postitMode) return;
+    if (e.target.classList?.contains('sticky-note')) return;
+    const wrap = e.currentTarget;
+    const rect = wrap.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    const pageNum = parseInt(wrap.dataset.page);
+    openStickyCreateModal(_postitMode, pageNum, x, y);
+}
+
+// ─── Modo post-it (toolbar inferior) ─────────────────────────────────────
+function togglePostitMode() {
+    if (_postitMode) {
+        exitPostitMode();
+    } else {
+        enterPostitMode('check');
+    }
+}
+
+function enterPostitMode(initialTag) {
+    _postitMode = initialTag;
+    document.body.classList.add('postit-mode');
+    const btn = document.getElementById('btn-postit');
+    if (btn) {
+        btn.classList.add('btn-primary');
+        btn.innerHTML = '<i class="fa-solid fa-circle-stop text-[10px]"></i> Sair etiquetas';
+    }
+    // Cria toolbar
+    if (!document.getElementById('postit-toolbar')) {
+        const tb = document.createElement('div');
+        tb.id = 'postit-toolbar';
+        tb.className = 'postit-toolbar';
+        tb.innerHTML = Object.entries(STICKY_TAGS).map(([k, v]) => `
+            <button class="pt-btn sticky-tag-${k}" data-tag="${k}" onclick="selectPostitTag('${k}')" title="${v.label}">
+                <i class="fa-solid ${v.icon}"></i>
+            </button>
+        `).join('') + `
+            <div class="pt-divider"></div>
+            <button class="pt-exit" onclick="exitPostitMode()">
+                <i class="fa-solid fa-xmark"></i> Sair
+            </button>
+        `;
+        document.body.appendChild(tb);
+    }
+    selectPostitTag(initialTag);
+    // Toast de instrução
+    toast('Modo etiquetas: clique no PDF para fixar uma etiqueta', 'info', 5000);
+}
+
+function exitPostitMode() {
+    _postitMode = null;
+    document.body.classList.remove('postit-mode');
+    document.getElementById('postit-toolbar')?.remove();
+    const btn = document.getElementById('btn-postit');
+    if (btn) {
+        btn.classList.remove('btn-primary');
+        btn.innerHTML = '<i class="fa-solid fa-note-sticky text-[10px]"></i> Etiquetas';
+    }
+}
+
+function selectPostitTag(tag) {
+    _postitMode = tag;
+    document.querySelectorAll('#postit-toolbar .pt-btn').forEach(b => {
+        b.classList.toggle('is-selected', b.dataset.tag === tag);
+    });
+}
+
+function openStickyCreateModal(tag, pageNum, x_pct, y_pct) {
+    const t = STICKY_TAGS[tag];
+    openModal(`
+    <div class="modal-head">
+        <h3>Nova etiqueta · pg. ${pageNum}</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mb-4">
+        <p class="text-[11px] uppercase tracking-wider mb-2" style="color:var(--text-4); letter-spacing:.08em;">Tipo</p>
+        <div class="flex flex-wrap gap-2">
+            ${Object.entries(STICKY_TAGS).map(([k, v]) => `
+                <button data-tag="${k}" onclick="document.querySelectorAll('[data-tag]').forEach(b=>b.classList.remove('is-selected'));this.classList.add('is-selected');document.getElementById('sticky-tag').value='${k}'"
+                    class="sticky-tag-${k} ${k === tag ? 'is-selected' : ''}"
+                    style="padding:6px 10px;border-radius:4px;cursor:pointer;font-size:11.5px;font-weight:600;border:2px solid transparent;">
+                    <i class="fa-solid ${v.icon} text-[10px]"></i> ${v.label}
+                </button>
+            `).join('')}
+        </div>
+        <style>[data-tag].is-selected { border-color: var(--text) !important; box-shadow: 0 0 0 2px white inset, 0 0 0 4px var(--text); }</style>
+    </div>
+    <input type="hidden" id="sticky-tag" value="${tag}">
+    <div>
+        <label class="label">Texto curto (opcional)</label>
+        <input type="text" id="sticky-text" class="input" placeholder="Ex: revisar art. 5º" maxlength="80" autofocus>
+        <p class="help">Se deixar em branco, mostra apenas o ícone e nome do tipo.</p>
+    </div>
+    <div class="flex gap-2 justify-end pt-3 mt-4" style="border-top:1px solid var(--border)">
+        <button onclick="closeModal()" class="btn">Cancelar</button>
+        <button onclick="saveStickyCreate(${pageNum}, ${x_pct}, ${y_pct})" class="btn btn-primary">Fixar etiqueta</button>
+    </div>`);
+    setTimeout(() => document.getElementById('sticky-text')?.focus(), 50);
+}
+
+async function saveStickyCreate(pageNum, x_pct, y_pct) {
+    const tag = document.getElementById('sticky-tag').value;
+    const text = document.getElementById('sticky-text').value.trim();
+    try {
+        const result = await api(`/books/${currentBookId}/annotations`, {
+            method: 'POST',
+            body: JSON.stringify({
+                page_number: pageNum,
+                note_text: text || '',
+                color: 'yellow',
+                tag,
+                x_pct,
+                y_pct,
+            }),
+        });
+        _readerAnnotations.push(result);
+        closeModal();
+        toast('Etiqueta fixada', 'success');
+        updateNotesCount();
+        readerGoToPage(pageNum);
+        renderNotesList();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+function openStickyEditModal(s) {
+    const tag = STICKY_TAGS[s.tag];
+    openModal(`
+    <div class="modal-head">
+        <h3>${tag.label} · pg. ${s.page_number}</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="mb-4">
+        <p class="text-[11px] uppercase tracking-wider mb-2" style="color:var(--text-4); letter-spacing:.08em;">Tipo</p>
+        <div class="flex flex-wrap gap-2">
+            ${Object.entries(STICKY_TAGS).map(([k, v]) => `
+                <button data-tag="${k}" onclick="document.querySelectorAll('[data-tag]').forEach(b=>b.classList.remove('is-selected'));this.classList.add('is-selected');document.getElementById('sticky-edit-tag').value='${k}'"
+                    class="sticky-tag-${k} ${s.tag === k ? 'is-selected' : ''}"
+                    style="padding:6px 10px;border-radius:4px;cursor:pointer;font-size:11.5px;font-weight:600;border:2px solid transparent;">
+                    <i class="fa-solid ${v.icon} text-[10px]"></i> ${v.label}
+                </button>
+            `).join('')}
+        </div>
+        <style>[data-tag].is-selected { border-color: var(--text) !important; box-shadow: 0 0 0 2px white inset, 0 0 0 4px var(--text); }</style>
+    </div>
+    <input type="hidden" id="sticky-edit-tag" value="${s.tag}">
+    <div>
+        <label class="label">Texto</label>
+        <input type="text" id="sticky-edit-text" class="input" value="${s.note_text || ''}" maxlength="80" autofocus>
+    </div>
+    <div class="flex gap-2 justify-between pt-3 mt-4" style="border-top:1px solid var(--border)">
+        <button onclick="deleteSticky('${s.id}')" class="btn btn-danger"><i class="fa-solid fa-trash text-[10px]"></i> Remover</button>
+        <div class="flex gap-2">
+            <button onclick="closeModal()" class="btn">Cancelar</button>
+            <button onclick="saveStickyEdit('${s.id}')" class="btn btn-primary">Salvar</button>
+        </div>
+    </div>`);
+}
+
+async function saveStickyEdit(id) {
+    const tag = document.getElementById('sticky-edit-tag').value;
+    const text = document.getElementById('sticky-edit-text').value.trim();
+    try {
+        const updated = await api(`/books/annotations/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({ tag, note_text: text }),
+        });
+        const i = _readerAnnotations.findIndex(a => a.id === id);
+        if (i !== -1) _readerAnnotations[i] = updated;
+        closeModal();
+        toast('Etiqueta atualizada', 'success');
+        readerGoToPage(_renderedPage);
+        renderNotesList();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteSticky(id) {
+    if (!confirm('Remover esta etiqueta?')) return;
+    try {
+        await api(`/books/annotations/${id}`, { method: 'DELETE' });
+        _readerAnnotations = _readerAnnotations.filter(a => a.id !== id);
+        closeModal();
+        toast('Etiqueta removida', 'success');
+        updateNotesCount();
+        readerGoToPage(_renderedPage);
+        renderNotesList();
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 function showNoteDetail(item, type) {
@@ -559,22 +930,42 @@ function toggleNotesPanel() {
 function renderNotesList() {
     const el = document.getElementById('notes-list');
     if (!el) return;
+    // Separar: stickies (com tag) vs anotações comuns vs highlights
+    const stickies = _readerAnnotations.filter(a => a.tag);
+    const annsPlain = _readerAnnotations.filter(a => !a.tag);
     const all = [
+        ...stickies.map(s => ({ ...s, type: 'sticky' })),
         ..._readerHighlights.map(h => ({ ...h, type: 'highlight' })),
-        ..._readerAnnotations.map(a => ({ ...a, type: 'annotation' })),
+        ...annsPlain.map(a => ({ ...a, type: 'annotation' })),
     ].sort((a, b) => a.page_number - b.page_number);
+
     if (all.length === 0) {
-        el.innerHTML = emptyState('fa-bookmark', 'Sem grifos ou notas', 'Selecione texto no PDF para começar.');
+        el.innerHTML = emptyState('fa-bookmark', 'Sem grifos ou notas', 'Selecione texto ou ative o modo etiquetas.');
         return;
     }
     const hlBgs = { yellow:'#fef9c3', green:'#dcfce7', blue:'#dbeafe', pink:'#fce7f3' };
+    const stickyAccent = {check:'#16a34a',done:'#2563eb',review:'#d97706',important:'#fbbf24',question:'#7c3aed',pin:'#dc2626'};
+
     el.innerHTML = all.map(it => {
+        if (it.type === 'sticky') {
+            const t = STICKY_TAGS[it.tag] || STICKY_TAGS.pin;
+            return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="readerGoToPage(${it.page_number});setTimeout(()=>openStickyEditModal(${JSON.stringify(it).replace(/"/g,'&quot;')}),100)" style="background:var(--bg-2); border-radius: 3px; border-left: 3px solid ${stickyAccent[it.tag] || '#dc2626'};">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="sticky-note sticky-tag-${it.tag}" style="position:static;box-shadow:none;padding:2px 7px;font-size:10px;cursor:default;">
+                        <i class="fa-solid ${t.icon}"></i>${t.label}
+                    </span>
+                    <button onclick="event.stopPropagation();deleteSticky('${it.id}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                </div>
+                <p class="text-[10.5px] mono mt-1" style="color:var(--text-4)">pg. ${it.page_number}</p>
+                ${it.note_text ? `<p class="text-[12px] mt-1" style="color:var(--text)">${it.note_text}</p>` : ''}
+            </div>`;
+        }
         const isHL = it.type === 'highlight';
         const bg = isHL ? (hlBgs[it.color] || hlBgs.yellow) : 'var(--bg-2)';
         const preview = isHL
             ? `<p class="text-[12px] line-clamp-3" style="color:var(--text); white-space: pre-wrap;">${it.selected_text}</p>`
             : `<div class="md-body" style="font-size:11.5px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${renderMarkdown(it.note_text)}</div>`;
-        return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="showNoteDetail(${JSON.stringify(it).replace(/"/g,'&quot;')}, '${it.type}')" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? '#ca8a04' : 'var(--warning)'};">
+        return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="readerGoToPage(${it.page_number})" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? '#ca8a04' : 'var(--warning)'};">
             <div class="flex items-center justify-between mb-1">
                 <span class="text-[10px] mono uppercase font-medium" style="color:var(--text-4); letter-spacing:.04em;">
                     <i class="fa-solid fa-${isHL ? 'highlighter' : 'note-sticky'} text-[9px]"></i> pg. ${it.page_number}

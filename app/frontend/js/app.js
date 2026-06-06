@@ -30,6 +30,22 @@ function setActive(id) {
     document.getElementById(id)?.classList.add('sidebar-active');
 }
 
+function updateHeaderAvatar() {
+    const av = document.getElementById('headerAvatar');
+    if (!av || !me) return;
+    const initials = getInitials(me.full_name);
+    if (me.photo_url) {
+        av.innerHTML = '';
+        av.style.backgroundImage = `url("${me.photo_url}")`;
+        av.style.backgroundSize = 'cover';
+        av.style.backgroundPosition = 'center';
+        av.textContent = '';
+    } else {
+        av.style.backgroundImage = '';
+        av.textContent = initials;
+    }
+}
+
 function setPage(title, section = '') {
     document.getElementById('crumb-section').textContent = section || 'Geral';
     document.getElementById('crumb-page').textContent = title;
@@ -44,7 +60,7 @@ async function init() {
         document.getElementById('userDisplayName').textContent = me.full_name;
         document.getElementById('sidebar-name').textContent = me.full_name;
         document.getElementById('sidebar-initial').textContent = initials;
-        document.getElementById('headerAvatar').textContent = initials;
+        updateHeaderAvatar();
         document.getElementById('sidebar-role').textContent = me.role === 'admin' ? 'Administrador' : (me.curso || 'Estudante');
         if (me.role === 'admin') document.getElementById('admin-menu').classList.remove('hidden');
         subjects = await api('/subjects/').catch(() => []);

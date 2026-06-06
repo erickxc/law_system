@@ -105,6 +105,82 @@ aside.sidebar { background: var(--side); color: var(--side-text); border-right: 
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Sidebar scrollbar fina (visivel quando ha overflow) */
+aside.sidebar nav::-webkit-scrollbar { width: 6px; }
+aside.sidebar nav::-webkit-scrollbar-track { background: transparent; }
+aside.sidebar nav::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,.08);
+    border-radius: 3px;
+}
+aside.sidebar nav::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,.18);
+}
+aside.sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08) transparent; }
+
+/* Sticky notes (etiquetas posicionadas no PDF) */
+.sticky-note {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,.18), 0 1px 2px rgba(0,0,0,.1);
+    transition: transform .12s, box-shadow .12s;
+    z-index: 5;
+    white-space: nowrap;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.sticky-note:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 10px rgba(0,0,0,.2), 0 2px 4px rgba(0,0,0,.12);
+    z-index: 10;
+}
+.sticky-note i { font-size: 10.5px; }
+
+.sticky-tag-check     { background: #16a34a; color: white; }
+.sticky-tag-done      { background: #2563eb; color: white; }
+.sticky-tag-review    { background: #d97706; color: white; }
+.sticky-tag-important { background: #fbbf24; color: #422006; }
+.sticky-tag-question  { background: #7c3aed; color: white; }
+.sticky-tag-pin       { background: #dc2626; color: white; }
+
+/* Toolbar de modo post-it */
+.postit-toolbar {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    z-index: 100;
+    background: var(--text); color: white;
+    padding: 8px 10px; border-radius: 99px;
+    display: flex; align-items: center; gap: 4px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+}
+.postit-toolbar .pt-btn {
+    width: 36px; height: 36px;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%; cursor: pointer;
+    transition: transform .12s, box-shadow .12s;
+    font-size: 13px;
+}
+.postit-toolbar .pt-btn:hover { transform: scale(1.1); }
+.postit-toolbar .pt-btn.is-selected { box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
+.postit-toolbar .pt-divider { width:1px; height: 20px; background: rgba(255,255,255,.15); margin: 0 4px; }
+.postit-toolbar .pt-exit {
+    background: none; color: white; padding: 6px 12px;
+    font-size: 11px; font-weight: 500; letter-spacing: .04em;
+    text-transform: uppercase; border: none; cursor: pointer;
+    opacity: .7;
+}
+.postit-toolbar .pt-exit:hover { opacity: 1; }
+
+/* Cursor PDF em modo post-it */
+body.postit-mode .pdf-page-wrap { cursor: crosshair; }
+
 /* ── Topbar / page header ────────────────────────────────────────────── */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
 .crumb { font-size: 13px; color: var(--text-3); }
