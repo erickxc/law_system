@@ -1,1518 +1,1679 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law System - Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-    .sidebar-item-active { background-color: #2563eb !important; color: white !important; }
-    .sidebar-item-active i { color: white !important; }
-    .timer-font { font-family: 'Courier New', Courier, monospace; line-height: 1; }
-    .progress-bg { transition: width 0.8s cubic-bezier(0.65, 0, 0.35, 1); }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .sidebar-link { transition: all 0.2s ease-in-out; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Law System - Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+* { font-family: 'Inter', sans-serif; }
+.sidebar-active { background: #2563eb !important; color: #fff !important; }
+.sidebar-active i, .sidebar-active span { color: #fff !important; }
+.sidebar-link { transition: all .18s; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-    /* ===== TOAST SYSTEM ===== */
-    #toast-container {
-        position: fixed;
-        top: 24px;
-        right: 24px;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-        pointer-events: none;
-    }
-    .toast {
-        pointer-events: all;
-        display: flex;
-        align-items: flex-start;
-        gap: 12px;
-        min-width: 300px;
-        max-width: 420px;
-        padding: 16px 20px;
-        border-radius: 20px;
-        font-size: 14px;
-        font-weight: 600;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-        animation: slideIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        transition: opacity 0.4s ease, transform 0.4s ease;
-    }
-    .toast.hide { opacity: 0; transform: translateX(40px); }
-    .toast-success { background:#f0fdf4; border:1.5px solid #bbf7d0; color:#166534; }
-    .toast-error   { background:#fef2f2; border:1.5px solid #fecaca; color:#991b1b; }
-    .toast-warning { background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; }
-    .toast-info    { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1e40af; }
-    .toast-icon  { font-size:18px; margin-top:1px; flex-shrink:0; }
-    .toast-body  { flex:1; }
-    .toast-title { font-weight:800; font-size:13px; margin-bottom:2px; }
-    .toast-msg   { font-weight:500; opacity:0.85; font-size:13px; }
-    .toast-close { background:none; border:none; cursor:pointer; opacity:0.5; font-size:16px; padding:0; color:inherit; }
-    .toast-close:hover { opacity:1; }
+/* Toast */
+#toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { pointer-events:all; display:flex; align-items:flex-start; gap:10px; min-width:280px; max-width:400px; padding:14px 18px; border-radius:14px; font-size:13px; font-weight:600; box-shadow:0 8px 30px rgba(0,0,0,.15); animation:slideIn .3s cubic-bezier(.34,1.56,.64,1); transition:opacity .35s, transform .35s; }
+.toast.hide { opacity:0; transform:translateX(36px); }
+.toast-success { background:#f0fdf4; border:1.5px solid #bbf7d0; color:#166534; }
+.toast-error   { background:#fef2f2; border:1.5px solid #fecaca; color:#991b1b; }
+.toast-warning { background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; }
+.toast-info    { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1e40af; }
+.toast-close { background:none; border:none; cursor:pointer; opacity:.5; font-size:14px; color:inherit; padding:0; margin-left:auto; }
+.toast-close:hover { opacity:1; }
+@keyframes slideIn { from { opacity:0; transform:translateX(36px); } to { opacity:1; transform:translateX(0); } }
 
-    @keyframes slideIn {
-        from { opacity:0; transform:translateX(40px); }
-        to   { opacity:1; transform:translateX(0); }
-    }
+/* Cards */
+.stat-card { transition: transform .2s, box-shadow .2s; }
+.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+
+/* Modal */
+.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
+.modal-box { background:#fff; border-radius:20px; padding:28px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; }
+
+/* Input */
+.form-input { width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; transition:border-color .2s, box-shadow .2s; }
+.form-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+.form-select { width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; background:#fff; cursor:pointer; }
+.form-select:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
+.form-label { display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+.form-group { margin-bottom:16px; }
+
+/* Badges */
+.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; }
+.badge-pendente   { background:#fef3c7; color:#92400e; }
+.badge-em-curso   { background:#dbeafe; color:#1e40af; }
+.badge-concluida  { background:#dcfce7; color:#166534; }
+.badge-alta  { background:#fee2e2; color:#991b1b; }
+.badge-media { background:#fef3c7; color:#92400e; }
+.badge-baixa { background:#f0fdf4; color:#166534; }
+
+/* Flashcard flip */
+.card-scene { perspective:1000px; }
+.card-flip { position:relative; width:100%; transition:transform .5s; transform-style:preserve-3d; }
+.card-flip.flipped { transform:rotateY(180deg); }
+.card-face { position:absolute; inset:0; backface-visibility:hidden; display:flex; align-items:center; justify-content:center; border-radius:16px; padding:24px; }
+.card-back { transform:rotateY(180deg); }
+
+/* Progress bar */
+.progress-bar { height:6px; border-radius:99px; background:#e2e8f0; overflow:hidden; }
+.progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#3b82f6,#6366f1); transition:width .6s cubic-bezier(.65,0,.35,1); }
+
+/* Timer */
+.timer-display { font-family:'Courier New',monospace; font-size:3.5rem; font-weight:800; line-height:1; letter-spacing:-.02em; }
+
+/* Tabs */
+.section-tab { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; color:#64748b; }
+.section-tab.active { background:#eff6ff; color:#2563eb; }
 </style>
-
 </head>
-<body class="bg-slate-50 flex h-screen font-sans text-slate-900 overflow-hidden">
+<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-900">
 
-    <div id="toast-container"></div>
+<div id="toast-container"></div>
 
-    <aside class="w-72 bg-[#0f172a] text-white flex flex-col shadow-2xl z-20">
-        <div class="p-8 text-2xl font-black tracking-tight border-b border-slate-800 flex items-center space-x-3">
-            <span class="text-blue-500"><i class="fa-solid fa-scale-balanced"></i></span>
-            <span>Law System</span>
+<!-- SIDEBAR -->
+<aside class="w-64 bg-[#0f172a] text-white flex flex-col shadow-2xl z-20 flex-shrink-0">
+    <div class="p-6 border-b border-slate-800">
+        <div class="flex items-center gap-3">
+            <div class="w-9 h-9 bg-blue-600/20 border border-blue-500/30 rounded-xl flex items-center justify-center">
+                <i class="fa-solid fa-scale-balanced text-blue-400 text-sm"></i>
+            </div>
+            <div>
+                <p class="text-sm font-bold text-white">Law System</p>
+                <p class="text-[10px] text-slate-500">Estudos Jurídicos</p>
+            </div>
         </div>
-        <nav class="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
-    <a href="#" onclick="showCurrentSemester()" id="menu-semestre" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-graduation-cap"></i> <span>Dashboard</span>
-    </a>
-
-    <div class="pt-4 pb-2 px-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Cadastros</div>
-    <a href="#" onclick="showSubjects()" id="menu-materias" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-book-bookmark"></i> <span>Matérias</span>
-    </a>
-    <a href="#" onclick="showTeachers()" id="menu-docentes" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-chalkboard-user"></i> <span>Docentes</span>
-    </a>
-    <a href="#" onclick="showBooks()" id="menu-livros" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-book"></i> <span>Livros</span>
-    </a>
-
-    <div class="pt-4 pb-2 px-3 text-[10px] font-black text-slate-500 uppercase tracking-widest">Estudo</div>
-    <a href="#" onclick="showSessions()" id="menu-sessoes" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-stopwatch"></i> <span>Sessões de Estudo</span>
-    </a>
-    <a href="#" onclick="showHistory()" id="menu-historico" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-chart-line"></i> <span>Histórico</span>
-    </a>
-    
-    <div id="admin-menu-item" class="hidden border-t border-slate-800 pt-2 mt-2">
-        <a href="#" onclick="showAccessManagement()" id="menu-gestao" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-            <i class="fa-solid fa-user-shield text-amber-500"></i> <span>Gestão de Acesso</span>
-        </a>
     </div>
 
-    <a href="#" onclick="showProfile()" id="menu-perfil" class="sidebar-link flex items-center space-x-3 p-3 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white">
-        <i class="fa-solid fa-user"></i> <span>Meu Perfil</span>
-    </a>
-</nav>
-        <div class="p-4 border-t border-slate-800">
-            <button onclick="logout()" class="flex items-center space-x-3 p-3 w-full rounded-xl text-red-400 hover:bg-red-900/20 transition-all">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> <span>Sair do Sistema</span>
-            </button>
+    <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
+        <a href="#" onclick="showDashboard()" id="menu-dash" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-house w-4 text-center"></i><span>Dashboard</span>
+        </a>
+
+        <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Cadastros</p>
+        <a href="#" onclick="showSubjects()" id="menu-materias" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-book-bookmark w-4 text-center"></i><span>Matérias</span>
+        </a>
+        <a href="#" onclick="showTeachers()" id="menu-docentes" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-chalkboard-user w-4 text-center"></i><span>Docentes</span>
+        </a>
+        <a href="#" onclick="showBooks()" id="menu-livros" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-book-open w-4 text-center"></i><span>Livros</span>
+        </a>
+
+        <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Estudo</p>
+        <a href="#" onclick="showFlashcards()" id="menu-flashcards" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-layer-group w-4 text-center"></i><span>Flashcards</span>
+            <span id="fc-due-badge" class="hidden ml-auto bg-amber-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5"></span>
+        </a>
+        <a href="#" onclick="showSessions()" id="menu-sessoes" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-stopwatch w-4 text-center"></i><span>Sessões de Estudo</span>
+        </a>
+        <a href="#" onclick="showHistory()" id="menu-historico" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-chart-line w-4 text-center"></i><span>Histórico</span>
+        </a>
+
+        <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Conta</p>
+        <a href="#" onclick="showProfile()" id="menu-perfil" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
+            <i class="fa-solid fa-user w-4 text-center"></i><span>Meu Perfil</span>
+        </a>
+        <div id="admin-menu" class="hidden">
+            <a href="admin.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-amber-400 hover:bg-amber-500/10 text-sm">
+                <i class="fa-solid fa-user-shield w-4 text-center"></i><span>Painel Admin</span>
+            </a>
         </div>
-    </aside>
+    </nav>
 
-    <main class="flex-1 flex flex-col overflow-hidden">
-        <header class="bg-white px-8 py-4 flex justify-between items-center border-b border-slate-200">
-            <div>
-                <h2 id="pageTitle" class="text-xl font-bold text-slate-800">Dashboard Acadêmico</h2>
-                <p id="pageSubtitle" class="text-slate-400 text-xs font-medium italic">"A constância vence o talento."</p>
+    <div class="p-3 border-t border-slate-800">
+        <div class="flex items-center gap-3 px-3 py-2 mb-1">
+            <div class="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-user text-slate-400 text-xs"></i>
             </div>
-            <div class="flex items-center space-x-4">
-                <div class="text-right">
-                    <div id="userDisplayName" class="font-bold text-slate-700 text-sm">Carregando...</div>
-                    <div id="userGroupBadge" class="text-[10px] text-blue-500 font-black uppercase tracking-widest">Estudante</div>
-                </div>
-                <div class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                    <i class="fa-solid fa-user"></i>
-                </div>
+            <div class="min-w-0 flex-1">
+                <p id="sidebar-name" class="text-xs font-semibold text-white truncate">—</p>
+                <p id="sidebar-role" class="text-[10px] text-slate-500 truncate">Estudante</p>
             </div>
-        </header>
+        </div>
+        <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-900/20 transition-all text-sm">
+            <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i><span>Sair</span>
+        </button>
+    </div>
+</aside>
 
-        <section id="mainContent" class="p-8 overflow-y-auto flex-1 no-scrollbar bg-slate-50"></section>
-    </main>
+<!-- MAIN -->
+<main class="flex-1 flex flex-col overflow-hidden">
+    <header class="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+        <div>
+            <h2 id="pageTitle" class="text-lg font-bold text-slate-800">Dashboard</h2>
+            <p id="pageSubtitle" class="text-xs text-slate-400 mt-0.5">Bem-vindo de volta</p>
+        </div>
+        <div id="header-user" class="text-right">
+            <p id="userDisplayName" class="text-sm font-semibold text-slate-700">—</p>
+            <p id="userCurso" class="text-xs text-blue-500 font-semibold"></p>
+        </div>
+    </header>
 
-    <script>
-        const API_BASE = 'http://127.0.0.1:8000';
-        const token = localStorage.getItem('access_token');
-        let timerInterval, seconds = 0, isRunning = false;
-        let tasks = [];
+    <section id="mainContent" class="flex-1 overflow-y-auto p-8 no-scrollbar"></section>
+</main>
 
-        function setActive(id) {
-            document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('sidebar-item-active'));
-            const el = document.getElementById(id);
-            if(el) el.classList.add('sidebar-item-active');
-        }
+<!-- MODAL -->
+<div id="modal" class="modal-backdrop hidden" onclick="if(event.target===this)closeModal()">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <div id="modal-content"></div>
+    </div>
+</div>
 
-        async function showCurrentSemester() {
-            setActive('menu-semestre');
-            document.getElementById('pageTitle').innerText = "Dashboard Acadêmico";
-            
-            const mockData = [
-                { name: "Direito Civil", progresso: 75, acertos: 88 },
-                { name: "Direito Penal", progresso: 40, acertos: 62 },
-                { name: "Constitucional", progresso: 90, acertos: 95 }
-            ];
+<script src="config.js"></script>
+<script>
+// ── State ──────────────────────────────────────────
+const token = localStorage.getItem('access_token');
+let me = null;
+let subjects = [];
+let teachers = [];
+let timerInterval = null;
+let timerSeconds = 0;
+let timerRunning = false;
+let sessionTasks = [];
+let editingSubjectId = null;
+let editingBookId = null;
+let editingFlashcardId = null;
+let currentBookId = null;
+let currentBookPage = 1;
+let reviewQueue = [];
+let reviewIndex = 0;
 
-            document.getElementById('mainContent').innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-7xl mx-auto w-full">
-                    <div class="lg:col-span-2 space-y-8">
-                        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
-                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Progresso das Matérias</h3>
-                            <div class="space-y-6">
-                                ${mockData.map(s => `
-                                    <div>
-                                        <div class="flex justify-between mb-2">
-                                            <span class="text-sm font-bold text-slate-700">${s.name}</span>
-                                            <span class="text-sm font-black text-blue-600">${s.progresso}%</span>
-                                        </div>
-                                        <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                            <div class="bg-blue-600 h-full progress-bg" style="width: ${s.progresso}%"></div>
-                                        </div>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
+if (!token) location.href = 'index.html';
 
-                        <div class="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
-                            <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Performance de Acertos (%)</h3>
-                            <div class="relative h-64">
-                                <canvas id="performanceChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
+// ── Toast ──────────────────────────────────────────
+function toast(msg, type = 'info', duration = 3500) {
+    const icons = { success:'circle-check', error:'circle-xmark', warning:'triangle-exclamation', info:'circle-info' };
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `<i class="fa-solid fa-${icons[type]} text-base flex-shrink-0"></i><span class="flex-1">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.classList.add('hide'); setTimeout(() => el.remove(), 400); }, duration);
+}
 
-                    <div class="space-y-8">
-                        <div class="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="font-bold text-slate-800">Próximos Prazos</h3>
-                                <i class="fa-solid fa-calendar-day text-blue-500"></i>
-                            </div>
-                            <div class="space-y-4">
-                                <div class="flex items-start space-x-3 p-3 rounded-2xl bg-amber-50 border border-amber-100">
-                                    <div class="bg-amber-500 text-white p-2 rounded-lg text-xs font-bold text-center w-12 shrink-0">15<br>FEV</div>
-                                    <div><p class="text-sm font-bold text-slate-800">Petição Inicial</p><p class="text-xs text-slate-500">Prática Jurídica I</p></div>
-                                </div>
-                                <div class="flex items-start space-x-3 p-3 rounded-2xl bg-blue-50 border border-blue-100">
-                                    <div class="bg-blue-500 text-white p-2 rounded-lg text-xs font-bold text-center w-12 shrink-0">18<br>FEV</div>
-                                    <div><p class="text-sm font-bold text-slate-800">Prova Penal II</p><p class="text-xs text-slate-500">Módulo de Teoria da Pena</p></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            renderChart(mockData);
-        }
+// ── Modal ──────────────────────────────────────────
+function openModal(html) {
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal').classList.remove('hidden');
+}
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
 
-        function renderChart(data) {
-            const ctx = document.getElementById('performanceChart').getContext('2d');
-            new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.map(s => s.name),
-                    datasets: [{
-                        label: '% de Acertos',
-                        data: data.map(s => s.acertos),
-                        backgroundColor: '#2563eb',
-                        borderRadius: 12,
-                        barThickness: 40
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { 
-                        y: { beginAtZero: true, max: 100, grid: { color: '#f1f5f9' } }, 
-                        x: { grid: { display: false } } 
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
+// ── API helpers ───────────────────────────────────
+async function api(path, opts = {}) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...opts.headers },
+        ...opts
+    });
+    if (res.status === 401) { localStorage.removeItem('access_token'); location.href = 'index.html'; return; }
+    if (res.status === 204) return null;
+    return res.json().then(d => { if (!res.ok) throw new Error(d.detail || `Erro ${res.status}`); return d; });
+}
 
-        async function showHistory() {
-            setActive('menu-historico');
-            document.getElementById('pageTitle').innerText = "Histórico de Estudos";
-            
-            const content = document.getElementById('mainContent');
-            content.innerHTML = `
-                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden max-w-7xl mx-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-black tracking-widest">
-                            <tr>
-                                <th class="px-8 py-5">Data</th>
-                                <th class="px-8 py-5">Matéria</th>
-                                <th class="px-8 py-5">Tempo Total</th>
-                                <th class="px-8 py-5">Desempenho</th>
-                                <th class="px-8 py-5 text-right">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody id="historyTableBody" class="divide-y divide-slate-100">
-                            <tr><td colspan="5" class="p-10 text-center text-slate-400 italic">Carregando sessões...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            `;
+function setActive(id) {
+    document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('sidebar-active'));
+    const el = document.getElementById(id);
+    if (el) el.classList.add('sidebar-active');
+}
 
-            try {
-                const resp = await fetch(`${API_BASE}/sessions/history`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const sessions = await resp.json();
-                const tbody = document.getElementById('historyTableBody');
-                
-                if (!sessions || sessions.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-slate-400">Nenhuma sessão registrada. Comece a estudar!</td></tr>';
-                    return;
-                }
+function setPage(title, subtitle = '') {
+    document.getElementById('pageTitle').textContent = title;
+    document.getElementById('pageSubtitle').textContent = subtitle;
+}
 
-                tbody.innerHTML = sessions.map(s => {
-                    const h = Math.floor(s.duration_seconds / 3600);
-                    const m = Math.floor((s.duration_seconds % 3600) / 60);
-                    const dateStr = new Date(s.created_at).toLocaleDateString('pt-BR');
-                    return `
-                        <tr class="hover:bg-slate-50/80 transition-colors">
-                            <td class="px-8 py-5 text-sm font-medium text-slate-500">${dateStr}</td>
-                            <td class="px-8 py-5 font-bold text-slate-700">${s.subject_name || 'Geral'}</td>
-                            <td class="px-8 py-5 text-slate-600 font-bold">${h}h ${m}m</td>
-                            <td class="px-8 py-5">
-                                <span class="text-blue-600 font-black">${s.correct_answers}</span>
-                                <span class="text-slate-300">/ ${s.total_questions}</span>
-                            </td>
-                            <td class="px-8 py-5 text-right">
-                                <button class="text-slate-300 hover:text-blue-600 transition-colors"><i class="fa-solid fa-circle-info text-lg"></i></button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            } catch (e) {
-                document.getElementById('historyTableBody').innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500">Erro ao carregar dados.</td></tr>';
-            }
-        }
+function fmtDuration(s) {
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${sec}s`;
+    return `${sec}s`;
+}
+function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', year:'numeric' });
+}
 
-        async function showSessions() {
-            setActive('menu-sessoes');
-            document.getElementById('pageTitle').innerText = "Sessões de Estudo";
-            const content = document.getElementById('mainContent');
-            
-            let subjects = [];
-            try {
-                const resp = await fetch(`${API_BASE}/subjects/my-group`, { headers: { 'Authorization': `Bearer ${token}` } });
-                subjects = await resp.json();
-            } catch(e) { console.error("Erro ao carregar matérias"); }
-
-            content.innerHTML = `
-                <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 max-w-7xl mx-auto">
-                    <div class="xl:col-span-2 bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden relative">
-                        <div id="progressBar" class="absolute top-0 left-0 h-1.5 bg-blue-500 progress-bg" style="width: 0%"></div>
-                        <div class="p-10 flex flex-col items-center justify-center min-h-[450px]">
-                            <div class="text-center mb-8">
-                                <p class="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] mb-4">Cronômetro Ativo</p>
-                                <div id="timerDisplay" class="text-7xl md:text-8xl font-black text-slate-800 timer-font">00:00:00</div>
-                            </div>
-                            <div class="flex gap-4 mb-10">
-                                <button id="btnStart" onclick="startTimer()" class="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 hover:-translate-y-0.5 transition-all">Iniciar</button>
-                                <button onclick="stopTimer()" class="bg-slate-100 text-slate-500 px-8 py-4 rounded-2xl font-bold hover:bg-red-50 hover:text-red-600 transition-all">Finalizar</button>
-                            </div>
-                            <div class="w-full grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-8">
-                                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Matéria</label>
-                                <select id="sessionSubject" class="w-full bg-slate-50 p-3.5 rounded-xl mt-1 text-sm outline-none font-semibold border border-transparent focus:border-blue-500 transition-all">
-                                    <option value="">Selecionar...</option>
-                                    ${subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}
-                                </select></div>
-                                <div><label class="text-[10px] font-bold text-slate-400 uppercase">Total Questões</label><input type="number" id="qTotal" value="0" class="w-full bg-slate-50 p-3.5 rounded-xl mt-1 text-sm outline-none border border-transparent focus:border-blue-500"></div>
-                                <div><label class="text-[10px] font-bold text-green-500 uppercase">Acertos</label><input type="number" id="qAcertos" value="0" class="w-full bg-green-50/50 p-3.5 rounded-xl mt-1 text-sm outline-none text-green-600 font-bold border border-transparent focus:border-green-500"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm p-8 flex flex-col h-[550px]">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-bold">Checklist</h3>
-                            <span id="taskCount" class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-[10px] font-black">0%</span>
-                        </div>
-                        <div class="flex mb-6 gap-2">
-                            <input type="text" id="taskInput" placeholder="Nova meta..." class="flex-1 bg-slate-50 p-4 rounded-2xl text-sm outline-none border border-transparent focus:border-blue-500">
-                            <button onclick="addTask()" class="bg-slate-900 text-white px-5 rounded-2xl hover:bg-blue-600 transition-colors font-bold">+</button>
-                        </div>
-                        <div id="taskList" class="flex-1 space-y-3 overflow-y-auto no-scrollbar"></div>
-                    </div>
-                </div>`;
-            renderTasks();
-        }
-
-        function startTimer() {
-            const btn = document.getElementById('btnStart');
-            if (isRunning) { 
-                clearInterval(timerInterval); 
-                isRunning = false; 
-                btn.innerText = 'Retomar'; 
-                btn.classList.replace('bg-amber-500', 'bg-blue-600');
-                return; 
-            }
-            isRunning = true; 
-            btn.innerText = 'Pausar';
-            btn.classList.replace('bg-blue-600', 'bg-amber-500');
-            timerInterval = setInterval(() => { 
-                seconds++; 
-                const h=Math.floor(seconds/3600).toString().padStart(2,'0'), 
-                      m=Math.floor((seconds%3600)/60).toString().padStart(2,'0'), 
-                      s=(seconds%60).toString().padStart(2,'0'); 
-                document.getElementById('timerDisplay').innerText=`${h}:${m}:${s}`; 
-            }, 1000);
-        }
-
-        async function rejectUser(userId) {
-    if (!confirm("Deseja realmente excluir permanentemente este usuário?")) return;
-
-    // Se o seu router tem prefixo no main.py, adicione aqui. 
-    // Ex: Se no main.py está app.include_router(router, prefix="/users"), use /users/admin...
-    const url = `${API_BASE}/admin/users/${userId}`; 
-    
-    console.log("Tentando deletar em:", url); // Verifique no F12 se o ID não é 'undefined'
-
+// ── Init ──────────────────────────────────────────
+async function init() {
     try {
-        const resp = await fetch(url, {
-            method: 'DELETE',
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (resp.ok) {
-            showToast('success', 'Sucesso', 'Usuário removido da base.');
-            showAccessManagement(); 
-        } else {
-            const error = await resp.json();
-            showToast('error', 'Erro ' + resp.status, error.detail || "Erro ao excluir");
-        }
+        me = await api('/users/me');
+        document.getElementById('userDisplayName').textContent = me.full_name;
+        document.getElementById('sidebar-name').textContent = me.full_name;
+        document.getElementById('userCurso').textContent = me.curso || '';
+        document.getElementById('sidebar-role').textContent = me.role === 'admin' ? 'Administrador' : me.curso || 'Estudante';
+        if (me.role === 'admin') document.getElementById('admin-menu').classList.remove('hidden');
+        subjects = await api('/subjects/');
+        teachers = await api('/teachers/');
+        loadFlashcardBadge();
+        showDashboard();
     } catch (e) {
-        console.error("Erro na requisição:", e);
-        showToast('error', 'Conexão', 'Não foi possível contatar o servidor.');
+        toast('Erro ao carregar dados. ' + e.message, 'error');
     }
 }
 
-        async function stopTimer() {
-            const subjectId = document.getElementById('sessionSubject').value;
-            if(!subjectId) return alert("Selecione a matéria!");
-            if(seconds < 10 && !confirm("Sessão muito curta. Deseja salvar mesmo assim?")) return;
-            
-            const sessionData = {
-                subject_id: subjectId,
-                duration_seconds: seconds,
-                total_questions: parseInt(document.getElementById('qTotal').value) || 0,
-                correct_answers: parseInt(document.getElementById('qAcertos').value) || 0,
-                tasks: tasks.map(t => ({ description: t.text, is_done: t.done }))
-            };
-
-            try {
-                const response = await fetch(`${API_BASE}/sessions/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(sessionData)
-                });
-                if (response.ok) { 
-                    alert("Sessão finalizada com sucesso!"); 
-                    location.reload(); 
-                }
-            } catch (e) { alert("Erro ao salvar sessão."); }
-        }
-
-        function showToast(type, title, message, duration = 4000) {
-    const icons = { success:'fa-circle-check', error:'fa-circle-xmark', warning:'fa-triangle-exclamation', info:'fa-circle-info' };
-    const container = document.getElementById('toast-container');
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.innerHTML = `
-        <i class="toast-icon fa-solid ${icons[type]}"></i>
-        <div class="toast-body">
-            <div class="toast-title">${title}</div>
-            <div class="toast-msg">${message}</div>
-        </div>
-        <button class="toast-close" onclick="dismissToast(this.parentElement)">&#x2715;</button>`;
-    container.appendChild(toast);
-    if (duration > 0) setTimeout(() => dismissToast(toast), duration);
-    return toast; // retorna para poder fechar manualmente (ex: loading)
-}
-function dismissToast(toast) {
-    if (!toast || !toast.parentElement) return;
-    toast.classList.add('hide');
-    setTimeout(() => toast.remove(), 400);
-}
-
-
-        function addTask() {
-            const input = document.getElementById('taskInput');
-            if (!input.value.trim()) return;
-            tasks.push({ id: Date.now(), text: input.value, done: false });
-            input.value = ''; renderTasks();
-        }
-
-        function renderTasks() {
-            const list = document.getElementById('taskList');
-            if(!list) return;
-            const done = tasks.filter(t => t.done).length;
-            const percent = tasks.length ? Math.round((done/tasks.length)*100) : 0;
-            const pBar = document.getElementById('progressBar');
-            if(pBar) pBar.style.width = percent + '%';
-            document.getElementById('taskCount').innerText = percent + '%';
-            
-            list.innerHTML = tasks.length ? tasks.map(t => `
-                <div onclick="toggleTask(${t.id})" class="flex items-center p-4 rounded-2xl border cursor-pointer transition-all ${t.done?'bg-slate-50 opacity-60 border-transparent':'bg-white shadow-sm border-slate-100 hover:border-blue-200'}">
-                    <div class="w-5 h-5 rounded-lg border-2 mr-3 flex items-center justify-center transition-colors ${t.done?'bg-blue-600 border-blue-600':'border-slate-200'}">
-                        ${t.done ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
-                    </div>
-                    <span class="text-sm font-semibold ${t.done?'line-through text-slate-400':''}">${t.text}</span>
-                </div>`).join('') : '<div class="text-center py-10"><i class="fa-solid fa-clipboard-list text-slate-200 text-4xl mb-2"></i><p class="text-slate-400 text-xs italic">Nenhuma meta definida.</p></div>';
-        }
-
-        function toggleTask(id) {
-            const t = tasks.find(x => x.id === id);
-            if(t) t.done = !t.done;
-            renderTasks();
-        }
-
-        async function showAccessManagement() {
-    setActive('menu-gestao');
-    document.getElementById('pageTitle').innerText = "Gestão de Acesso";
+async function loadFlashcardBadge() {
     try {
-        const resp = await fetch(`${API_BASE}/admin/pending`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
-        });
-        const pendingUsers = await resp.json();
-        
-        document.getElementById('mainContent').innerHTML = `
-            <div class="max-w-4xl mx-auto">
-                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Solicitações de Cadastro</h3>
-                <div class="space-y-4">
-                    ${pendingUsers.length === 0 ? 
-                        '<p class="italic text-slate-400 text-center py-20">Nenhuma solicitação pendente.</p>' : 
-                        pendingUsers.map(u => `
-                        <div class="bg-white p-6 rounded-[24px] border border-slate-200 shadow-sm flex items-center justify-between hover:border-blue-100 transition-all">
-                            <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center font-bold text-slate-500 text-xl">
-                                    ${u.full_name[0].toUpperCase()}
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-800">${u.full_name}</h4>
-                                    <p class="text-sm text-slate-500">${u.email}</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="rejectUser('${u.id}')" 
-                                    class="bg-white border-2 border-red-100 text-red-500 px-4 py-2 rounded-xl font-bold hover:bg-red-50 transition-all text-sm flex items-center gap-2">
-                                    <i class="fa-solid fa-trash-can"></i> Rejeitar
-                                </button>
-                                
-                                <button onclick="approveUser('${u.id}')" 
-                                    class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 transition-all text-sm shadow-md shadow-blue-100 flex items-center gap-2">
-                                    <i class="fa-solid fa-check"></i> Aprovar
-                                </button>
-                            </div>
-                        </div>`).join('')}
-                </div>
-            </div>`;
-    } catch (e) { 
-        showToast('error', 'Erro', 'Não foi possível carregar a lista de usuários.');
-    }
-}
-
-        async function approveUser(userId) {
-            if(!confirm("Confirmar aprovação deste usuário?")) return;
-            const resp = await fetch(`${API_BASE}/admin/approve/${userId}`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
-            if(resp.ok) { alert("Usuário aprovado!"); showAccessManagement(); }
+        const due = await api('/flashcards/due');
+        const badge = document.getElementById('fc-due-badge');
+        if (due.length > 0) {
+            badge.textContent = due.length > 99 ? '99+' : due.length;
+            badge.classList.remove('hidden');
         }
-
-        // Localize estas funções no seu dash.html e atualize-as
-function showTeachers() {
-    setActive('menu-docentes');
-    document.getElementById('pageTitle').innerText = "Gestão de Docentes";
-    const content = document.getElementById('mainContent');
-    content.innerHTML = `
-        <div class="max-w-7xl mx-auto space-y-6 animate-fadeIn">
-            <div class="flex justify-between items-center">
-                <h3 class="text-slate-800 font-bold">Professores e Coordenadores</h3>
-                <button onclick="openTeacherModal()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100">
-                    <i class="fa-solid fa-plus mr-2"></i> Novo Docente
-                </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="teachersList">
-                <div class="p-10 bg-white rounded-[32px] border border-dashed border-slate-300 text-center text-slate-400 col-span-full">
-                    Nenhum docente cadastrado ainda.
-                </div>
-            </div>
-        </div>
-    `;
+    } catch {}
 }
 
-function showBooks() {
-    setActive('menu-livros');
-    document.getElementById('pageTitle').innerText = "Biblioteca de Apoio";
-    const content = document.getElementById('mainContent');
-    content.innerHTML = `
-        <div class="max-w-7xl mx-auto space-y-6 animate-fadeIn">
-            <div class="flex justify-between items-center">
-                <h3 class="text-slate-800 font-bold">Livros e Doutrinas</h3>
-                <button onclick="openBookModal()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-100">
-                    <i class="fa-solid fa-plus mr-2"></i> Novo Livro
-                </button>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="booksList">
-                 <div class="p-10 bg-white rounded-[32px] border border-dashed border-slate-300 text-center text-slate-400 col-span-full">
-                    Sua biblioteca está vazia.
-                </div>
-            </div>
-        </div>
-    `;
+function logout() {
+    localStorage.removeItem('access_token');
+    location.href = 'index.html';
 }
 
-// 1. Função de Upload Atualizada para Replicar a Imagem
-        function uploadPhoto(event, userId) {
-            const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                        reader.onload = function(e) {
-                    const base64Image = e.target.result;
-            
-            // Salva no LocalStorage
-            localStorage.setItem(`user_photo_${userId}`, base64Image);
-            
-            // Atualiza a foto no Perfil (Centro)
-            const profilePreview = document.getElementById('photoPreview');
-            if(profilePreview) {
-                profilePreview.innerHTML = `<img src="${base64Image}" class="w-full h-full object-cover">`;
-            }
-            
-            // ATUALIZA A FOTO NO CANTO SUPERIOR DIREITO (Header)
-            const headerPhotoContainer = document.querySelector('header .w-10.h-10');
-            if(headerPhotoContainer) {
-                headerPhotoContainer.innerHTML = `<img src="${base64Image}" class="w-full h-full rounded-full object-cover">`;
-            }
-            
-            alert("Foto atualizada com sucesso!");
-        };
-        reader.readAsDataURL(file);
-    }
-}
-
-// 2. Ajuste na Função de Carregamento Inicial para exibir a foto ao logar
-async function loadUserInfo() {
+async function exportHistoryPdf() {
     try {
-        const resp = await fetch(`${API_BASE}/users/me`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
-        });
-        
-        if(resp.ok) {
-            const me = await resp.json();
-            
-            // CORRIGIDO: Verifica is_admin primeiro, depois role
-            let cargoDisplay = 'ESTUDANTE';
-            if (me.is_admin === true || me.role === 'admin') {
-                cargoDisplay = 'ADMIN';
-            } else if (me.role === 'student') {
-                cargoDisplay = 'ESTUDANTE';
-            } else if (me.role) {
-                cargoDisplay = me.role.toUpperCase();
-            }
-            
-            document.getElementById('userDisplayName').innerText = me.full_name;
-            document.getElementById('userGroupBadge').innerText = cargoDisplay;
-
-            // Replica a foto no Header ao carregar a página
-            const savedPhoto = localStorage.getItem(`user_photo_${me.id}`);
-            if(savedPhoto) {
-                const headerPhotoContainer = document.querySelector('header .w-10.h-10');
-                if(headerPhotoContainer) {
-                    headerPhotoContainer.innerHTML = `<img src="${savedPhoto}" class="w-full h-full rounded-full object-cover">`;
-                }
-            }
-
-            // Mostra menu admin se for admin
-            if(me.is_admin === true || me.role === 'admin') {
-                document.getElementById('admin-menu-item').classList.remove('hidden');
-            }
-            return me;
-        }
-    } catch (e) { 
-        console.error("Erro ao carregar info do usuário", e);
-        logout(); 
-    }
-}
-
-async function showProfile() {
-    setActive('menu-perfil');
-    document.getElementById('pageTitle').innerText = "Meu Perfil";
-    
-    try {
-        const resp = await fetch(`${API_BASE}/users/me`, { 
-            headers: { 'Authorization': `Bearer ${token}` } 
-        });
-
-        const me = await resp.json();
-        const savedPhoto = localStorage.getItem(`user_photo_${me.id}`);
-
-        document.getElementById('mainContent').innerHTML = `
-            <div class="max-w-5xl mx-auto animate-fadeIn">
-                <form id="profileForm" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    <!-- CARD PERFIL -->
-                    <div class="lg:col-span-1 space-y-6">
-                        <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm flex flex-col items-center text-center hover:shadow-xl transition-all duration-300">
-                            
-                            <div class="relative mb-4">
-                                <div id="photoPreview" class="w-32 h-32 bg-slate-50 rounded-[40px] flex items-center justify-center overflow-hidden border-2 border-slate-100 shadow-inner">
-                                    ${savedPhoto ? 
-                                        `<img src="${savedPhoto}" class="w-full h-full object-cover">` : 
-                                        '<i class="fa-solid fa-user text-4xl text-slate-300"></i>'}
-                                </div>
-                                <label class="absolute -bottom-2 -right-2 bg-slate-900 text-white p-3 rounded-2xl cursor-pointer hover:scale-110 transition-transform shadow-xl">
-                                    <i class="fa-solid fa-pen-to-square text-xs"></i>
-                                    <input type="file" class="hidden" accept="image/*" onchange="uploadPhoto(event, '${me.id}')">
-                                </label>
-                            </div>
-
-                            <h3 class="text-xl font-black text-slate-800">${me.full_name}</h3>
-                            <span class="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest mt-2">
-                                ${me.is_admin || me.role === 'admin' ? 'ADMIN' : 'ESTUDANTE'}
-                            </span>
-                            <p class="text-slate-400 text-sm mt-4 font-medium">${me.email}</p>
-                        </div>
-
-                        <div class="grid grid-cols-2 gap-3">
-                            <button type="button" onclick="showProfile()" class="bg-white text-slate-600 p-4 rounded-2xl font-bold border border-slate-200 hover:bg-slate-50 transition-all">
-                                Limpar
-                            </button>
-                            <button type="button" onclick="saveProfileData()" class="bg-slate-900 text-white p-4 rounded-2xl font-bold hover:bg-blue-600 transition-all shadow-lg">
-                                Salvar
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- DADOS -->
-                    <div class="lg:col-span-2 space-y-6">
-
-                        <!-- CONTATO -->
-                        <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-                            <h4 class="font-black text-slate-800 uppercase text-xs tracking-widest mb-6">Localização e Contato</h4>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                                <div>
-                                    <label class="label-modern">WhatsApp / Celular</label>
-                                    <input type="text" name="phone" value="${me.phone || ''}" 
-                                           oninput="formatPhone(this)"
-                                           maxlength="15"
-                                           class="input-modern" 
-                                           placeholder="(00) 00000-0000">
-                                </div>
-
-                                <div>
-                                    <label class="label-modern">CEP</label>
-                                    <input type="text" name="cep" value="${me.cep || ''}" 
-                                           oninput="formatCEP(this)"
-                                           onblur="checkCEP(this.value)"
-                                           maxlength="9"
-                                           class="input-modern"
-                                           placeholder="00000-000">
-                                </div>
-
-                                <div class="md:col-span-2">
-                                    <label class="label-modern">Endereço</label>
-                                    <input type="text" name="logradouro" value="${me.logradouro || ''}" class="input-modern">
-                                </div>
-
-                                <div>
-                                    <label class="label-modern">Bairro</label>
-                                    <input type="text" name="bairro" value="${me.bairro || ''}" class="input-modern">
-                                </div>
-
-                                <div>
-                                    <label class="label-modern">Cidade</label>
-                                    <input type="text" name="city" value="${me.city || ''}" class="input-modern">
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-3 md:col-span-2">
-                                    <div>
-                                        <label class="label-modern">UF</label>
-                                        <input type="text" name="state" value="${me.state || ''}" maxlength="2" class="input-modern">
-                                    </div>
-                                    <div>
-                                        <label class="label-modern">País</label>
-                                        <input type="text" name="country" value="${me.country || 'Brasil'}" class="input-modern">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- ACADÊMICO -->
-                        <div class="bg-white p-8 rounded-[32px] border border-slate-100 shadow-sm">
-                            <h4 class="font-black text-slate-800 uppercase text-xs tracking-widest mb-6">Jornada Acadêmica</h4>
-                            
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
-                                <div>
-                                    <label class="label-modern">Curso</label>
-                                    <input type="text" name="curso" value="${me.curso || ''}" class="input-modern">
-                                </div>
-
-                                <div>
-                                    <label class="label-modern">CPF ${me.cpf ? '(bloqueado)' : ''}</label>
-                                    <input type="text"
-                                           name="cpf"
-                                           value="${me.cpf || ''}"
-                                           oninput="formatCPF(this)"
-                                           maxlength="14"
-                                           ${me.cpf ? 'disabled' : ''}
-                                           class="input-modern ${me.cpf ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : ''}"
-                                           placeholder="000.000.000-00">
-                                </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                <div>
-                                    <label class="label-modern">Período Atual</label>
-                                    <input type="number" name="current_period" value="${me.current_period || ''}" class="input-modern">
-                                </div>
-
-                                <div>
-                                    <label class="label-modern">Total de Períodos</label>
-                                    <input type="number" name="total_periods" value="${me.total_periods || ''}" class="input-modern">
-                                </div>
-
-                                <div>
-                                    <label class="label-modern">Conclusão Prevista</label>
-                                    <input type="text" name="completion_estimate" value="${me.completion_estimate || ''}" class="input-modern">
-                                </div>
-                            </div>
-                        </div>
-
-                    </div>
-                </form>
-            </div>
-        `;
-
-        addModernStyles();
-
-    } catch (e) {
-        console.error("Erro ao carregar perfil:", e);
-    }
-}
-
-
-
-// ===============================
-// BUSCAR CEP
-// ===============================
-async function checkCEP(cep) {
-    const value = cep.replace(/\D/g, '');
-    if (value.length !== 8) return;
-
-    try {
-        const response = await fetch(`https://viacep.com.br/ws/${value}/json/`);
-        const data = await response.json();
-
-        if (!data.erro) {
-            const form = document.getElementById('profileForm');
-            // Agora os nomes batem com o HTML e com o Banco
-            form.logradouro.value = data.logradouro || '';
-            form.bairro.value = data.bairro || '';
-            form.city.value = data.localidade || '';
-            form.state.value = data.uf || '';
-            
-            showToast('success', 'CEP Encontrado', 'Endereço preenchido!');
-        }
-    } catch (e) {
-        console.error("Erro no CEP", e);
-    }
-}
-
-// ===============================
-// MÁSCARA CPF + VALIDAÇÃO
-// ===============================
-function formatCPF(input) {
-    let v = input.value.replace(/\D/g, '').substring(0, 11);
-
-    v = v.replace(/(\d{3})(\d)/, '$1.$2');
-    v = v.replace(/(\d{3})(\d)/, '$1.$2');
-    v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-
-    input.value = v;
-
-    const digits = v.replace(/\D/g, '');
-
-    if (digits.length === 11) {
-        validarCPF(digits)
-            ? setFieldState(input, 'success', 'CPF válido ✓')
-            : setFieldState(input, 'error', 'CPF inválido — verifique os dígitos.');
-    } else {
-        setFieldState(input, '', '');
-    }
-}
-
-
-// ===============================
-// VALIDADOR CPF
-// ===============================
-function validarCPF(cpf) {
-    if (/^(\d)\1{10}$/.test(cpf)) return false;
-
-    let sum = 0;
-    let rest;
-
-    for (let i = 1; i <= 9; i++) {
-        sum += parseInt(cpf[i - 1]) * (11 - i);
-    }
-
-    rest = (sum * 10) % 11;
-    if (rest === 10 || rest === 11) rest = 0;
-    if (rest !== parseInt(cpf[9])) return false;
-
-    sum = 0;
-
-    for (let i = 1; i <= 10; i++) {
-        sum += parseInt(cpf[i - 1]) * (12 - i);
-    }
-
-    rest = (sum * 10) % 11;
-    if (rest === 10 || rest === 11) rest = 0;
-
-    return rest === parseInt(cpf[10]);
-}
-
-// --- NOVAS FUNCIONALIDADES SEM REMOVER AS ANTIGAS ---
-
-async function showSubjects() {
-    setActive('menu-materias');
-    document.getElementById('pageTitle').innerText = "Minhas Matérias";
-    const content = document.getElementById('mainContent');
-    
-    // Injetamos o HTML
-    content.innerHTML = `
-        <div class="max-w-7xl mx-auto space-y-6">
-            <div class="flex justify-between items-center">
-                <h3 class="text-2xl font-black text-slate-800">Disciplinas</h3>
-                <button onclick="openSubjectModal()" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all">
-                    + Nova Matéria
-                </button>
-            </div>
-            <div id="subjectsList" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <p class="text-slate-400 italic">Carregando...</p>
-            </div>
-        </div>
-    `;
-
-    // IMPORTANTE: Agora que o formulário existe no "content", chamamos o listener
-    setupSubjectFormListener();
-
-    try {
-        const resp = await fetch(`${API_BASE}/subjects/my-group`, {
+        const res = await fetch(`${API_BASE}/sessions/report/pdf`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (resp.ok) {
-            const subjects = await resp.json();
-            renderSubjectsList(subjects);
-        } else {
-            throw new Error();
-        }
+        if (!res.ok) { toast('Erro ao gerar PDF.', 'error'); return; }
+        const blob = await res.blob();
+        const disp = res.headers.get('content-disposition') || '';
+        const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"';]+)["']?/i);
+        const fname = match ? decodeURIComponent(match[1]) : `Historico - ${me.full_name}.pdf`;
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = fname; a.click();
+        URL.revokeObjectURL(url);
+    } catch (e) { toast('Erro ao exportar PDF: ' + e.message, 'error'); }
+}
+
+// ── DASHBOARD ─────────────────────────────────────
+let _activityChart = null;
+let _subjectsChart = null;
+
+async function showDashboard() {
+    setActive('menu-dash');
+    setPage('Dashboard', 'Visão geral do seu desempenho');
+    document.getElementById('mainContent').innerHTML = `<div class="flex items-center justify-center h-32"><i class="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i></div>`;
+
+    try {
+        const [stats, history, fcStats] = await Promise.all([
+            api('/sessions/stats').catch(() => null),
+            api('/sessions/history').catch(() => []),
+            api('/flashcards/stats').catch(() => null),
+        ]);
+
+        const totalMin = stats ? stats.total_minutes : 0;
+        const accuracy = stats ? stats.accuracy : 0;
+        const streak = stats ? stats.current_streak : 0;
+        const totalQ = stats ? stats.total_questions : 0;
+
+        document.getElementById('mainContent').innerHTML = `
+        <div class="max-w-6xl mx-auto space-y-6">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                ${statCard('fa-clock','Tempo estudado', formatMinutes(totalMin), 'text-blue-500', 'bg-blue-50')}
+                ${statCard('fa-fire','Sequência atual', streak > 0 ? `${streak} dia${streak>1?'s':''}` : '—', 'text-orange-500', 'bg-orange-50')}
+                ${statCard('fa-bullseye','Taxa de acerto', totalQ > 0 ? `${accuracy}%` : '—', 'text-green-500', 'bg-green-50')}
+                ${statCard('fa-layer-group','Flashcards', fcStats ? `${fcStats.due_today} hoje` : '—', 'text-amber-500', 'bg-amber-50')}
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-bold text-slate-700">Atividade — últimos 30 dias</h3>
+                        ${stats && stats.best_day ? `<span class="text-xs text-slate-400">Melhor: ${fmtShortDate(stats.best_day.date)} (${stats.best_day.minutes}m)</span>` : ''}
+                    </div>
+                    <div class="h-56"><canvas id="activityChart"></canvas></div>
+                </div>
+
+                <div class="bg-white rounded-2xl border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold text-slate-700 mb-4">Tempo por matéria</h3>
+                    ${stats && stats.by_subject.length > 0
+                        ? `<div class="h-56"><canvas id="subjectsChart"></canvas></div>`
+                        : emptyState('fa-book-bookmark','Sem dados','Estude alguma matéria pra ver a distribuição.')}
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6">
+                    <h3 class="text-sm font-bold text-slate-700 mb-4">Sessões recentes</h3>
+                    ${history.length === 0 ? emptyState('fa-stopwatch','Nenhuma sessão registrada','Inicie uma sessão de estudo para ver o histórico aqui.') :
+                    `<div class="space-y-3">${history.slice(0,5).map(s => `
+                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
+                            <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
+                                <i class="fa-solid fa-book-open text-blue-500 text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-semibold text-slate-800 truncate">${s.subject_name}</p>
+                                <p class="text-xs text-slate-400">${fmtDate(s.start_time)}</p>
+                            </div>
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-bold text-slate-700">${fmtDuration(s.duration_seconds)}</p>
+                                ${s.total_questions > 0 ? `<p class="text-xs text-slate-400">${s.correct_answers}/${s.total_questions} acertos</p>` : ''}
+                            </div>
+                        </div>`).join('')}</div>`}
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-white rounded-2xl border border-slate-100 p-6">
+                        <h3 class="text-sm font-bold text-slate-700 mb-4">Matérias por status</h3>
+                        ${subjects.length === 0 ? `<p class="text-xs text-slate-400">Nenhuma matéria cadastrada.</p>` :
+                        `<div class="space-y-2">
+                            ${Object.entries(subjects.reduce((acc, s) => { acc[s.status]=(acc[s.status]||0)+1; return acc; }, {})).map(([st, n]) => `
+                            <div class="flex items-center justify-between">
+                                <span class="badge badge-${st.toLowerCase().replace(' ','-')}">${st}</span>
+                                <span class="text-sm font-bold text-slate-600">${n}</span>
+                            </div>`).join('')}
+                        </div>`}
+                    </div>
+                    ${fcStats && fcStats.due_today > 0 ? `
+                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+                        <div class="flex items-center gap-3 mb-2">
+                            <i class="fa-solid fa-layer-group text-amber-500"></i>
+                            <p class="text-sm font-bold text-amber-800">Flashcards para revisar</p>
+                        </div>
+                        <p class="text-2xl font-black text-amber-700 mb-3">${fcStats.due_today}</p>
+                        <button onclick="showFlashcards()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors">Revisar agora</button>
+                    </div>` : ''}
+                </div>
+            </div>
+        </div>`;
+
+        // Render charts (após DOM existir)
+        if (stats) renderDashboardCharts(stats);
+
     } catch (e) {
-        document.getElementById('subjectsList').innerHTML = `
-            <div class="col-span-full p-10 border-2 border-dashed border-slate-200 rounded-[32px] text-center">
-                <p class="text-slate-500 mb-4">Nenhuma matéria encontrada ou erro na conexão.</p>
-                <button onclick="openSubjectModal()" class="text-blue-600 font-bold underline">Cadastrar minha primeira matéria</button>
-            </div>`;
-    }
-}
-function allowDrop(ev) {
-    ev.preventDefault();
-}
-
-function drag(ev) {
-    ev.dataTransfer.setData("text", ev.target.id);
-    ev.target.classList.add('opacity-40');
-}
-
-function drop(ev) {
-    ev.preventDefault();
-    const data = ev.dataTransfer.getData("text");
-    const draggedEl = document.getElementById(data);
-    draggedEl.classList.remove('opacity-40');
-    
-    // Alvo onde soltou
-    const dropZone = ev.target.closest('#subjectsList');
-    if (dropZone) {
-        // Aqui você pode implementar a lógica para salvar a nova ordem no banco se quiser
-        dropZone.appendChild(draggedEl);
-        showToast('success', 'Ordem alterada', 'Visualização atualizada.');
+        toast('Erro ao carregar dashboard: ' + e.message, 'error');
     }
 }
 
-function setupSubjectFormListener() {
-    const subjectForm = document.getElementById('formSubject');
-    
-    if (subjectForm) {
-        // Isso garante que não adicionaremos o mesmo evento várias vezes
-        subjectForm.onsubmit = async (e) => {
-            e.preventDefault();
-            
-            const btn = e.target.querySelector('button[type="submit"]');
-            const originalText = btn.innerText;
-            btn.innerText = "Salvando...";
-            btn.disabled = true;
+function renderDashboardCharts(stats) {
+    if (_activityChart) { _activityChart.destroy(); _activityChart = null; }
+    if (_subjectsChart) { _subjectsChart.destroy(); _subjectsChart = null; }
 
-            // Dentro do seu submit do formSubject:
-const formData = new FormData(e.target);
-const data = {
-    name: formData.get('name'),
-    sigla: formData.get('sigla'),
-    period: parseInt(formData.get('period')) || 1,
-    priority: "Média", // Adicionado porque o seu Python exige este campo
-    no_teacher: true,   // Adicionado para evitar erro de validação do professor por enquanto
-    teacher_id: null
-};
-
-try {
-    // MUDANÇA AQUI: URL alterada de /subjects/create para /subjects/
-    const resp = await fetch(`${API_BASE}/subjects/`, { 
-        method: 'POST',
-        headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json' 
-        },
-        body: JSON.stringify(data)
-    });
-    // ... resto do código (if resp.ok...)
-
-                if (resp.ok) {
-                    showToast('success', 'Sucesso!', 'Matéria cadastrada.');
-                    closeModal('modalSubject');
-                    e.target.reset();
-                    showSubjects(); // Recarrega a lista para mostrar a nova matéria
-                } else {
-                    const errorData = await resp.json();
-                    showToast('error', 'Erro', errorData.detail || 'Falha ao salvar');
+    const actCanvas = document.getElementById('activityChart');
+    if (actCanvas) {
+        const labels = stats.last_30_days.map(d => {
+            const dt = new Date(d.date + 'T00:00:00');
+            return `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+        });
+        _activityChart = new Chart(actCanvas, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'Minutos',
+                    data: stats.last_30_days.map(d => d.minutes),
+                    backgroundColor: 'rgba(59, 130, 246, 0.85)',
+                    borderRadius: 4,
+                    maxBarThickness: 14,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
+                    x: { ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } }
                 }
-            } catch (err) {
-                showToast('error', 'Erro de Conexão', 'Servidor offline');
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
             }
-        };
+        });
+    }
+
+    const subjCanvas = document.getElementById('subjectsChart');
+    if (subjCanvas && stats.by_subject.length > 0) {
+        const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+        _subjectsChart = new Chart(subjCanvas, {
+            type: 'doughnut',
+            data: {
+                labels: stats.by_subject.map(b => b.name),
+                datasets: [{
+                    data: stats.by_subject.map(b => b.minutes),
+                    backgroundColor: stats.by_subject.map((_, i) => palette[i % palette.length]),
+                    borderWidth: 2, borderColor: '#fff',
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '60%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { font: { size: 10 }, color: '#475569', boxWidth: 10, padding: 8 } },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}m` } }
+                }
+            }
+        });
     }
 }
 
-window.editSubject = async function(id) {
-    console.log("--- DEBUG CLIQUE ---");
-    
-    // 1. Tenta todas as chaves comuns de uma vez
-    const token = localStorage.getItem('token') || 
-                  localStorage.getItem('access_token') || 
-                  localStorage.getItem('auth_token');
-    
-    console.log("Token recuperado:", token ? "Sim (Iniciando busca...)" : "Não encontrado");
+function formatMinutes(min) {
+    const h = Math.floor(min/60);
+    const m = min % 60;
+    if (h >= 1) return `${h}h ${m}m`;
+    return `${m}m`;
+}
 
-    if (!token) {
-        // Se falhar, vamos ver o que TEM no storage para te avisar
-        console.log("Conteúdo do Storage:", Object.keys(localStorage));
-        alert("Sessão não encontrada. Por favor, faça login novamente.");
+function fmtShortDate(iso) {
+    const d = new Date(iso + 'T00:00:00');
+    return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function statCard(icon, label, value, iconClass, bgClass) {
+    return `<div class="stat-card bg-white rounded-2xl border border-slate-100 p-5">
+        <div class="flex items-start justify-between">
+            <div class="${bgClass} w-10 h-10 rounded-xl flex items-center justify-center">
+                <i class="fa-solid ${icon} ${iconClass}"></i>
+            </div>
+        </div>
+        <p class="text-2xl font-black text-slate-800 mt-3">${value}</p>
+        <p class="text-xs text-slate-500 font-medium mt-0.5">${label}</p>
+    </div>`;
+}
+
+function formatHours(secs) {
+    const h = Math.floor(secs/3600);
+    const m = Math.floor((secs%3600)/60);
+    if (h >= 1) return `${h}h ${m}m`;
+    return `${m}m`;
+}
+
+function emptyState(icon, title, msg) {
+    return `<div class="text-center py-10">
+        <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid ${icon} text-slate-300 text-xl"></i>
+        </div>
+        <p class="font-semibold text-slate-600 text-sm">${title}</p>
+        <p class="text-xs text-slate-400 mt-1">${msg}</p>
+    </div>`;
+}
+
+// ── SUBJECTS ──────────────────────────────────────
+async function showSubjects() {
+    setActive('menu-materias');
+    setPage('Matérias', 'Gerencie suas disciplinas');
+    subjects = await api('/subjects/').catch(() => []);
+    renderSubjects();
+}
+
+function renderSubjects() {
+    const byPeriod = subjects.reduce((acc, s) => { (acc[s.period]=acc[s.period]||[]).push(s); return acc; }, {});
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-5xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <p class="text-sm text-slate-500">${subjects.length} matéria${subjects.length !== 1 ? 's' : ''} cadastrada${subjects.length !== 1 ? 's' : ''}</p>
+            <button onclick="openSubjectModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-plus"></i> Nova Matéria
+            </button>
+        </div>
+        ${subjects.length === 0 ? emptyState('fa-book-bookmark','Nenhuma matéria','Adicione sua primeira matéria clicando em "Nova Matéria".') :
+        Object.entries(byPeriod).sort(([a],[b])=>a-b).map(([period, items]) => `
+            <div class="mb-6">
+                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${period}º Período</p>
+                <div class="grid gap-3">
+                    ${items.map(s => `
+                    <div class="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 hover:border-blue-200 transition-colors group">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-book-bookmark text-blue-500 text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="font-semibold text-slate-800 text-sm">${s.name}</p>
+                                ${s.sigla ? `<span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">${s.sigla}</span>` : ''}
+                                <span class="badge badge-${s.status.toLowerCase().replace(' ','-')}">${s.status}</span>
+                                <span class="badge badge-${s.priority.toLowerCase()}">${s.priority}</span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">${s.no_teacher ? 'Sem professor' : (s.teacher_name || 'Prof. não informado')}</p>
+                        </div>
+                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <select onchange="updateSubjectStatus('${s.id}',this.value)" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white cursor-pointer">
+                                <option value="Pendente" ${s.status==='Pendente'?'selected':''}>Pendente</option>
+                                <option value="Em Curso" ${s.status==='Em Curso'?'selected':''}>Em Curso</option>
+                                <option value="Concluída" ${s.status==='Concluída'?'selected':''}>Concluída</option>
+                            </select>
+                            <button onclick="openSubjectModal('${s.id}')" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteSubject('${s.id}','${s.name}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>`).join('')}
+                </div>
+            </div>`).join('')}
+    </div>`;
+}
+
+async function updateSubjectStatus(id, status) {
+    try {
+        await api(`/subjects/${id}/status?s_status=${encodeURIComponent(status)}`, { method: 'PATCH' });
+        subjects = await api('/subjects/');
+        renderSubjects();
+        toast(`Status atualizado para "${status}"`, 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+function openSubjectModal(id = null) {
+    editingSubjectId = id;
+    const s = id ? subjects.find(x => x.id === id) : null;
+    const teacherOpts = teachers.map(t => `<option value="${t.id}" ${s && s.teacher_id === t.id ? 'selected' : ''}>${t.name}</option>`).join('');
+
+    openModal(`
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Nova'} Matéria</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form onsubmit="saveSubject(event)">
+        <div class="form-group">
+            <label class="form-label">Nome *</label>
+            <input class="form-input" id="s-name" value="${s?.name||''}" required placeholder="Ex: Direito Civil">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+                <label class="form-label">Sigla</label>
+                <input class="form-input" id="s-sigla" value="${s?.sigla||''}" placeholder="Ex: DIR_CIV">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Período *</label>
+                <input type="number" class="form-input" id="s-period" value="${s?.period||1}" min="1" max="12" required>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+                <label class="form-label">Prioridade</label>
+                <select class="form-select" id="s-priority">
+                    <option value="Alta" ${s?.priority==='Alta'?'selected':''}>Alta</option>
+                    <option value="Média" ${!s||s?.priority==='Média'?'selected':''}>Média</option>
+                    <option value="Baixa" ${s?.priority==='Baixa'?'selected':''}>Baixa</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Professor</label>
+                <select class="form-select" id="s-teacher" onchange="toggleNoTeacher(this.value)">
+                    <option value="">Selecione...</option>
+                    ${teacherOpts}
+                    <option value="NONE" ${s?.no_teacher?'selected':''}>Sem professor</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex gap-3 mt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        </div>
+    </form>`);
+}
+
+async function saveSubject(e) {
+    e.preventDefault();
+    const teacherVal = document.getElementById('s-teacher').value;
+    const no_teacher = teacherVal === 'NONE';
+    const teacher_id = (!no_teacher && teacherVal) ? teacherVal : null;
+    const data = {
+        name: document.getElementById('s-name').value.trim(),
+        sigla: document.getElementById('s-sigla').value.trim() || null,
+        period: parseInt(document.getElementById('s-period').value),
+        priority: document.getElementById('s-priority').value,
+        no_teacher,
+        teacher_id,
+    };
+    try {
+        if (editingSubjectId) {
+            await api(`/subjects/${editingSubjectId}`, { method: 'PUT', body: JSON.stringify(data) });
+            toast('Matéria atualizada!', 'success');
+        } else {
+            await api('/subjects/', { method: 'POST', body: JSON.stringify(data) });
+            toast('Matéria criada!', 'success');
+        }
+        subjects = await api('/subjects/');
+        closeModal();
+        renderSubjects();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteSubject(id, name) {
+    if (!confirm(`Excluir "${name}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+        await api(`/subjects/${id}`, { method: 'DELETE' });
+        subjects = subjects.filter(s => s.id !== id);
+        toast('Matéria excluída.', 'success');
+        renderSubjects();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── TEACHERS ──────────────────────────────────────
+async function showTeachers() {
+    setActive('menu-docentes');
+    setPage('Docentes', 'Professores das suas matérias');
+    teachers = await api('/teachers/').catch(() => []);
+    renderTeachers();
+}
+
+function renderTeachers() {
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <p class="text-sm text-slate-500">${teachers.length} docente${teachers.length !== 1 ? 's' : ''}</p>
+            <button onclick="openTeacherModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-plus"></i> Novo Docente
+            </button>
+        </div>
+        ${teachers.length === 0 ? emptyState('fa-chalkboard-user','Nenhum docente','Cadastre os professores das suas disciplinas.') :
+        `<div class="grid gap-3">
+            ${teachers.map(t => `
+            <div class="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 group hover:border-blue-200 transition-colors">
+                <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-user-tie text-purple-500 text-sm"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-semibold text-slate-800 text-sm">${t.name}</p>
+                    <p class="text-xs text-slate-400 mt-0.5">${[t.email, t.contact].filter(Boolean).join(' · ') || 'Sem contato cadastrado'}</p>
+                </div>
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openTeacherModal('${t.id}')" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-pen text-xs"></i>
+                    </button>
+                    <button onclick="deleteTeacher('${t.id}','${t.name}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>`).join('')}
+        </div>`}
+    </div>`;
+}
+
+function openTeacherModal(id = null) {
+    const t = id ? teachers.find(x => x.id === id) : null;
+    openModal(`
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Novo'} Docente</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form onsubmit="saveTeacher(event,'${id||''}')">
+        <div class="form-group">
+            <label class="form-label">Nome *</label>
+            <input class="form-input" id="t-name" value="${t?.name||''}" required placeholder="Nome do professor">
+        </div>
+        <div class="form-group">
+            <label class="form-label">E-mail</label>
+            <input type="email" class="form-input" id="t-email" value="${t?.email||''}" placeholder="prof@email.com">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Contato</label>
+            <input class="form-input" id="t-contact" value="${t?.contact||''}" placeholder="Telefone ou lattes">
+        </div>
+        <div class="flex gap-3 mt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        </div>
+    </form>`);
+}
+
+async function saveTeacher(e, id) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('t-name').value.trim(),
+        email: document.getElementById('t-email').value.trim() || null,
+        contact: document.getElementById('t-contact').value.trim() || null,
+    };
+    try {
+        if (id) {
+            await api(`/teachers/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+            toast('Docente atualizado!', 'success');
+        } else {
+            await api('/teachers/', { method: 'POST', body: JSON.stringify(data) });
+            toast('Docente cadastrado!', 'success');
+        }
+        teachers = await api('/teachers/');
+        closeModal();
+        renderTeachers();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteTeacher(id, name) {
+    if (!confirm(`Excluir docente "${name}"?`)) return;
+    try {
+        await api(`/teachers/${id}`, { method: 'DELETE' });
+        teachers = teachers.filter(t => t.id !== id);
+        toast('Docente excluído.', 'success');
+        renderTeachers();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── BOOKS ─────────────────────────────────────────
+async function showBooks() {
+    setActive('menu-livros');
+    setPage('Livros', 'Sua biblioteca de estudo');
+    const books = await api('/books/').catch(() => []);
+    renderBooks(books);
+}
+
+const COVER_COLORS = ['#1e40af','#7c3aed','#be185d','#065f46','#92400e','#b91c1c','#0e7490'];
+
+function renderBooks(books) {
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-5xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <p class="text-sm text-slate-500">${books.length} livro${books.length !== 1 ? 's' : ''}</p>
+            <button onclick="openBookModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
+                <i class="fa-solid fa-plus"></i> Adicionar Livro
+            </button>
+        </div>
+        ${books.length === 0 ? emptyState('fa-book-open','Nenhum livro','Adicione PDFs e livros para estudar com grifos e anotações.') :
+        `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            ${books.map(b => {
+                const color = b.cover_color || '#1e40af';
+                const pct = b.progress_pct || 0;
+                return `
+                <div class="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer group" onclick="openBookReader('${b.id}')">
+                    <div class="h-32 flex items-center justify-center relative" style="background:${color}20; border-bottom:3px solid ${color}">
+                        <i class="fa-solid fa-book-open text-4xl" style="color:${color}80"></i>
+                        <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
+                            <button onclick="openBookModal('${b.id}')" class="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 shadow-sm">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+                            <button onclick="deleteBook('${b.id}','${b.name.replace(/'/g,"\\'")}',event)" class="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-600 shadow-sm">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <p class="font-semibold text-slate-800 text-sm truncate">${b.name}</p>
+                        ${b.author ? `<p class="text-xs text-slate-400 truncate">${b.author}</p>` : ''}
+                        <div class="mt-3">
+                            <div class="flex justify-between text-xs text-slate-500 mb-1">
+                                <span>Pg. ${b.current_page}/${b.total_pages}</span>
+                                <span>${pct}%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>`}
+    </div>`;
+}
+
+function openBookModal(id = null) {
+    editingBookId = id;
+    const subjectOpts = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    const colorPicker = COVER_COLORS.map(c => `
+        <button type="button" onclick="selectColor('${c}',this)" data-color="${c}"
+            class="color-btn w-7 h-7 rounded-full border-2 border-transparent hover:scale-110 transition-transform" style="background:${c}"></button>`).join('');
+
+    openModal(`
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Adicionar'} Livro</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form onsubmit="saveBook(event)">
+        <div class="form-group">
+            <label class="form-label">Título *</label>
+            <input class="form-input" id="b-name" required placeholder="Título do livro">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+                <label class="form-label">Autor</label>
+                <input class="form-input" id="b-author" placeholder="Autor">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Gênero</label>
+                <input class="form-input" id="b-genre" placeholder="Ex: Doutrina">
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+                <label class="form-label">Total de páginas</label>
+                <input type="number" class="form-input" id="b-pages" value="1" min="1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Página atual</label>
+                <input type="number" class="form-input" id="b-curpage" value="0" min="0">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">URL do PDF (link externo)</label>
+            <input type="url" class="form-input" id="b-url" placeholder="https://...">
+            <p class="text-xs text-slate-400 mt-1">Cole o link direto para um PDF público</p>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Matéria</label>
+            <select class="form-select" id="b-subject">
+                <option value="">Nenhuma</option>
+                ${subjectOpts}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Cor da capa</label>
+            <div class="flex gap-2 flex-wrap mt-1" id="color-picker">${colorPicker}</div>
+            <input type="hidden" id="b-color" value="${COVER_COLORS[0]}">
+        </div>
+        <div class="flex gap-3 mt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        </div>
+    </form>`);
+
+    // Pre-select first color
+    document.querySelector('.color-btn').classList.add('border-white', 'scale-110');
+
+    if (id) {
+        api(`/books/${id}`).then(b => {
+            document.getElementById('b-name').value = b.name;
+            document.getElementById('b-author').value = b.author || '';
+            document.getElementById('b-genre').value = b.genre || '';
+            document.getElementById('b-pages').value = b.total_pages;
+            document.getElementById('b-curpage').value = b.current_page;
+            document.getElementById('b-url').value = b.url || '';
+            document.getElementById('b-subject').value = b.subject_id || '';
+            if (b.cover_color) {
+                document.getElementById('b-color').value = b.cover_color;
+                document.querySelectorAll('.color-btn').forEach(btn => {
+                    btn.classList.remove('border-white','scale-110');
+                    if (btn.dataset.color === b.cover_color) btn.classList.add('border-white','scale-110');
+                });
+            }
+        });
+    }
+}
+
+function selectColor(color, btn) {
+    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('border-white','scale-110'));
+    btn.classList.add('border-white','scale-110');
+    document.getElementById('b-color').value = color;
+}
+
+async function saveBook(e) {
+    e.preventDefault();
+    const data = {
+        name: document.getElementById('b-name').value.trim(),
+        author: document.getElementById('b-author').value.trim() || null,
+        genre: document.getElementById('b-genre').value.trim() || null,
+        total_pages: parseInt(document.getElementById('b-pages').value) || 1,
+        current_page: parseInt(document.getElementById('b-curpage').value) || 0,
+        url: document.getElementById('b-url').value.trim() || null,
+        subject_id: document.getElementById('b-subject').value || null,
+        cover_color: document.getElementById('b-color').value,
+    };
+    try {
+        if (editingBookId) {
+            await api(`/books/${editingBookId}`, { method: 'PUT', body: JSON.stringify(data) });
+            toast('Livro atualizado!', 'success');
+        } else {
+            await api('/books/', { method: 'POST', body: JSON.stringify(data) });
+            toast('Livro adicionado!', 'success');
+        }
+        closeModal();
+        showBooks();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteBook(id, name, ev) {
+    ev.stopPropagation();
+    if (!confirm(`Excluir "${name}"? Grifos e anotações serão perdidos.`)) return;
+    try {
+        await api(`/books/${id}`, { method: 'DELETE' });
+        toast('Livro excluído.', 'success');
+        showBooks();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function openBookReader(bookId) {
+    currentBookId = bookId;
+    const book = await api(`/books/${bookId}`).catch(() => null);
+    if (!book) { toast('Livro não encontrado.', 'error'); return; }
+    currentBookPage = book.current_page || 1;
+
+    setActive('menu-livros');
+    setPage(book.name, book.author || 'Leitor');
+
+    const [annotations, highlights] = await Promise.all([
+        api(`/books/${bookId}/annotations`).catch(() => []),
+        api(`/books/${bookId}/highlights`).catch(() => []),
+    ]);
+
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-6xl mx-auto h-full flex flex-col">
+        <!-- Progress bar top -->
+        <div class="flex items-center gap-4 mb-4">
+            <button onclick="showBooks()" class="text-slate-400 hover:text-slate-700 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="flex-1">
+                <div class="flex justify-between text-xs text-slate-500 mb-1">
+                    <span>Progresso</span>
+                    <span>${book.progress_pct}% · Pg. ${book.current_page}/${book.total_pages}</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${book.progress_pct}%"></div></div>
+            </div>
+            <button onclick="openBookModal('${bookId}')" class="text-xs text-slate-400 hover:text-slate-700 transition-colors">
+                <i class="fa-solid fa-gear"></i>
+            </button>
+        </div>
+
+        <div class="flex gap-6 flex-1 min-h-0">
+            <!-- PDF/Content area -->
+            <div class="flex-1 bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col">
+                ${book.url ? `
+                <div class="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50">
+                    <span class="text-xs text-slate-500">Visualizando PDF externo</span>
+                    <a href="${book.url}" target="_blank" class="text-xs text-blue-600 hover:underline ml-auto flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir em nova aba
+                    </a>
+                </div>
+                <iframe src="${book.url}" class="flex-1 w-full" style="border:none"></iframe>` :
+                `<div class="flex-1 flex flex-col items-center justify-center text-center p-8">
+                    <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
+                        <i class="fa-solid fa-link text-slate-300 text-2xl"></i>
+                    </div>
+                    <p class="font-semibold text-slate-600 text-sm mb-1">Nenhum PDF vinculado</p>
+                    <p class="text-xs text-slate-400 mb-4">Edite o livro e cole a URL de um PDF público</p>
+                    <button onclick="openBookModal('${bookId}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
+                        <i class="fa-solid fa-link mr-2"></i>Vincular PDF
+                    </button>
+                </div>`}
+            </div>
+
+            <!-- Sidebar: annotations & highlights -->
+            <div class="w-80 flex-shrink-0 flex flex-col gap-4">
+                <!-- Page progress -->
+                <div class="bg-white rounded-2xl border border-slate-100 p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Atualizar página</p>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="book-page-input" value="${book.current_page}" min="0" max="${book.total_pages}"
+                            class="form-input text-center font-bold text-lg w-24">
+                        <span class="text-sm text-slate-400">/ ${book.total_pages}</span>
+                        <button onclick="saveBookPage('${bookId}')" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">Salvar</button>
+                    </div>
+                </div>
+
+                <!-- Add highlight -->
+                <div class="bg-white rounded-2xl border border-slate-100 p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Adicionar grifo</p>
+                    <textarea id="hl-text" rows="2" class="form-input text-sm resize-none mb-2" placeholder="Cole o trecho grifado..."></textarea>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="hl-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input w-20 text-sm">
+                        <select id="hl-color" class="form-select flex-1 text-sm">
+                            <option value="yellow">Amarelo</option>
+                            <option value="green">Verde</option>
+                            <option value="blue">Azul</option>
+                            <option value="pink">Rosa</option>
+                        </select>
+                        <button onclick="addHighlight('${bookId}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">Salvar</button>
+                    </div>
+                </div>
+
+                <!-- Add annotation -->
+                <div class="bg-white rounded-2xl border border-slate-100 p-4">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Anotação</p>
+                    <textarea id="ann-text" rows="3" class="form-input text-sm resize-none mb-2" placeholder="Sua anotação para esta página..."></textarea>
+                    <div class="flex items-center gap-2">
+                        <input type="number" id="ann-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input w-20 text-sm">
+                        <button onclick="addAnnotation('${bookId}')" class="ml-auto bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">Salvar</button>
+                    </div>
+                </div>
+
+                <!-- Existing notes -->
+                <div class="bg-white rounded-2xl border border-slate-100 p-4 flex-1 overflow-y-auto no-scrollbar">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Salvos (${annotations.length + highlights.length})</p>
+                    ${[...highlights.map(h => ({...h,type:'highlight'})), ...annotations.map(a => ({...a,type:'annotation'}))]
+                        .sort((a,b) => a.page_number - b.page_number)
+                        .map(item => {
+                            const isHL = item.type === 'highlight';
+                            const hlBg = { yellow:'bg-yellow-50 border-yellow-200', green:'bg-green-50 border-green-200', blue:'bg-blue-50 border-blue-200', pink:'bg-pink-50 border-pink-200' };
+                            const bg = isHL ? (hlBg[item.color] || 'bg-yellow-50 border-yellow-200') : 'bg-slate-50 border-slate-200';
+                            return `
+                            <div id="item-${item.id}" class="border rounded-xl p-3 mb-2 ${bg}">
+                                <div class="flex items-start justify-between gap-2">
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <i class="fa-solid fa-${isHL ? 'highlighter' : 'pencil'} text-xs text-slate-500"></i>
+                                        <span class="text-[10px] font-bold text-slate-500 uppercase">Pg. ${item.page_number}</span>
+                                    </div>
+                                    <button onclick="deleteNote('${item.id}','${isHL ? 'highlight' : 'annotation'}')" class="text-slate-300 hover:text-red-500 transition-colors flex-shrink-0">
+                                        <i class="fa-solid fa-xmark text-xs"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-slate-700">${isHL ? item.selected_text : item.note_text}</p>
+                            </div>`;
+                        }).join('') || '<p class="text-xs text-slate-400">Nenhum grifo ou anotação ainda.</p>'}
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+async function saveBookPage(bookId) {
+    const page = parseInt(document.getElementById('book-page-input').value);
+    try {
+        await api(`/books/${bookId}`, { method: 'PUT', body: JSON.stringify({ current_page: page }) });
+        toast('Progresso salvo!', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function addHighlight(bookId) {
+    const text = document.getElementById('hl-text').value.trim();
+    const page = parseInt(document.getElementById('hl-page').value);
+    const color = document.getElementById('hl-color').value;
+    if (!text) { toast('Insira o texto grifado.', 'warning'); return; }
+    try {
+        const h = await api(`/books/${bookId}/highlights`, { method: 'POST', body: JSON.stringify({ page_number: page, selected_text: text, color }) });
+        document.getElementById('hl-text').value = '';
+        toast('Grifo salvo!', 'success');
+        openBookReader(bookId);
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function addAnnotation(bookId) {
+    const text = document.getElementById('ann-text').value.trim();
+    const page = parseInt(document.getElementById('ann-page').value);
+    if (!text) { toast('Insira a anotação.', 'warning'); return; }
+    try {
+        await api(`/books/${bookId}/annotations`, { method: 'POST', body: JSON.stringify({ page_number: page, note_text: text }) });
+        document.getElementById('ann-text').value = '';
+        toast('Anotação salva!', 'success');
+        openBookReader(bookId);
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteNote(id, type) {
+    try {
+        const path = type === 'highlight' ? `/books/highlights/${id}` : `/books/annotations/${id}`;
+        await api(path, { method: 'DELETE' });
+        document.getElementById(`item-${id}`)?.remove();
+        toast('Removido.', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── FLASHCARDS ────────────────────────────────────
+async function showFlashcards() {
+    setActive('menu-flashcards');
+    setPage('Flashcards', 'Revisão espaçada');
+    const [cards, stats] = await Promise.all([
+        api('/flashcards/').catch(() => []),
+        api('/flashcards/stats').catch(() => null)
+    ]);
+    renderFlashcards(cards, stats);
+}
+
+function renderFlashcards(cards, stats) {
+    const due = cards.filter(c => c.is_due);
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-5xl mx-auto">
+        <!-- Stats row -->
+        ${stats ? `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+            ${statCard('fa-layer-group','Total de cards',stats.total_cards,'text-blue-500','bg-blue-50')}
+            ${statCard('fa-clock','Para revisar hoje',stats.due_today,'text-amber-500','bg-amber-50')}
+            ${statCard('fa-repeat','Total de revisões',stats.total_reviews,'text-purple-500','bg-purple-50')}
+            ${statCard('fa-bullseye','Taxa de acerto',stats.overall_accuracy_pct != null ? `${stats.overall_accuracy_pct}%` : '—','text-green-500','bg-green-50')}
+        </div>` : ''}
+
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex gap-2">
+                <button id="tab-all" onclick="filterCards('all')" class="section-tab active">Todos (${cards.length})</button>
+                <button id="tab-due" onclick="filterCards('due')" class="section-tab">Para revisar (${due.length})</button>
+            </div>
+            <div class="flex gap-2">
+                ${due.length > 0 ? `<button onclick="startReview()" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-play"></i> Revisar ${due.length} card${due.length>1?'s':''}
+                </button>` : ''}
+                <button onclick="openFlashcardModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-plus"></i> Novo card
+                </button>
+            </div>
+        </div>
+
+        <div id="fc-list" class="grid gap-3">
+            ${renderCardList(cards)}
+        </div>
+    </div>`;
+
+    window._fcAll = cards;
+    window._fcDue = due;
+}
+
+function filterCards(type) {
+    document.getElementById('tab-all').classList.toggle('active', type==='all');
+    document.getElementById('tab-due').classList.toggle('active', type==='due');
+    document.getElementById('fc-list').innerHTML = renderCardList(type==='all' ? window._fcAll : window._fcDue);
+}
+
+function renderCardList(cards) {
+    if (cards.length === 0) return `<div class="col-span-full">${emptyState('fa-layer-group','Nenhum flashcard','Crie cards para revisar conceitos importantes com revisão espaçada.')}</div>`;
+    return cards.map(c => {
+        const acc = c.accuracy_pct != null ? `${c.accuracy_pct}%` : '—';
+        const isDue = c.is_due;
+        return `
+        <div class="bg-white border ${isDue ? 'border-amber-200' : 'border-slate-100'} rounded-2xl p-5 group hover:shadow-sm transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-2 flex-wrap">
+                        ${c.subject_name ? `<span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-md">${c.subject_name}</span>` : ''}
+                        ${isDue ? `<span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-md"><i class="fa-solid fa-clock mr-1"></i>Para revisar</span>` : ''}
+                        ${c.tags ? c.tags.split(',').map(t=>`<span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">${t.trim()}</span>`).join('') : ''}
+                    </div>
+                    <p class="text-sm font-semibold text-slate-800 line-clamp-1">${c.front}</p>
+                    <p class="text-xs text-slate-400 mt-0.5 line-clamp-1">${c.back}</p>
+                </div>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    <div class="text-right mr-3">
+                        <p class="text-sm font-bold text-slate-700">${acc}</p>
+                        <p class="text-[10px] text-slate-400">${c.total_reviews} rev.</p>
+                    </div>
+                    <button onclick="openFlashcardModal('${c.id}')" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
+                        <i class="fa-solid fa-pen text-xs"></i>
+                    </button>
+                    <button onclick="deleteFlashcard('${c.id}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function openFlashcardModal(id = null) {
+    editingFlashcardId = id;
+    const subjectOpts = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    openModal(`
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Novo'} Flashcard</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <form onsubmit="saveFlashcard(event)">
+        <div class="form-group">
+            <label class="form-label">Frente (pergunta/conceito) *</label>
+            <textarea id="fc-front" rows="3" class="form-input resize-none" required placeholder="O que é...? Defina..."></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Verso (resposta/explicação) *</label>
+            <textarea id="fc-back" rows="3" class="form-input resize-none" required placeholder="A resposta ou definição..."></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="form-group">
+                <label class="form-label">Matéria</label>
+                <select class="form-select" id="fc-subject">
+                    <option value="">Nenhuma</option>
+                    ${subjectOpts}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Tags</label>
+                <input class="form-input" id="fc-tags" placeholder="tag1, tag2">
+            </div>
+        </div>
+        <div class="flex gap-3 mt-2">
+            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
+            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        </div>
+    </form>`);
+
+    if (id) {
+        api(`/flashcards/${id}`).then(c => {
+            document.getElementById('fc-front').value = c.front;
+            document.getElementById('fc-back').value = c.back;
+            document.getElementById('fc-subject').value = c.subject_id || '';
+            document.getElementById('fc-tags').value = c.tags || '';
+        });
+    }
+}
+
+async function saveFlashcard(e) {
+    e.preventDefault();
+    const data = {
+        front: document.getElementById('fc-front').value.trim(),
+        back: document.getElementById('fc-back').value.trim(),
+        subject_id: document.getElementById('fc-subject').value || null,
+        tags: document.getElementById('fc-tags').value.trim() || null,
+    };
+    try {
+        if (editingFlashcardId) {
+            await api(`/flashcards/${editingFlashcardId}`, { method: 'PUT', body: JSON.stringify(data) });
+            toast('Flashcard atualizado!', 'success');
+        } else {
+            await api('/flashcards/', { method: 'POST', body: JSON.stringify(data) });
+            toast('Flashcard criado!', 'success');
+        }
+        closeModal();
+        showFlashcards();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function deleteFlashcard(id) {
+    if (!confirm('Excluir este flashcard e todo o histórico de revisões?')) return;
+    try {
+        await api(`/flashcards/${id}`, { method: 'DELETE' });
+        toast('Flashcard excluído.', 'success');
+        showFlashcards();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// Review mode
+async function startReview() {
+    reviewQueue = [...window._fcDue];
+    reviewIndex = 0;
+    if (reviewQueue.length === 0) { toast('Nenhum card para revisar!', 'info'); return; }
+    showReviewCard();
+}
+
+function showReviewCard() {
+    if (reviewIndex >= reviewQueue.length) {
+        document.getElementById('mainContent').innerHTML = `
+        <div class="max-w-lg mx-auto text-center py-20">
+            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-trophy text-green-500 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-800 mb-2">Revisão concluída!</h3>
+            <p class="text-slate-500 mb-8">Você revisou ${reviewQueue.length} flashcard${reviewQueue.length>1?'s':''}.</p>
+            <button onclick="showFlashcards()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors">Ver todos os cards</button>
+        </div>`;
+        loadFlashcardBadge();
         return;
     }
 
-    // Limpa aspas extras
-    const cleanToken = token.replace(/"/g, '');
+    const card = reviewQueue[reviewIndex];
+    const progress = Math.round((reviewIndex / reviewQueue.length) * 100);
 
-    try {
-        const response = await fetch(`http://127.0.0.1:8000/subjects/${id}`, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${cleanToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.status === 401) {
-            alert("Sua sessão expirou no servidor. Faça login novamente.");
-            return;
-        }
-
-        if (!response.ok) throw new Error("Erro ao carregar matéria");
-
-        const data = await response.json();
-
-        // 2. Preenche o Modal
-        const modal = document.getElementById('modalSubject');
-        const form = document.getElementById('formSubject');
-
-        if (modal && form) {
-            form.name.value = data.name || '';
-            form.sigla.value = data.sigla || '';
-            form.period.value = data.period || '';
-            
-            form.dataset.mode = 'edit';
-            form.dataset.editId = id;
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            
-            // Troca o título do modal para edição
-            const title = modal.querySelector('h3');
-            if (title) title.innerText = "Editar Disciplina";
-        }
-
-    } catch (error) {
-        console.error("Erro na requisição:", error);
-        alert("Não foi possível carregar os dados da matéria.");
-    }
-};
-
-function renderSubjectsList(subjects) {
-    const container = document.getElementById('subjectsList');
-    if (!container) return;
-
-    const userStored = JSON.parse(localStorage.getItem('user') || '{}');
-    const periodoAtual = String(window.userProfile?.current_period || userStored.current_period || 7);
-
-    const atuais = subjects.filter(s => String(s.period) === periodoAtual);
-    const pendentes = subjects.filter(s => String(s.period) !== periodoAtual);
-
-    const cardHtml = (s, isPendente) => {
-        // Lógica de cores para prioridade
-        const priorityColors = {
-            'Alta': 'bg-red-50 text-red-600 border-red-100',
-            'Média': 'bg-amber-50 text-amber-600 border-amber-100',
-            'Baixa': 'bg-emerald-50 text-emerald-600 border-emerald-100'
-        };
-        const pClass = priorityColors[s.priority] || priorityColors['Média'];
-
-        return `
-            <div onclick="editSubject('${s.id}')" 
-                 draggable="true" 
-                 ondragstart="drag(event)" 
-                 id="${s.id}"
-                 class="bg-white p-6 rounded-[32px] border border-slate-100 shadow-sm hover:shadow-2xl hover:scale-[1.01] transition-all cursor-grab active:cursor-grabbing w-full mb-4 group relative overflow-hidden">
-                
-                <div class="absolute left-0 top-0 h-full w-2 ${isPendente ? 'bg-slate-200' : 'bg-blue-600'}"></div>
-
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div class="flex-1">
-                        <div class="flex items-center gap-3 mb-1">
-                            <h4 class="text-xl font-black text-slate-800 group-hover:text-blue-600 transition-colors">${s.name}</h4>
-                            <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold border ${pClass}">
-                                ${s.priority || 'Média'}
-                            </span>
-                        </div>
-                        <p class="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                            <i class="fa-solid fa-bookmark text-blue-500/50"></i>
-                            ${s.sigla || 'S/S'} • ${s.period}º PERÍODO • ${s.workload || '0'}H EMENTA
-                        </p>
-                    </div>
-
-                    <div class="flex items-center gap-6">
-                        <div class="text-right hidden sm:block">
-                            <p class="text-[10px] font-black text-slate-300 uppercase italic">Docente</p>
-                            <p class="text-sm font-bold text-slate-600">${s.teacher_name || 'Não atribuído'}</p>
-                        </div>
-
-                        <div class="px-5 py-2 rounded-2xl text-[11px] font-black uppercase tracking-tighter ${isPendente ? 'bg-slate-100 text-slate-400' : 'bg-blue-600 text-white shadow-lg shadow-blue-200'}">
-                            ${isPendente ? 'Pendente' : 'Em Curso'}
-                        </div>
-                    </div>
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-2xl mx-auto">
+        <div class="flex items-center gap-4 mb-6">
+            <button onclick="showFlashcards()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-arrow-left"></i></button>
+            <div class="flex-1">
+                <div class="flex justify-between text-xs text-slate-500 mb-1">
+                    <span>Card ${reviewIndex+1} de ${reviewQueue.length}</span>
+                    <span>${progress}%</span>
                 </div>
-
-                <div class="mt-4 pt-4 border-t border-slate-50 flex items-center justify-between">
-                    <div class="flex gap-4">
-                        <span class="text-[10px] font-bold text-slate-400"><i class="fa-solid fa-check-double text-blue-500 mr-1"></i> Média: <span class="text-slate-700">${s.average || '-'}</span></span>
-                        <span class="text-[10px] font-bold text-slate-400"><i class="fa-solid fa-clock text-blue-500 mr-1"></i> Estudo: <span class="text-slate-700">${s.study_hours || 0}h</span></span>
-                    </div>
-                    <i class="fa-solid fa-ellipsis text-slate-200 group-hover:text-blue-300 transition-colors"></i>
-                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
             </div>
-        `;
-    };
-
-    container.innerHTML = `
-        <div class="w-full" ondrop="drop(event)" ondragover="allowDrop(event)">
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] flex items-center gap-3">
-                    <span class="w-8 h-[2px] bg-blue-600"></span> FOCO ATUAL (${periodoAtual}º PERÍODO)
-                </h2>
-                <span class="text-[10px] font-bold bg-blue-50 text-blue-600 px-3 py-1 rounded-full italic">Economizando para o Casamento 💍</span>
-            </div>
-
-            <div class="grid grid-cols-1 gap-2">
-                ${atuais.map(s => cardHtml(s, false)).join('')}
-                ${atuais.length === 0 ? '<div class="p-10 border-2 border-dashed border-slate-100 rounded-[32px] text-center text-slate-300 text-xs italic">Nenhuma matéria para o período atual.</div>' : ''}
-            </div>
-            
-            ${pendentes.length > 0 ? `
-                <div class="mt-16">
-                    <h2 class="text-xs font-black text-slate-300 uppercase tracking-[0.3em] mb-8 flex items-center gap-3">
-                         <span class="w-8 h-[2px] bg-slate-200"></span> OUTROS PERÍODOS
-                    </h2>
-                    <div class="opacity-70 hover:opacity-100 transition-opacity">
-                        ${pendentes.map(s => cardHtml(s, true)).join('')}
-                    </div>
-                </div>
-            ` : ''}
         </div>
-    `;
-}
 
-function setMode(m) {
-    currentMode = m;
-    // Seleção visual dos botões
-    document.getElementById('mEstudo').className = m === 'estudo' ? 'p-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-600 font-bold text-xs' : 'p-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-400 font-bold text-xs';
-    document.getElementById('mLeitura').className = m === 'leitura' ? 'p-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-600 font-bold text-xs' : 'p-3 rounded-xl border-2 border-transparent bg-slate-50 text-slate-400 font-bold text-xs';
-    
-    // Alterna visibilidade dos campos específicos (Requisito do TXT)
-    document.getElementById('estudoInputs').classList.toggle('hidden', m !== 'estudo');
-    document.getElementById('leituraInputs').classList.toggle('hidden', m !== 'leitura');
-}
+        ${card.subject_name ? `<p class="text-center text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">${card.subject_name}</p>` : ''}
 
-function handlePDF(e) {
-    const file = e.target.files[0];
-    if(file && file.type === "application/pdf") {
-        const url = URL.createObjectURL(file);
-        document.getElementById('pdfFrame').innerHTML = `
-            <embed src="${url}" type="application/pdf" width="100%" height="100%" class="rounded-[28px]">
-        `;
-        showToast('info', 'Estudo Ativo', 'PDF carregado para leitura e grifo.');
-    }
-}
-
-
-// ===============================
-// MÁSCARA TELEFONE (FIXO E CELULAR)
-// ===============================
-function formatPhone(input) {
-    let v = input.value.replace(/\D/g, '').substring(0, 11);
-
-    if (v.length <= 10) {
-        // Telefone fixo: (99) 9999-9999
-        v = v.replace(/(\d{2})(\d)/, '($1) $2');
-        v = v.replace(/(\d{4})(\d)/, '$1-$2');
-    } else {
-        // Celular: (99) 99999-9999
-        v = v.replace(/(\d{2})(\d)/, '($1) $2');
-        v = v.replace(/(\d{5})(\d)/, '$1-$2');
-    }
-
-    input.value = v;
-}
-
-async function saveProfileData() {
-    const form = document.getElementById('profileForm');
-    
-    const loadingToast = showToast('info', 'Processando', 'Salvando suas alterações...', 0);
-
-    const data = {
-        phone: form.phone.value || null,
-        cep: form.cep.value || null,
-        logradouro: form.logradouro.value || null,
-        bairro: form.bairro.value || null,
-        city: form.city.value || null,
-        state: form.state.value || null,
-        country: form.country.value || null,
-        curso: form.curso.value || null,
-        // Captura dos novos campos
-        current_period: parseInt(form.current_period.value) || null,
-        total_periods: parseInt(form.total_periods.value) || null,
-        completion_estimate: form.completion_estimate.value || null
-    };
-
-    if (!form.cpf.disabled && form.cpf.value) {
-        data.cpf = form.cpf.value;
-    }
-
-    try {
-        const resp = await fetch(`${API_BASE}/users/me/update`, {
-            method: 'PUT',
-            headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        });
-
-        dismissToast(loadingToast);
-
-        if (resp.ok) {
-            showToast('success', 'Sucesso!', 'Perfil atualizado com sucesso.');
-            // O showProfile() recarrega os dados frescos do banco
-            setTimeout(() => showProfile(), 1000); 
-        } else {
-            showToast('error', 'Erro', 'Não foi possível salvar os dados no servidor.');
-        }
-
-    } catch (e) {
-        dismissToast(loadingToast);
-        console.error("Erro ao salvar dados", e);
-        showToast('error', 'Falha Crítica', 'Erro de conexão.');
-    }
-}
-// Funções para abrir/fechar modais
-function openSubjectModal() { document.getElementById('modalSubject').classList.remove('hidden'); }
-function openTeacherModal() { document.getElementById('modalTeacher').classList.remove('hidden'); }
-function openBookModal() { document.getElementById('modalBook').classList.remove('hidden'); }
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-
-// Lógica de envio para o Backend
-function setupSubjectForm() {
-    const subjectForm = document.getElementById('formSubject');
-    
-    if (subjectForm) {
-        subjectForm.replaceWith(subjectForm.cloneNode(true));
-        const newForm = document.getElementById('formSubject');
-
-        newForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const btn = e.target.querySelector('button[type="submit"]');
-            const mode = e.target.dataset.mode; // 'edit' ou undefined
-            const subjectId = e.target.dataset.editId; // ID da matéria se for edição
-
-            btn.innerText = "Salvando...";
-            btn.disabled = true;
-
-            const formData = new FormData(e.target);
-            const token = localStorage.getItem('token')?.replace(/"/g, '');
-
-            // 1. Monta o objeto com os novos campos que você citou
-            const data = {
-                name: formData.get('name'),
-                sigla: formData.get('sigla'),
-                period: parseInt(formData.get('period')) || 1,
-                priority: formData.get('priority') || 'Média', // Novo campo
-                teacher_id: formData.get('teacher_id') || null // Para vincular ao professor
-            };
-
-            // 2. Lógica Dinâmica: Se houver ID, é PUT (edição), senão é POST (criação)
-            const url = (mode === 'edit' && subjectId) 
-                ? `${API_BASE}/subjects/${subjectId}` 
-                : `${API_BASE}/subjects/create`;
-            
-            const method = (mode === 'edit' && subjectId) ? 'PUT' : 'POST';
-
-            try {
-                const resp = await fetch(url, {
-                    method: method,
-                    headers: { 
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                if (resp.ok) {
-                    showToast('success', 'Sucesso', mode === 'edit' ? 'Matéria atualizada!' : 'Matéria criada!');
-                    closeModal('modalSubject');
-                    e.target.reset();
-                    delete e.target.dataset.mode; // Limpa o modo para a próxima
-                    delete e.target.dataset.editId;
-                    
-                    if(typeof loadSubjects === 'function') loadSubjects(); 
-                } else {
-                    const error = await resp.json();
-                    showToast('error', 'Erro', error.detail || 'Não foi possível salvar.');
-                }
-            } catch (err) {
-                showToast('error', 'Erro', 'Falha na conexão com o servidor.');
-            } finally {
-                btn.innerText = "Salvar Matéria";
-                btn.disabled = false;
-            }
-        });
-    }
-}
-
-function addModernStyles() {
-    // Verifica se o estilo já foi adicionado para evitar duplicação
-    if (document.getElementById('modern-profile-styles')) return;
-    
-    const style = document.createElement('style');
-    style.id = 'modern-profile-styles';
-    style.textContent = `
-        .input-modern {
-            width: 100%;
-            padding: 14px 18px;
-            border: 2px solid #e2e8f0;
-            border-radius: 16px;
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            background: white;
-            transition: all 0.2s ease;
-        }
-        .input-modern:focus {
-            outline: none;
-            border-color: #3b82f6;
-            background: #fafafa;
-        }
-        .input-modern::placeholder {
-            color: #cbd5e1;
-            font-weight: 500;
-        }
-        .animate-fadeIn {
-            animation: fadeIn 0.4s ease-in-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-    `;
-    document.head.appendChild(style);
-}
-
-
-        function logout() { localStorage.removeItem('access_token'); window.location.href = 'index.html'; }
-        
-        window.onload = async () => { 
-            if(!token) {
-                logout(); 
-            } else { 
-                await loadUserInfo();
-                const urlParams = new URLSearchParams(window.location.search);
-                const redirect = urlParams.get('redirect') || localStorage.getItem('pending_redirect');
-                
-                if (redirect === 'gestao') {
-                    localStorage.removeItem('pending_redirect');
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    showAccessManagement();
-                } else {
-                    showCurrentSemester();
-                }
-            }
-        }
-    </script>
-    <div id="modalSubject" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl animate-fadeIn overflow-hidden flex flex-col max-h-[90vh]">
-        <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <div>
-                <span id="subjectUuid" class="text-[9px] font-mono text-slate-400 block mb-1 uppercase tracking-widest">UUID: ---</span>
-                <h3 class="text-2xl font-black text-slate-800">Gestão da Disciplina</h3>
+        <div class="card-scene mb-6" style="height:220px">
+            <div class="card-flip" id="review-card" style="height:100%">
+                <div class="card-face bg-white border-2 border-slate-100 shadow-sm" style="border-radius:20px">
+                    <div class="text-center p-8">
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Pergunta</p>
+                        <p class="text-lg font-semibold text-slate-800">${card.front}</p>
+                    </div>
+                </div>
+                <div class="card-face card-back bg-blue-600" style="border-radius:20px">
+                    <div class="text-center p-8">
+                        <p class="text-[11px] font-bold text-blue-200 uppercase tracking-widest mb-4">Resposta</p>
+                        <p class="text-lg font-semibold text-white">${card.back}</p>
+                    </div>
+                </div>
             </div>
-            <button onclick="closeModal('modalSubject')" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-400 hover:text-red-500 transition-all">
-                <i class="fa-solid fa-xmark"></i>
+        </div>
+
+        <div class="text-center mb-6">
+            <button onclick="flipCard()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors">
+                <i class="fa-solid fa-rotate mr-2"></i>Virar card
             </button>
         </div>
 
-        <form id="formSubject" class="flex-1 overflow-y-auto no-scrollbar p-8 space-y-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2">
-                    <label class="label-modern">Nome da Matéria</label>
-                    <input name="name" required class="input-modern" placeholder="Ex: Direito Constitucional I">
-                </div>
-                <div>
-                    <label class="label-modern">Sigla</label>
-                    <input name="sigla" class="input-modern" placeholder="DC1">
-                </div>
-                <div>
-                    <label class="label-modern">Prioridade</label>
-                    <select name="priority" class="input-modern">
-                        <option value="Alta">🔴 Alta</option>
-                        <option value="Média">🟡 Média</option>
-                        <option value="Baixa">🟢 Baixa</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="label-modern">Período</label>
-                    <input name="period" type="number" class="input-modern" placeholder="7">
-                </div>
-                <div>
-                    <label class="label-modern">Carga Horária (Ementa)</label>
-                    <input name="workload" type="number" class="input-modern" placeholder="80">
-                </div>
-                <div class="md:col-span-2">
-                    <label class="label-modern">Professor Titular</label>
-                    <input name="teacher_name" class="input-modern" placeholder="Nome do docente">
-                </div>
-                <div>
-                    <label class="label-modern">Status</label>
-                    <select name="status" class="input-modern bg-slate-50">
-                        <option value="Pendente">Pendente</option>
-                        <option value="Em Curso">Em Curso</option>
-                        <option value="Concluída">Concluída</option>
-                    </select>
-                </div>
+        <div id="confidence-section" class="hidden">
+            <p class="text-center text-sm font-semibold text-slate-600 mb-4">Como você se saiu?</p>
+            <div class="grid grid-cols-5 gap-2">
+                ${[
+                    {v:1, label:'Nada', color:'bg-red-500 hover:bg-red-600'},
+                    {v:2, label:'Pouco', color:'bg-orange-500 hover:bg-orange-600'},
+                    {v:3, label:'Regular', color:'bg-yellow-500 hover:bg-yellow-600'},
+                    {v:4, label:'Bem', color:'bg-lime-500 hover:bg-lime-600'},
+                    {v:5, label:'Perfeito', color:'bg-green-500 hover:bg-green-600'},
+                ].map(opt => `
+                <button onclick="submitReview('${card.id}',${opt.v})"
+                    class="${opt.color} text-white font-bold py-3 rounded-xl text-xs transition-colors">
+                    ${opt.label}
+                </button>`).join('')}
             </div>
+        </div>
+    </div>`;
+}
 
-            <div class="bg-slate-50 p-6 rounded-[32px] border border-slate-100">
-                <div class="flex justify-between items-center mb-4">
-                    <h4 class="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                        <i class="fa-solid fa-graduation-cap text-blue-600"></i> Notas & Avaliações
-                    </h4>
-                    <button type="button" onclick="addNoteRow()" class="text-[10px] font-black bg-blue-600 text-white px-3 py-1 rounded-full hover:bg-blue-700 transition-all">
-                        + NOTA
-                    </button>
-                </div>
-                <table class="w-full text-left text-xs">
-                    <thead>
-                        <tr class="text-slate-400 font-bold uppercase tracking-tighter">
-                            <th class="pb-2 pl-2">Data</th>
-                            <th class="pb-2">Descrição</th>
-                            <th class="pb-2">Nota</th>
-                            <th class="pb-2 w-10"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="notesTableBody">
-                        </tbody>
-                </table>
-                <div class="mt-4 flex justify-end">
-                    <div class="text-right">
-                        <p class="text-[10px] font-black text-slate-400 uppercase">Média Atual</p>
-                        <p id="averageDisplay" class="text-xl font-black text-blue-600">0.0</p>
-                    </div>
-                </div>
+function flipCard() {
+    const card = document.getElementById('review-card');
+    card.classList.toggle('flipped');
+    document.getElementById('confidence-section').classList.remove('hidden');
+}
+
+async function submitReview(cardId, confidence) {
+    try {
+        await api(`/flashcards/${cardId}/review`, {
+            method: 'POST',
+            body: JSON.stringify({ is_correct: confidence >= 3, confidence })
+        });
+        reviewIndex++;
+        showReviewCard();
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── STUDY SESSIONS ────────────────────────────────
+async function showSessions() {
+    setActive('menu-sessoes');
+    setPage('Sessão de Estudo', 'Registre seu tempo e atividades');
+
+    const subjectOpts = subjects.length === 0
+        ? '<option value="">Nenhuma matéria cadastrada</option>'
+        : subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+
+    timerSeconds = 0;
+    clearInterval(timerInterval);
+    timerRunning = false;
+    sessionTasks = [];
+
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-2xl mx-auto space-y-6">
+        <div class="bg-white rounded-2xl border border-slate-100 p-8">
+            <div class="text-center mb-8">
+                <p class="timer-display text-slate-800" id="timer-display">00:00:00</p>
+                <p class="text-xs text-slate-400 mt-2">Tempo de estudo</p>
             </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="p-6 border border-slate-100 rounded-[32px]">
-                    <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Banco de Questões</h4>
-                    <div class="flex gap-4">
-                        <div class="flex-1">
-                            <label class="text-[9px] font-bold text-slate-400 ml-2">ACERTOS</label>
-                            <input name="correct_questions" type="number" class="input-modern text-center" value="0">
-                        </div>
-                        <div class="flex-1">
-                            <label class="text-[9px] font-bold text-slate-400 ml-2">TOTAL</label>
-                            <input name="total_questions" type="number" class="input-modern text-center" value="0">
-                        </div>
-                    </div>
-                </div>
-                <div class="p-6 border border-slate-100 rounded-[32px]">
-                    <h4 class="text-[10px] font-black text-slate-400 uppercase mb-4 tracking-widest">Leitura & Estudo</h4>
-                    <div class="flex gap-4">
-                        <div class="flex-1">
-                            <label class="text-[9px] font-bold text-slate-400 ml-2">TEMPO ESTUDO (H)</label>
-                            <input name="study_hours" type="number" class="input-modern text-center" value="0">
-                        </div>
-                        <div class="flex-1">
-                            <label class="text-[9px] font-bold text-slate-400 ml-2">TEMPO LEITURA (H)</label>
-                            <input name="reading_hours" type="number" class="input-modern text-center" value="0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="pt-6 border-t border-slate-100 flex gap-4">
-                <button type="submit" class="flex-1 bg-blue-600 text-white p-5 rounded-[24px] font-black hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-200 transition-all flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-circle-check text-xl"></i> SALVAR ALTERAÇÕES
+            <div class="flex justify-center gap-3 mb-8">
+                <button onclick="toggleTimer()" id="btn-timer"
+                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-play" id="timer-icon"></i><span id="timer-label">Iniciar</span>
+                </button>
+                <button onclick="resetTimer()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-5 py-3 rounded-xl transition-colors">
+                    <i class="fa-solid fa-rotate-left"></i>
                 </button>
             </div>
-        </form>
-    </div>
-</div>
 
-<div id="modalTeacher" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-lg rounded-[32px] shadow-2xl animate-fadeIn">
-        <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-            <h3 class="text-xl font-black text-slate-800">Novo Docente</h3>
-            <button onclick="closeModal('modalTeacher')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark"></i></button>
+            <div class="form-group">
+                <label class="form-label">Matéria *</label>
+                <select class="form-select" id="session-subject">${subjectOpts}</select>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="form-group mb-0">
+                    <label class="form-label">Questões feitas</label>
+                    <input type="number" class="form-input" id="session-total" value="0" min="0">
+                </div>
+                <div class="form-group mb-0">
+                    <label class="form-label">Acertos</label>
+                    <input type="number" class="form-input" id="session-correct" value="0" min="0">
+                </div>
+            </div>
         </div>
-        <form id="formTeacher" class="p-8 space-y-4">
-            <div><label class="label-modern">Nome do Professor</label><input name="name" required class="input-modern"></div>
-            <div><label class="label-modern">E-mail / Contato</label><input name="email" class="input-modern"></div>
-            <button type="submit" class="w-full bg-slate-900 text-white p-4 rounded-2xl font-bold hover:bg-blue-600 transition-all">Cadastrar Professor</button>
-        </form>
-    </div>
-</div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-6">
+            <h3 class="text-sm font-bold text-slate-700 mb-4">Tarefas da sessão</h3>
+            <div id="task-list" class="space-y-2 mb-3"></div>
+            <div class="flex gap-2">
+                <input class="form-input flex-1 text-sm" id="task-input" placeholder="Adicionar tarefa..." onkeydown="if(event.key==='Enter'){event.preventDefault();addTask()}">
+                <button onclick="addTask()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-semibold transition-colors">Adicionar</button>
+            </div>
+        </div>
+
+        <button onclick="saveSession()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl text-sm flex items-center justify-center gap-2 transition-colors">
+            <i class="fa-solid fa-floppy-disk"></i> Salvar Sessão
+        </button>
+    </div>`;
+}
+
+function toggleTimer() {
+    timerRunning = !timerRunning;
+    if (timerRunning) {
+        timerInterval = setInterval(() => {
+            timerSeconds++;
+            const h = String(Math.floor(timerSeconds/3600)).padStart(2,'0');
+            const m = String(Math.floor((timerSeconds%3600)/60)).padStart(2,'0');
+            const s = String(timerSeconds%60).padStart(2,'0');
+            document.getElementById('timer-display').textContent = `${h}:${m}:${s}`;
+        }, 1000);
+        document.getElementById('timer-icon').className = 'fa-solid fa-pause';
+        document.getElementById('timer-label').textContent = 'Pausar';
+        document.getElementById('btn-timer').className = 'bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors';
+    } else {
+        clearInterval(timerInterval);
+        document.getElementById('timer-icon').className = 'fa-solid fa-play';
+        document.getElementById('timer-label').textContent = 'Retomar';
+        document.getElementById('btn-timer').className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors';
+    }
+}
+
+function resetTimer() {
+    clearInterval(timerInterval);
+    timerRunning = false;
+    timerSeconds = 0;
+    document.getElementById('timer-display').textContent = '00:00:00';
+    document.getElementById('timer-icon').className = 'fa-solid fa-play';
+    document.getElementById('timer-label').textContent = 'Iniciar';
+    document.getElementById('btn-timer').className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors';
+}
+
+function addTask() {
+    const inp = document.getElementById('task-input');
+    const desc = inp.value.trim();
+    if (!desc) return;
+    sessionTasks.push({ description: desc, is_done: false });
+    inp.value = '';
+    renderTaskList();
+}
+
+function toggleTask(i) {
+    sessionTasks[i].is_done = !sessionTasks[i].is_done;
+    renderTaskList();
+}
+
+function removeTask(i) {
+    sessionTasks.splice(i, 1);
+    renderTaskList();
+}
+
+function renderTaskList() {
+    document.getElementById('task-list').innerHTML = sessionTasks.map((t, i) => `
+    <div class="flex items-center gap-3 p-3 rounded-xl ${t.is_done ? 'bg-green-50' : 'bg-slate-50'}">
+        <button onclick="toggleTask(${i})" class="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${t.is_done ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">
+            ${t.is_done ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+        </button>
+        <span class="flex-1 text-sm ${t.is_done ? 'line-through text-slate-400' : 'text-slate-700'}">${t.description}</span>
+        <button onclick="removeTask(${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xs"></i></button>
+    </div>`).join('');
+}
+
+async function saveSession() {
+    const subjectId = document.getElementById('session-subject').value;
+    if (!subjectId) { toast('Selecione uma matéria.', 'warning'); return; }
+    if (timerSeconds === 0) { toast('Inicie o timer antes de salvar.', 'warning'); return; }
+
+    const data = {
+        subject_id: subjectId,
+        duration_seconds: timerSeconds,
+        total_questions: parseInt(document.getElementById('session-total').value) || 0,
+        correct_answers: parseInt(document.getElementById('session-correct').value) || 0,
+        tasks: sessionTasks,
+    };
+    try {
+        await api('/sessions/', { method: 'POST', body: JSON.stringify(data) });
+        toast('Sessão salva com sucesso!', 'success');
+        resetTimer();
+        sessionTasks = [];
+        renderTaskList();
+        document.getElementById('session-total').value = '0';
+        document.getElementById('session-correct').value = '0';
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── HISTORY ───────────────────────────────────────
+async function showHistory() {
+    setActive('menu-historico');
+    setPage('Histórico', 'Registro de todas as sessões');
+    const history = await api('/sessions/history').catch(() => []);
+
+    const totalH = fmtDuration(history.reduce((a, s) => a + s.duration_seconds, 0));
+    const totalQ = history.reduce((a, s) => a + s.total_questions, 0);
+    const totalC = history.reduce((a, s) => a + s.correct_answers, 0);
+    const acc = totalQ > 0 ? Math.round(totalC/totalQ*100) : 0;
+
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-4xl mx-auto">
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="sr-only">Histórico</h2>
+            ${history.length > 0 ? `
+            <button onclick="exportHistoryPdf()" class="ml-auto flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
+                <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+            </button>` : ''}
+        </div>
+        <div class="grid grid-cols-3 gap-4 mb-6">
+            ${statCard('fa-clock','Tempo total',totalH,'text-blue-500','bg-blue-50')}
+            ${statCard('fa-list','Sessões',history.length,'text-purple-500','bg-purple-50')}
+            ${statCard('fa-bullseye','Taxa de acerto',totalQ>0?`${acc}%`:'—','text-green-500','bg-green-50')}
+        </div>
+        ${history.length === 0 ? emptyState('fa-clock-rotate-left','Nenhuma sessão','Registre sua primeira sessão de estudo.') :
+        `<div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <table class="w-full text-sm">
+                <thead class="bg-slate-50 border-b border-slate-100">
+                    <tr class="text-left">
+                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Matéria</th>
+                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Data</th>
+                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Duração</th>
+                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Questões</th>
+                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Acerto</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    ${history.map(s => {
+                        const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
+                        return `<tr class="hover:bg-slate-50 transition-colors">
+                            <td class="px-5 py-4 font-semibold text-slate-800">${s.subject_name}</td>
+                            <td class="px-5 py-4 text-slate-500">${fmtDate(s.start_time)}</td>
+                            <td class="px-5 py-4 font-mono text-slate-700">${fmtDuration(s.duration_seconds)}</td>
+                            <td class="px-5 py-4 text-slate-500">${s.total_questions > 0 ? `${s.correct_answers}/${s.total_questions}` : '—'}</td>
+                            <td class="px-5 py-4">${a != null ? `<span class="font-bold ${a>=70?'text-green-600':a>=50?'text-yellow-600':'text-red-500'}">${a}%</span>` : '—'}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>`}
+    </div>`;
+}
+
+// ── PROFILE ───────────────────────────────────────
+async function showProfile() {
+    setActive('menu-perfil');
+    setPage('Meu Perfil', 'Informações e configurações');
+    const u = me;
+    document.getElementById('mainContent').innerHTML = `
+    <div class="max-w-2xl mx-auto space-y-5">
+        <div class="bg-white rounded-2xl border border-slate-100 p-6">
+            <div class="flex items-center gap-5 mb-6">
+                <div class="relative group">
+                    ${u.photo_url
+                        ? `<img src="${u.photo_url}" class="w-16 h-16 rounded-2xl object-cover border border-slate-200" onerror="this.outerHTML='<div class=\\'w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center\\'><span class=\\'text-2xl font-black text-blue-600\\'>${u.full_name.charAt(0).toUpperCase()}</span></div>'">`
+                        : `<div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center"><span class="text-2xl font-black text-blue-600">${u.full_name.charAt(0).toUpperCase()}</span></div>`}
+                    <button onclick="openPhotoModal()" class="absolute -bottom-1 -right-1 w-7 h-7 bg-slate-900 hover:bg-slate-700 text-white rounded-full flex items-center justify-center shadow-md transition-colors" title="Alterar foto">
+                        <i class="fa-solid fa-camera text-[10px]"></i>
+                    </button>
+                </div>
+                <div>
+                    <p class="text-lg font-bold text-slate-800">${u.full_name}</p>
+                    <p class="text-sm text-slate-400">${u.email}</p>
+                    <span class="inline-block mt-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${u.role==='admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-600'}">${u.role==='admin'?'Administrador':'Estudante'}</span>
+                </div>
+            </div>
+            <form onsubmit="saveProfile(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group mb-0">
+                        <label class="form-label">Nome completo</label>
+                        <input class="form-input" id="p-name" value="${u.full_name||''}">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">Curso</label>
+                        <input class="form-input" id="p-curso" value="${u.curso||''}" placeholder="Ex: Direito">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="form-group mb-0">
+                        <label class="form-label">Período atual</label>
+                        <input type="number" class="form-input" id="p-period" value="${u.current_period||''}" min="1" max="12">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">Total de períodos</label>
+                        <input type="number" class="form-input" id="p-total" value="${u.total_periods||''}" min="1" max="12">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">Previsão de conclusão</label>
+                        <input class="form-input" id="p-estimate" value="${u.completion_estimate||''}" placeholder="Ex: Dez/2027">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group mb-0">
+                        <label class="form-label">Telefone</label>
+                        <input class="form-input" id="p-phone" value="${u.phone||''}" placeholder="(11) 99999-0000">
+                    </div>
+                    <div class="form-group mb-0">
+                        <label class="form-label">CPF</label>
+                        <input class="form-input" id="p-cpf" value="${u.cpf||''}" placeholder="000.000.000-00" ${u.cpf ? 'disabled' : ''}>
+                        ${u.cpf ? '<p class="text-[11px] text-slate-400 mt-1">CPF não pode ser alterado</p>' : ''}
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i>Salvar alterações
+                </button>
+            </form>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-100 p-6">
+            <h3 class="text-sm font-bold text-slate-700 mb-1">Conta</h3>
+            <p class="text-xs text-slate-400 mb-4">E-mail: ${u.email}</p>
+            <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm font-semibold transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair do sistema
+            </button>
+        </div>
+    </div>`;
+}
+
+function openPhotoModal() {
+    openModal(`
+    <div class="p-6">
+        <h3 class="text-lg font-bold text-slate-800 mb-2">Foto de perfil</h3>
+        <p class="text-xs text-slate-500 mb-4">Cole a URL de uma imagem (https://...) ou deixe em branco para remover.</p>
+        <input id="photo-url-input" class="form-input w-full" placeholder="https://i.imgur.com/exemplo.jpg" value="${me.photo_url || ''}">
+        <div class="flex gap-2 mt-4">
+            <button onclick="closeModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm transition-colors">Cancelar</button>
+            <button onclick="savePhoto()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors">Salvar</button>
+        </div>
+    </div>`);
+}
+
+async function savePhoto() {
+    const url = document.getElementById('photo-url-input').value.trim();
+    try {
+        const updated = await api('/users/me/photo', { method: 'PUT', body: JSON.stringify({ photo_url: url || null }) });
+        me = { ...me, ...updated };
+        closeModal();
+        showProfile();
+        toast(url ? 'Foto atualizada!' : 'Foto removida.', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+async function saveProfile(e) {
+    e.preventDefault();
+    const data = {
+        full_name: document.getElementById('p-name').value.trim() || undefined,
+        curso: document.getElementById('p-curso').value.trim() || null,
+        current_period: parseInt(document.getElementById('p-period').value) || null,
+        total_periods: parseInt(document.getElementById('p-total').value) || null,
+        completion_estimate: document.getElementById('p-estimate').value.trim() || null,
+        phone: document.getElementById('p-phone').value.trim() || null,
+    };
+    const cpfEl = document.getElementById('p-cpf');
+    if (!cpfEl.disabled && cpfEl.value.trim()) data.cpf = cpfEl.value.trim();
+
+    try {
+        const updated = await api('/users/me/update', { method: 'PUT', body: JSON.stringify(data) });
+        me = { ...me, ...updated };
+        document.getElementById('userDisplayName').textContent = me.full_name;
+        document.getElementById('sidebar-name').textContent = me.full_name;
+        toast('Perfil atualizado!', 'success');
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// ── Start ──────────────────────────────────────────
+init();
+</script>
 </body>
 </html>

@@ -1,7 +1,7 @@
-from app.database import Base 
+from app.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy import text, String, Text, ForeignKey, Boolean, Integer
+from sqlalchemy import text, String, Text, ForeignKey, Boolean, Integer, DateTime
 import uuid
 from datetime import datetime
 from typing import Optional, List
@@ -62,8 +62,14 @@ class User(Base):
         nullable=True
     )
 
+    photo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("TRUE"))
     is_approved: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
+
+    # Lockout / brute-force protection
+    failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    locked_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     group: Mapped[Optional["Group"]] = relationship("Group", back_populates="users")

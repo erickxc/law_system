@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from uuid import UUID
+from pydantic import BaseModel
+from typing import Optional
 
 from app.database import get_db
 from app.core.auth import get_current_user
@@ -8,6 +9,10 @@ from app.models.user import User
 from app.models.schemas.user_schema import UserUpdate, UserResponse
 
 router = APIRouter(tags=["Users"])
+
+
+class PhotoUpdate(BaseModel):
+    photo_url: Optional[str] = None  # URL externa (ou null pra remover)
 
 
 @router.put("/users/me/update", response_model=UserResponse)
@@ -35,30 +40,22 @@ def update_user_profile(
         db.commit()
         db.refresh(current_user)
         return current_user
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise HTTPException(status_code=500, detail="Erro interno ao salvar os dados.")
 
 
-@router.delete("/admin/users/{user_id}", status_code=204)
-def delete_user(
-    user_id: UUID,
+@router.put("/users/me/photo", response_model=UserResponse)
+def update_user_photo(
+    body: PhotoUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Acesso negado. Apenas administradores podem excluir usuários.")
-
-    user_to_delete = db.query(User).filter(User.id == user_id).first()
-    if not user_to_delete:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado.")
-
-    if user_to_delete.id == current_user.id:
-        raise HTTPException(status_code=400, detail="Você não pode excluir sua própria conta.")
-
-    try:
-        db.delete(user_to_delete)
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise HTTPException(status_code=500, detail="Erro interno ao remover o usuário.")
+    """Atualiza apenas a foto de perfil (URL externa). Use null pra remover."""
+    url = body.photo_url
+    if url and not (url.startswith("http://") or url.startswith("https://") or url.startswith("data:image/")):
+        raise HTTPException(status_code=400, detail="photo_url deve ser uma URL http(s) ou data:image/...")
+    current_user.photo_url = url
+    db.commit()
+    db.refresh(current_user)
+    return current_user

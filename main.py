@@ -15,57 +15,42 @@ from pydantic import BaseModel, EmailStr, Field
 
 from app.database import engine, Base, get_db
 from app.models.user import User
-from app.models import academic  # garante que todos os modelos sejam registrados
-from app.models.routes import sessions, subject, teacher, update_user
+from app.models import academic
+from app.models.routes import sessions, subject, teacher, update_user, admin, flashcards, books
+from app.core.auth import get_current_user
 from config import settings
 
 
-# =========================
-# LOGGING
-# =========================
+if hasattr(sys.stdout, 'buffer'):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
-# =========================
-# APP
-# =========================
-
-app = FastAPI(
-    title="Law System API",
-    version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc"
-)
+app = FastAPI(title="Law System API", version="2.0.0", docs_url="/docs", redoc_url="/redoc")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://lawsysfrontend.vercel.app",
+        "http://localhost:5500",
+        "http://127.0.0.1:5500",
+        "http://localhost:3000",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# =========================
-# ROUTERS
-# =========================
-
 app.include_router(sessions.router)
 app.include_router(subject.router)
 app.include_router(teacher.router)
 app.include_router(update_user.router)
+app.include_router(admin.router)
+app.include_router(flashcards.router)
+app.include_router(books.router)
 
-
-# =========================
-# SCHEMAS (auth only)
-# =========================
 
 class UserCreate(BaseModel):
     full_name: str = Field(..., min_length=3)
@@ -80,10 +65,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-# =========================
-# TOKEN
-# =========================
-
 def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -91,34 +72,44 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-# =========================
-# STARTUP
-# =========================
-
 @app.on_event("startup")
 def startup():
-    with engine.connect() as conn:
-        conn.execute(text("CREATE SCHEMA IF NOT EXISTS core"))
-        conn.execute(text("CREATE SCHEMA IF NOT EXISTS academic"))
-        conn.commit()
-    Base.metadata.create_all(bind=engine)
-    logger.info("Law System API iniciada com sucesso!")
+    try:
+        with engine.connect() as conn:
+            conn.execute(text("CREATE SCHEMA IF NOT EXISTS core"))
+            conn.execute(text("CREATE SCHEMA IF NOT EXISTS academic"))
+            conn.commit()
+        Base.metadata.create_all(bind=engine)
+        logger.info("Law System API v2 iniciada com sucesso!")
+    except Exception as e:
+        logger.error(f"Erro no startup: {e}")
 
 
-# =========================
-# AUTH ENDPOINTS
-# =========================
+@app.get("/users/me", tags=["Users"])
+def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "id": str(current_user.id),
+        "full_name": current_user.full_name,
+        "email": current_user.email,
+        "role": current_user.role,
+        "curso": current_user.curso,
+        "current_period": current_user.current_period,
+        "total_periods": current_user.total_periods,
+        "completion_estimate": current_user.completion_estimate,
+        "cpf": current_user.cpf,
+        "phone": current_user.phone,
+        "photo_url": current_user.photo_url,
+        "is_approved": current_user.is_approved,
+        "is_active": current_user.is_active,
+    }
+
 
 @app.post("/register", status_code=201, tags=["Auth"])
 def register(u: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == u.email).first():
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
 
-    hashed = bcrypt.hashpw(
-        u.password.encode("utf-8"),
-        bcrypt.gensalt()
-    ).decode("utf-8")
-
+    hashed = bcrypt.hashpw(u.password.encode("utf-8"), bcrypt.gensalt(rounds=settings.BCRYPT_ROUNDS)).decode("utf-8")
     new_user = User(
         full_name=u.full_name,
         email=u.email,
@@ -127,34 +118,55 @@ def register(u: UserCreate, db: Session = Depends(get_db)):
         curso=u.curso,
         is_approved=False
     )
-
     db.add(new_user)
     db.commit()
-
     return {"message": "Registrado com sucesso! Aguarde aprovação."}
 
 
 @app.post("/login", tags=["Auth"])
 def login(l: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == l.email).first()
+    now = datetime.utcnow()
 
-    if not user or not bcrypt.checkpw(
-        l.password.encode("utf-8"),
-        user.password_hash.encode("utf-8")
-    ):
+    # Lockout check (antes da verificação de senha)
+    if user and user.locked_until and user.locked_until > now:
+        remaining = int((user.locked_until - now).total_seconds() / 60) + 1
+        raise HTTPException(
+            status_code=429,
+            detail=f"Muitas tentativas falhas. Tente novamente em {remaining} minuto(s).",
+        )
+
+    if not user or not bcrypt.checkpw(l.password.encode("utf-8"), user.password_hash.encode("utf-8")):
+        # Incrementa contador no usuário existente
+        if user:
+            user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+            if user.failed_login_attempts >= settings.MAX_LOGIN_ATTEMPTS:
+                user.locked_until = now + timedelta(minutes=settings.LOCKOUT_MINUTES)
+                user.failed_login_attempts = 0
+                db.commit()
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Conta bloqueada por {settings.LOCKOUT_MINUTES} minutos após {settings.MAX_LOGIN_ATTEMPTS} tentativas.",
+                )
+            db.commit()
         raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
 
     if not user.is_approved:
         raise HTTPException(status_code=403, detail="Conta aguardando aprovação do administrador")
 
-    token = create_access_token({"sub": str(user.id)})
+    if not user.is_active:
+        raise HTTPException(status_code=403, detail="Conta desativada. Entre em contato com o administrador.")
 
-    return {
-        "access_token": token,
-        "token_type": "bearer"
-    }
+    # Sucesso: reset contador
+    if user.failed_login_attempts or user.locked_until:
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        db.commit()
+
+    token = create_access_token({"sub": str(user.id)})
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @app.get("/health", tags=["System"])
 def health_check():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "2.0.0"}
