@@ -75,8 +75,8 @@ class SessionStartInput(BaseModel):
     def _max(cls, v):
         if v < 1:
             raise ValueError("max_cards deve ser >= 1")
-        if v > 200:
-            raise ValueError("max_cards no máximo 200")
+        if v > 1000:
+            raise ValueError("max_cards no máximo 1000")
         return v
 
 
