@@ -387,11 +387,12 @@ async function openBookReader(bookId) {
         .pdf-textLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; opacity: 0.2; line-height: 1.0; user-select: text; }
         .pdf-textLayer > span, .pdf-textLayer > br { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
         .pdf-textLayer ::selection { background: rgba(0, 100, 255, 0.3); }
-        .hl-overlay { position: absolute; pointer-events: none; mix-blend-mode: multiply; }
-        .hl-yellow { background: rgba(253, 224, 71, 0.4); }
-        .hl-green  { background: rgba(134, 239, 172, 0.4); }
-        .hl-blue   { background: rgba(147, 197, 253, 0.4); }
-        .hl-pink   { background: rgba(249, 168, 212, 0.4); }
+        .hl-overlay { position: absolute; mix-blend-mode: multiply; border-radius: 2px; transition: filter .12s; }
+        .hl-overlay:hover { filter: brightness(0.92); }
+        .hl-yellow { background: rgba(253, 224, 71, 0.55); }
+        .hl-green  { background: rgba(134, 239, 172, 0.55); }
+        .hl-blue   { background: rgba(147, 197, 253, 0.55); }
+        .hl-pink   { background: rgba(249, 168, 212, 0.55); }
         .note-pin { position: absolute; width: 20px; height: 20px; background: var(--warning); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.2); }
     </style>`;
 
@@ -662,7 +663,7 @@ function readerPrevPage() { readerGoToPage((_renderedPage || 1) - 1); }
 function readerNextPage() { readerGoToPage((_renderedPage || 1) + 1); }
 
 function renderOverlaysForPage(pageNum, wrap) {
-    // Sticky notes posicionadas (x_pct, y_pct) — etiquetas visuais
+    // Sticky notes posicionadas (x_pct, y_pct) — etiquetas visuais com DRAG
     const stickies = _readerAnnotations.filter(a => a.page_number === pageNum && a.tag && a.x_pct != null && a.y_pct != null);
     stickies.forEach(s => {
         const tag = STICKY_TAGS[s.tag] || STICKY_TAGS.pin;
@@ -670,19 +671,33 @@ function renderOverlaysForPage(pageNum, wrap) {
         el.className = `sticky-note sticky-tag-${s.tag}`;
         el.style.left = `${s.x_pct}%`;
         el.style.top  = `${s.y_pct}%`;
+        el.style.cursor = 'grab';
         el.innerHTML = `<i class="fa-solid ${tag.icon}"></i><span>${s.note_text || tag.label}</span>`;
-        el.title = `Clique para editar · ${tag.label}`;
-        el.onclick = (e) => {
-            e.stopPropagation();
-            if (_postitMode) return; // não abre detalhe em modo post-it
-            openStickyEditModal(s);
-        };
+        el.title = `Arrastar para mover · clique para editar`;
+        makeStickyDraggable(el, s, wrap);
         wrap.appendChild(el);
     });
 
-    // Pins na margem para highlights (sem coordenadas) e anotações antigas (sem tag/posição)
+    // Highlights: rects coloridos sobre o texto + pin na margem
     const hls = _readerHighlights.filter(h => h.page_number === pageNum);
     hls.forEach((h, i) => {
+        // Overlay colorido sobre o texto (se houver rects)
+        if (Array.isArray(h.rects) && h.rects.length > 0) {
+            h.rects.forEach(r => {
+                const ov = document.createElement('div');
+                ov.className = `hl-overlay hl-${h.color || 'yellow'}`;
+                ov.style.left   = `${r.x}%`;
+                ov.style.top    = `${r.y}%`;
+                ov.style.width  = `${r.w}%`;
+                ov.style.height = `${r.h}%`;
+                ov.title = `Grifo: ${h.selected_text.slice(0, 80)}`;
+                ov.style.cursor = 'pointer';
+                ov.style.pointerEvents = 'auto';
+                ov.onclick = (e) => { e.stopPropagation(); showNoteDetail(h, 'highlight'); };
+                wrap.appendChild(ov);
+            });
+        }
+        // Pin na margem (atalho de navegação/exclusão)
         const pin = document.createElement('div');
         pin.className = 'note-pin';
         pin.style.left = '-28px';
@@ -714,13 +729,88 @@ function renderOverlaysForPage(pageNum, wrap) {
 
 function pageClickPostit(e) {
     if (!_postitMode) return;
-    if (e.target.classList?.contains('sticky-note')) return;
+    if (e.target.closest('.sticky-note')) return;
+    if (e.target.closest('.hl-overlay')) return;
     const wrap = e.currentTarget;
     const rect = wrap.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     const pageNum = parseInt(wrap.dataset.page);
     openStickyCreateModal(_postitMode, pageNum, x, y);
+}
+
+// Torna a etiqueta arrastável. Threshold de 5px distingue click (edita) de drag (move).
+function makeStickyDraggable(el, sticky, wrap) {
+    let startX = 0, startY = 0, moved = false, dragging = false;
+    let offsetXpx = 0, offsetYpx = 0;
+
+    const onDown = (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        e.stopPropagation();
+        const elRect = el.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        offsetXpx = e.clientX - elRect.left;
+        offsetYpx = e.clientY - elRect.top;
+        moved = false;
+        dragging = true;
+        el.style.cursor = 'grabbing';
+        el.style.zIndex = 50;
+        el.style.opacity = '0.85';
+        document.addEventListener('mousemove', onMove);
+        document.addEventListener('mouseup', onUp);
+    };
+
+    const onMove = (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (!moved && Math.hypot(dx, dy) < 5) return;
+        moved = true;
+        const wrapRect = wrap.getBoundingClientRect();
+        let xPx = e.clientX - wrapRect.left - offsetXpx;
+        let yPx = e.clientY - wrapRect.top  - offsetYpx;
+        // Clamp dentro do wrap
+        xPx = Math.max(0, Math.min(wrapRect.width  - 10, xPx));
+        yPx = Math.max(0, Math.min(wrapRect.height - 10, yPx));
+        const xPct = (xPx / wrapRect.width)  * 100;
+        const yPct = (yPx / wrapRect.height) * 100;
+        el.style.left = `${xPct}%`;
+        el.style.top  = `${yPct}%`;
+        el._newX = xPct;
+        el._newY = yPct;
+    };
+
+    const onUp = async (e) => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+        if (!dragging) return;
+        dragging = false;
+        el.style.cursor = 'grab';
+        el.style.opacity = '';
+        el.style.zIndex = '';
+
+        if (moved && el._newX != null && el._newY != null) {
+            // Drag: salva nova posição
+            try {
+                const updated = await api(`/books/annotations/${sticky.id}`, {
+                    method: 'PUT',
+                    body: JSON.stringify({ x_pct: el._newX, y_pct: el._newY }),
+                });
+                const i = _readerAnnotations.findIndex(a => a.id === sticky.id);
+                if (i !== -1) _readerAnnotations[i] = updated;
+                sticky.x_pct = updated.x_pct;
+                sticky.y_pct = updated.y_pct;
+                toast('Etiqueta movida', 'success', 1200);
+            } catch (err) { toast('Erro ao mover: ' + err.message, 'error'); }
+        } else {
+            // Click sem mover: edita
+            if (!_postitMode) openStickyEditModal(sticky);
+        }
+    };
+
+    el.addEventListener('mousedown', onDown);
 }
 
 // ─── Modo post-it (toolbar inferior) ─────────────────────────────────────
@@ -935,16 +1025,27 @@ function handleSelectionEnd(e) {
             hidePopover();
             return;
         }
-        // Verificar se a seleção está dentro de um text layer
         const range = sel.getRangeAt(0);
         const pageWrap = range.startContainer.parentElement?.closest('.pdf-page-wrap');
         if (!pageWrap) {
             hidePopover();
             return;
         }
+        // Captura rects da seleção normalizados em % do wrap
+        const wrapRect = pageWrap.getBoundingClientRect();
+        const clientRects = Array.from(range.getClientRects());
+        const rects = clientRects
+            .filter(r => r.width > 1 && r.height > 1)
+            .map(r => ({
+                x: ((r.left - wrapRect.left) / wrapRect.width) * 100,
+                y: ((r.top  - wrapRect.top)  / wrapRect.height) * 100,
+                w: (r.width  / wrapRect.width)  * 100,
+                h: (r.height / wrapRect.height) * 100,
+            }));
         _lastSelection = {
             text,
             page: parseInt(pageWrap.dataset.page),
+            rects,
         };
         showPopover(range);
     }, 10);
@@ -984,13 +1085,18 @@ async function hlFromSelection(color) {
                 page_number: _lastSelection.page,
                 selected_text: _lastSelection.text,
                 color,
+                rects: _lastSelection.rects || [],
             }),
         });
         _readerHighlights.push(result);
         toast('Grifo salvo', 'success');
         updateNotesCount();
-        // Re-render página pra mostrar o pin
-        if (_renderedPage === _lastSelection.page) readerGoToPage(_renderedPage);
+        // Re-aplica overlays na página em vez de re-renderizar
+        const wrap = _pageWraps[_lastSelection.page - 1];
+        if (wrap) {
+            wrap.querySelectorAll('.hl-overlay,.note-pin,.sticky-note').forEach(el => el.remove());
+            renderOverlaysForPage(_lastSelection.page, wrap);
+        }
         renderNotesList();
         hidePopover();
         window.getSelection().removeAllRanges();
