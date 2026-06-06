@@ -3,163 +3,318 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Law System - Dashboard</title>
+<title>Law System — Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <style>
-* { font-family: 'Inter', sans-serif; }
-.sidebar-active { background: #2563eb !important; color: #fff !important; }
-.sidebar-active i, .sidebar-active span { color: #fff !important; }
-.sidebar-link { transition: all .18s; }
+/* ── Design tokens ────────────────────────────────────────── */
+:root {
+    --paper:       #f6f1e7;
+    --paper-soft:  #ede5d2;
+    --paper-warm:  #fbf7ee;
+    --ink:         #0d1117;
+    --ink-1:       #1a1f2b;
+    --ink-2:       #2a2f3a;
+    --ink-soft:    #4a5160;
+    --ink-faint:   #6b6f7a;
+    --line:        #d8cfb8;
+    --line-soft:   #e7dfc8;
+    --line-strong: #b9ad8f;
+    --gold:        #b08b3e;
+    --gold-soft:   #d4b76a;
+    --gold-bg:     #f1e8cf;
+    --emerald:     #1f5d3a;
+    --emerald-bg:  #e0ebe1;
+    --crimson:     #8b1538;
+    --crimson-bg:  #f5dadf;
+    --amber-bg:    #f7e8c4;
+    --amber-ink:   #6b4f15;
+    --plum:        #4a2a5c;
+    --plum-bg:     #ecdef0;
+}
+* { font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+.serif { font-family: 'Fraunces', Georgia, serif; }
+.mono  { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
+
+/* Editorial display */
+.h-display { font-family: 'Fraunces', serif; font-weight: 400; letter-spacing: -.02em; line-height: 1.05; font-variation-settings: 'opsz' 144; }
+.h-display em { font-style: italic; font-weight: 500; font-variation-settings: 'opsz' 144, 'WONK' 1; }
+.eyebrow { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
+
+/* Sidebar */
+aside.sidebar {
+    background: var(--ink);
+    color: var(--paper);
+    border-right: 1px solid #1f2533;
+}
+.sidebar-section { font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; color: #62687a; padding: 22px 18px 8px; }
+.sidebar-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 14px; margin: 0 6px; border-radius: 6px;
+    font-size: 13.5px; font-weight: 400; color: #a8aab6;
+    transition: color .15s, background .15s;
+    text-decoration: none;
+    border-left: 2px solid transparent;
+}
+.sidebar-link i { width: 18px; text-align: center; font-size: 13px; opacity: .75; }
+.sidebar-link:hover { color: var(--paper); background: rgba(255,255,255,.04); }
+.sidebar-active {
+    color: var(--paper) !important;
+    background: rgba(176,139,62,.10) !important;
+    border-left-color: var(--gold) !important;
+    margin-left: 0 !important;
+    padding-left: 18px !important;
+}
+.sidebar-active i { color: var(--gold-soft); opacity: 1; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-/* Toast */
-#toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-.toast { pointer-events:all; display:flex; align-items:flex-start; gap:10px; min-width:280px; max-width:400px; padding:14px 18px; border-radius:14px; font-size:13px; font-weight:600; box-shadow:0 8px 30px rgba(0,0,0,.15); animation:slideIn .3s cubic-bezier(.34,1.56,.64,1); transition:opacity .35s, transform .35s; }
-.toast.hide { opacity:0; transform:translateX(36px); }
-.toast-success { background:#f0fdf4; border:1.5px solid #bbf7d0; color:#166534; }
-.toast-error   { background:#fef2f2; border:1.5px solid #fecaca; color:#991b1b; }
-.toast-warning { background:#fffbeb; border:1.5px solid #fde68a; color:#92400e; }
-.toast-info    { background:#eff6ff; border:1.5px solid #bfdbfe; color:#1e40af; }
-.toast-close { background:none; border:none; cursor:pointer; opacity:.5; font-size:14px; color:inherit; padding:0; margin-left:auto; }
+/* Header */
+.app-header { background: var(--paper-warm); border-bottom: 1px solid var(--line); }
+
+/* Surfaces (paper-on-paper) */
+.surface { background: var(--paper-warm); border: 1px solid var(--line); }
+.surface-soft { background: rgba(255,255,255,.55); border: 1px solid var(--line-soft); }
+.surface-ink { background: var(--ink); color: var(--paper); }
+
+/* Toasts */
+#toast-container { position:fixed; top:24px; right:24px; z-index:9999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
+.toast { pointer-events:all; display:flex; align-items:flex-start; gap:12px; min-width:300px; max-width:420px; padding:14px 18px; font-size:13px; font-weight:500;
+         background: var(--paper-warm); border:1px solid var(--line); border-left-width: 3px;
+         box-shadow: 0 6px 28px rgba(13,17,23,.08); animation:slideIn .3s cubic-bezier(.34,1.56,.64,1); transition:opacity .35s, transform .35s; }
+.toast.hide { opacity:0; transform:translateX(40px); }
+.toast-success { border-left-color: var(--emerald); }
+.toast-error   { border-left-color: var(--crimson); }
+.toast-warning { border-left-color: var(--gold); }
+.toast-info    { border-left-color: var(--plum); }
+.toast-close { background:none; border:none; cursor:pointer; opacity:.45; font-size:14px; color:inherit; padding:0; margin-left:auto; }
 .toast-close:hover { opacity:1; }
 @keyframes slideIn { from { opacity:0; transform:translateX(36px); } to { opacity:1; transform:translateX(0); } }
 
-/* Cards */
-.stat-card { transition: transform .2s, box-shadow .2s; }
-.stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.08); }
+/* Stat card (editorial: number first, label second, no border-radius) */
+.stat-card {
+    background: var(--paper-warm);
+    border: 1px solid var(--line);
+    padding: 20px 22px 22px;
+    transition: border-color .2s;
+    position: relative;
+}
+.stat-card:hover { border-color: var(--line-strong); }
+.stat-card .stat-eyebrow { font-size: 10px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); }
+.stat-card .stat-value {
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    font-size: 36px;
+    line-height: 1;
+    letter-spacing: -.02em;
+    color: var(--ink);
+    margin-top: 12px;
+    font-variation-settings: 'opsz' 144;
+}
+.stat-card .stat-value em { font-style: italic; font-weight: 500; font-variation-settings: 'opsz' 144, 'WONK' 1; }
+.stat-card .stat-icon { position: absolute; top: 18px; right: 18px; font-size: 14px; color: var(--ink-faint); opacity: .35; }
+
+/* Section heading */
+.section-head {
+    display: flex; align-items: baseline; gap: 16px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--line);
+    margin-bottom: 18px;
+}
+.section-head .title { font-family: 'Fraunces', serif; font-size: 22px; font-weight: 500; letter-spacing: -.01em; color: var(--ink); }
+.section-head .sub { font-size: 12px; color: var(--ink-faint); letter-spacing: .04em; }
 
 /* Modal */
-.modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter:blur(4px); }
-.modal-box { background:#fff; border-radius:20px; padding:28px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto; }
+.modal-backdrop { position:fixed; inset:0; background:rgba(13,17,23,.6); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; backdrop-filter: blur(3px); }
+.modal-box { background: var(--paper-warm); border:1px solid var(--line-strong); padding:30px; width:100%; max-width:520px; max-height:90vh; overflow-y:auto; box-shadow: 0 24px 70px rgba(0,0,0,.25); }
 
-/* Input */
-.form-input { width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; transition:border-color .2s, box-shadow .2s; }
-.form-input:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
-.form-select { width:100%; padding:10px 14px; border:1.5px solid #e2e8f0; border-radius:10px; font-size:14px; outline:none; background:#fff; cursor:pointer; }
-.form-select:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1); }
-.form-label { display:block; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
-.form-group { margin-bottom:16px; }
+/* Forms */
+.form-input, .form-select {
+    width: 100%; padding: 11px 14px;
+    border: 1px solid var(--line-strong); background: var(--paper);
+    color: var(--ink); font-size: 14px; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(13,17,23,.08); }
+.form-select { cursor: pointer; }
+.form-label { display: block; font-size: 10.5px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
+.form-group { margin-bottom: 18px; }
 
-/* Badges */
-.badge { display:inline-flex; align-items:center; padding:3px 10px; border-radius:99px; font-size:11px; font-weight:700; }
-.badge-pendente   { background:#fef3c7; color:#92400e; }
-.badge-em-curso   { background:#dbeafe; color:#1e40af; }
-.badge-concluida  { background:#dcfce7; color:#166534; }
-.badge-alta  { background:#fee2e2; color:#991b1b; }
-.badge-media { background:#fef3c7; color:#92400e; }
-.badge-baixa { background:#f0fdf4; color:#166534; }
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+       font-size: 13px; font-weight: 500; padding: 10px 18px; cursor: pointer;
+       transition: background .15s, transform .12s, border-color .15s;
+       border: 1px solid transparent; }
+.btn:active { transform: translateY(1px); }
+.btn-ink { background: var(--ink); color: var(--paper); }
+.btn-ink:hover { background: var(--ink-1); }
+.btn-gold { background: var(--gold); color: #1d1404; }
+.btn-gold:hover { background: var(--gold-soft); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line-strong); }
+.btn-ghost:hover { background: var(--paper-soft); }
+.btn-danger { background: transparent; color: var(--crimson); border-color: var(--crimson); }
+.btn-danger:hover { background: var(--crimson-bg); }
+
+/* Badges (editorial: small caps + thin underline accent) */
+.badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+    padding: 4px 10px; line-height: 1;
+    border: 1px solid;
+}
+.badge-pendente   { background: var(--amber-bg);   color: var(--amber-ink); border-color: #e1cd99; }
+.badge-em-curso   { background: var(--plum-bg);    color: var(--plum);      border-color: #d6b8df; }
+.badge-concluida  { background: var(--emerald-bg); color: var(--emerald);   border-color: #b4cdb6; }
+.badge-alta       { background: var(--crimson-bg); color: var(--crimson);   border-color: #e3b7c1; }
+.badge-media      { background: var(--amber-bg);   color: var(--amber-ink); border-color: #e1cd99; }
+.badge-baixa      { background: var(--emerald-bg); color: var(--emerald);   border-color: #b4cdb6; }
 
 /* Flashcard flip */
-.card-scene { perspective:1000px; }
-.card-flip { position:relative; width:100%; transition:transform .5s; transform-style:preserve-3d; }
-.card-flip.flipped { transform:rotateY(180deg); }
-.card-face { position:absolute; inset:0; backface-visibility:hidden; display:flex; align-items:center; justify-content:center; border-radius:16px; padding:24px; }
-.card-back { transform:rotateY(180deg); }
+.card-scene { perspective:1200px; }
+.card-flip { position:relative; width:100%; transition:transform .55s cubic-bezier(.22,1,.36,1); transform-style:preserve-3d; }
+.card-flip.flipped { transform: rotateY(180deg); }
+.card-face { position:absolute; inset:0; backface-visibility:hidden; display:flex; flex-direction: column; align-items:center; justify-content:center;
+             padding:28px; border:1px solid var(--line-strong); background: var(--paper-warm); }
+.card-back { transform: rotateY(180deg); background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 /* Progress bar */
-.progress-bar { height:6px; border-radius:99px; background:#e2e8f0; overflow:hidden; }
-.progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#3b82f6,#6366f1); transition:width .6s cubic-bezier(.65,0,.35,1); }
+.progress-bar { height: 4px; background: var(--line-soft); }
+.progress-fill { height: 100%; background: var(--ink); transition: width .55s cubic-bezier(.65,0,.35,1); }
 
 /* Timer */
-.timer-display { font-family:'Courier New',monospace; font-size:3.5rem; font-weight:800; line-height:1; letter-spacing:-.02em; }
+.timer-display { font-family:'JetBrains Mono', monospace; font-size: 4rem; font-weight: 500; line-height: 1; letter-spacing: -.02em; color: var(--ink); }
 
 /* Tabs */
-.section-tab { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; color:#64748b; }
-.section-tab.active { background:#eff6ff; color:#2563eb; }
+.section-tab { padding: 8px 0; margin-right: 28px; font-size: 12px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+               cursor: pointer; color: var(--ink-faint); border-bottom: 2px solid transparent; transition: color .15s, border-color .15s; background: none; border-top: none; border-left: none; border-right: none; }
+.section-tab.active { color: var(--ink); border-bottom-color: var(--gold); }
+
+/* Table */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tbl th { text-align: left; padding: 12px 16px; font-size: 10.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
+.tbl td { padding: 14px 16px; border-bottom: 1px solid var(--line-soft); color: var(--ink); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: rgba(176,139,62,.05); }
+
+/* Avatar (initials) */
+.avatar {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px;
+    background: var(--gold-bg); color: var(--ink);
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px;
+    border: 1px solid var(--gold-soft);
+}
+
+/* Subtle paper grain on body */
+.paper-grain-bg {
+    background-color: var(--paper);
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 .025 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 </style>
 </head>
-<body class="bg-slate-50 flex h-screen overflow-hidden text-slate-900">
+<body class="paper-grain-bg flex h-screen overflow-hidden">
 
 <div id="toast-container"></div>
 
 <!-- SIDEBAR -->
-<aside class="w-64 bg-[#0f172a] text-white flex flex-col shadow-2xl z-20 flex-shrink-0">
-    <div class="p-6 border-b border-slate-800">
+<aside class="sidebar w-60 flex flex-col flex-shrink-0">
+    <div class="px-5 py-7" style="border-bottom: 1px solid #1f2533;">
         <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-blue-600/20 border border-blue-500/30 rounded-xl flex items-center justify-center">
-                <i class="fa-solid fa-scale-balanced text-blue-400 text-sm"></i>
+            <div style="width:36px;height:36px;border:1px solid var(--gold-soft);color:var(--gold-soft);display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-scale-balanced text-sm"></i>
             </div>
             <div>
-                <p class="text-sm font-bold text-white">Law System</p>
-                <p class="text-[10px] text-slate-500">Estudos Jurídicos</p>
+                <p class="serif text-[15px] font-semibold tracking-tight" style="color: var(--paper)">Law System</p>
+                <p class="eyebrow mt-0.5" style="color:#62687a">Edição 2026</p>
             </div>
         </div>
     </div>
 
-    <nav class="flex-1 p-3 space-y-0.5 overflow-y-auto no-scrollbar">
-        <a href="#" onclick="showDashboard()" id="menu-dash" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-house w-4 text-center"></i><span>Dashboard</span>
+    <nav class="flex-1 py-3 overflow-y-auto no-scrollbar">
+        <p class="sidebar-section">Visão geral</p>
+        <a href="#" onclick="showDashboard()" id="menu-dash" class="sidebar-link">
+            <i class="fa-solid fa-house"></i><span>Dashboard</span>
         </a>
 
-        <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Cadastros</p>
-        <a href="#" onclick="showSubjects()" id="menu-materias" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-book-bookmark w-4 text-center"></i><span>Matérias</span>
+        <p class="sidebar-section">Acervo</p>
+        <a href="#" onclick="showSubjects()" id="menu-materias" class="sidebar-link">
+            <i class="fa-solid fa-book-bookmark"></i><span>Matérias</span>
         </a>
-        <a href="#" onclick="showTeachers()" id="menu-docentes" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-chalkboard-user w-4 text-center"></i><span>Docentes</span>
+        <a href="#" onclick="showTeachers()" id="menu-docentes" class="sidebar-link">
+            <i class="fa-solid fa-chalkboard-user"></i><span>Docentes</span>
         </a>
-        <a href="#" onclick="showBooks()" id="menu-livros" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-book-open w-4 text-center"></i><span>Livros</span>
-        </a>
-
-        <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Estudo</p>
-        <a href="#" onclick="showFlashcards()" id="menu-flashcards" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-layer-group w-4 text-center"></i><span>Flashcards</span>
-            <span id="fc-due-badge" class="hidden ml-auto bg-amber-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5"></span>
-        </a>
-        <a href="#" onclick="showSessions()" id="menu-sessoes" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-stopwatch w-4 text-center"></i><span>Sessões de Estudo</span>
-        </a>
-        <a href="#" onclick="showHistory()" id="menu-historico" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-chart-line w-4 text-center"></i><span>Histórico</span>
+        <a href="#" onclick="showBooks()" id="menu-livros" class="sidebar-link">
+            <i class="fa-solid fa-book-open"></i><span>Livros</span>
         </a>
 
-        <p class="px-3 pt-4 pb-1.5 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Conta</p>
-        <a href="#" onclick="showProfile()" id="menu-perfil" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white text-sm">
-            <i class="fa-solid fa-user w-4 text-center"></i><span>Meu Perfil</span>
+        <p class="sidebar-section">Estudo</p>
+        <a href="#" onclick="showFlashcards()" id="menu-flashcards" class="sidebar-link">
+            <i class="fa-solid fa-layer-group"></i><span>Flashcards</span>
+            <span id="fc-due-badge" class="hidden ml-auto mono" style="background:var(--gold);color:#1d1404;font-size:10px;font-weight:600;padding:2px 6px;letter-spacing:0;"></span>
+        </a>
+        <a href="#" onclick="showSessions()" id="menu-sessoes" class="sidebar-link">
+            <i class="fa-solid fa-stopwatch"></i><span>Sessões</span>
+        </a>
+        <a href="#" onclick="showHistory()" id="menu-historico" class="sidebar-link">
+            <i class="fa-solid fa-chart-line"></i><span>Histórico</span>
+        </a>
+
+        <p class="sidebar-section">Conta</p>
+        <a href="#" onclick="showProfile()" id="menu-perfil" class="sidebar-link">
+            <i class="fa-solid fa-user"></i><span>Meu perfil</span>
         </a>
         <div id="admin-menu" class="hidden">
-            <a href="admin.html" class="sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-amber-400 hover:bg-amber-500/10 text-sm">
-                <i class="fa-solid fa-user-shield w-4 text-center"></i><span>Painel Admin</span>
+            <a href="admin.html" class="sidebar-link" style="color:var(--gold-soft)">
+                <i class="fa-solid fa-shield-halved" style="color:var(--gold-soft)"></i><span>Painel admin</span>
             </a>
         </div>
     </nav>
 
-    <div class="p-3 border-t border-slate-800">
-        <div class="flex items-center gap-3 px-3 py-2 mb-1">
-            <div class="w-8 h-8 bg-slate-700 rounded-full flex items-center justify-center flex-shrink-0">
-                <i class="fa-solid fa-user text-slate-400 text-xs"></i>
+    <div class="px-4 py-4" style="border-top: 1px solid #1f2533;">
+        <div class="flex items-center gap-3 mb-3">
+            <div class="avatar" style="background:#1f2533;color:var(--gold-soft);border-color:#2a2f3a;">
+                <span id="sidebar-initial">—</span>
             </div>
             <div class="min-w-0 flex-1">
-                <p id="sidebar-name" class="text-xs font-semibold text-white truncate">—</p>
-                <p id="sidebar-role" class="text-[10px] text-slate-500 truncate">Estudante</p>
+                <p id="sidebar-name" class="text-[13px] font-medium truncate" style="color:var(--paper)">—</p>
+                <p id="sidebar-role" class="eyebrow truncate mt-0.5" style="color:#62687a">Estudante</p>
             </div>
         </div>
-        <button onclick="logout()" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-red-400 hover:bg-red-900/20 transition-all text-sm">
-            <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i><span>Sair</span>
+        <button onclick="logout()" class="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 transition-colors" style="color:#a8aab6">
+            <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i>
+            <span class="eyebrow">Sair</span>
         </button>
     </div>
 </aside>
 
 <!-- MAIN -->
 <main class="flex-1 flex flex-col overflow-hidden">
-    <header class="bg-white border-b border-slate-100 px-8 py-4 flex items-center justify-between flex-shrink-0">
+    <header class="app-header px-10 py-5 flex items-center justify-between flex-shrink-0">
         <div>
-            <h2 id="pageTitle" class="text-lg font-bold text-slate-800">Dashboard</h2>
-            <p id="pageSubtitle" class="text-xs text-slate-400 mt-0.5">Bem-vindo de volta</p>
+            <p class="eyebrow" id="pageEyebrow">/ Visão geral</p>
+            <h1 id="pageTitle" class="serif text-[28px] font-medium mt-0.5" style="color:var(--ink); letter-spacing:-.01em; line-height:1;">Dashboard</h1>
+            <p id="pageSubtitle" class="text-[12.5px] mt-1.5" style="color:var(--ink-faint)">Bem-vindo de volta</p>
         </div>
-        <div id="header-user" class="text-right">
-            <p id="userDisplayName" class="text-sm font-semibold text-slate-700">—</p>
-            <p id="userCurso" class="text-xs text-blue-500 font-semibold"></p>
+        <div class="flex items-center gap-3">
+            <div class="text-right">
+                <p id="userDisplayName" class="text-[13px] font-medium" style="color:var(--ink)">—</p>
+                <p id="userCurso" class="eyebrow mt-0.5" style="color:var(--gold)"></p>
+            </div>
+            <div class="avatar" id="headerAvatar">—</div>
         </div>
     </header>
 
-    <section id="mainContent" class="flex-1 overflow-y-auto p-8 no-scrollbar"></section>
+    <section id="mainContent" class="flex-1 overflow-y-auto px-10 py-8 no-scrollbar"></section>
 </main>
 
 <!-- MODAL -->
@@ -224,11 +379,34 @@ function setActive(id) {
     document.querySelectorAll('.sidebar-link').forEach(el => el.classList.remove('sidebar-active'));
     const el = document.getElementById(id);
     if (el) el.classList.add('sidebar-active');
+    // ajusta page-eyebrow segundo a seção
+    const eyebrows = {
+        'menu-dash': '/ Visão geral',
+        'menu-materias': '/ Acervo',
+        'menu-docentes': '/ Acervo',
+        'menu-livros': '/ Acervo',
+        'menu-flashcards': '/ Estudo',
+        'menu-sessoes': '/ Estudo',
+        'menu-historico': '/ Estudo',
+        'menu-perfil': '/ Conta',
+    };
+    const eb = document.getElementById('pageEyebrow');
+    if (eb && eyebrows[id]) eb.textContent = eyebrows[id];
 }
 
-function setPage(title, subtitle = '') {
+function setPage(title, subtitle = '', eyebrow = '') {
     document.getElementById('pageTitle').textContent = title;
     document.getElementById('pageSubtitle').textContent = subtitle;
+    const eb = document.getElementById('pageEyebrow');
+    if (eb) eb.textContent = eyebrow || `/ ${title}`;
+}
+
+function getInitials(name) {
+    if (!name) return '—';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '—';
+    if (parts.length === 1) return parts[0].slice(0,2).toUpperCase();
+    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
 }
 
 function fmtDuration(s) {
@@ -246,10 +424,13 @@ function fmtDate(iso) {
 async function init() {
     try {
         me = await api('/users/me');
+        const initials = getInitials(me.full_name);
         document.getElementById('userDisplayName').textContent = me.full_name;
         document.getElementById('sidebar-name').textContent = me.full_name;
+        document.getElementById('sidebar-initial').textContent = initials;
+        document.getElementById('headerAvatar').textContent = initials;
         document.getElementById('userCurso').textContent = me.curso || '';
-        document.getElementById('sidebar-role').textContent = me.role === 'admin' ? 'Administrador' : me.curso || 'Estudante';
+        document.getElementById('sidebar-role').textContent = me.role === 'admin' ? 'Administrador' : (me.curso || 'Estudante');
         if (me.role === 'admin') document.getElementById('admin-menu').classList.remove('hidden');
         subjects = await api('/subjects/');
         teachers = await api('/teachers/');
@@ -299,8 +480,8 @@ let _subjectsChart = null;
 
 async function showDashboard() {
     setActive('menu-dash');
-    setPage('Dashboard', 'Visão geral do seu desempenho');
-    document.getElementById('mainContent').innerHTML = `<div class="flex items-center justify-center h-32"><i class="fa-solid fa-spinner fa-spin text-blue-500 text-2xl"></i></div>`;
+    setPage('Dashboard', 'O que aconteceu até aqui', '/ Visão geral');
+    document.getElementById('mainContent').innerHTML = loadingBlock();
 
     try {
         const [stats, history, fcStats] = await Promise.all([
@@ -313,79 +494,88 @@ async function showDashboard() {
         const accuracy = stats ? stats.accuracy : 0;
         const streak = stats ? stats.current_streak : 0;
         const totalQ = stats ? stats.total_questions : 0;
+        const hoursStr = totalMin >= 60
+            ? `<span class="serif">${Math.floor(totalMin/60)}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">h</span> <span class="serif">${totalMin%60}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">m</span>`
+            : `<span class="serif">${totalMin}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">m</span>`;
 
         document.getElementById('mainContent').innerHTML = `
-        <div class="max-w-6xl mx-auto space-y-6">
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                ${statCard('fa-clock','Tempo estudado', formatMinutes(totalMin), 'text-blue-500', 'bg-blue-50')}
-                ${statCard('fa-fire','Sequência atual', streak > 0 ? `${streak} dia${streak>1?'s':''}` : '—', 'text-orange-500', 'bg-orange-50')}
-                ${statCard('fa-bullseye','Taxa de acerto', totalQ > 0 ? `${accuracy}%` : '—', 'text-green-500', 'bg-green-50')}
-                ${statCard('fa-layer-group','Flashcards', fcStats ? `${fcStats.due_today} hoje` : '—', 'text-amber-500', 'bg-amber-50')}
+        <div class="max-w-6xl">
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-0 mb-10" style="border:1px solid var(--line); border-collapse:collapse;">
+                ${editorialStat('fa-clock', 'Tempo estudado', totalMin > 0 ? hoursStr : '—')}
+                ${editorialStat('fa-fire', 'Sequência', streak > 0 ? `<span class="serif">${streak}</span><span class="mono text-[20px] ml-2" style="color:var(--ink-faint)">${streak === 1 ? 'dia' : 'dias'}</span>` : '—')}
+                ${editorialStat('fa-bullseye', 'Acerto', totalQ > 0 ? `<span class="serif">${accuracy}</span><span class="mono text-[20px] ml-1" style="color:var(--ink-faint)">%</span>` : '—')}
+                ${editorialStat('fa-layer-group', 'Cards a revisar', fcStats ? `<span class="serif">${fcStats.due_today}</span><span class="mono text-[14px] ml-2" style="color:var(--ink-faint)">hoje</span>` : '—')}
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-sm font-bold text-slate-700">Atividade — últimos 30 dias</h3>
-                        ${stats && stats.best_day ? `<span class="text-xs text-slate-400">Melhor: ${fmtShortDate(stats.best_day.date)} (${stats.best_day.minutes}m)</span>` : ''}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+                <div class="lg:col-span-2 surface p-7">
+                    <div class="section-head mb-6">
+                        <h3 class="title">Atividade</h3>
+                        <span class="sub">/ últimos 30 dias</span>
+                        ${stats && stats.best_day ? `<span class="ml-auto eyebrow">melhor: ${fmtShortDate(stats.best_day.date)} · ${stats.best_day.minutes}m</span>` : ''}
                     </div>
                     <div class="h-56"><canvas id="activityChart"></canvas></div>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-slate-100 p-6">
-                    <h3 class="text-sm font-bold text-slate-700 mb-4">Tempo por matéria</h3>
+                <div class="surface p-7">
+                    <div class="section-head mb-6">
+                        <h3 class="title">Por matéria</h3>
+                    </div>
                     ${stats && stats.by_subject.length > 0
                         ? `<div class="h-56"><canvas id="subjectsChart"></canvas></div>`
-                        : emptyState('fa-book-bookmark','Sem dados','Estude alguma matéria pra ver a distribuição.')}
+                        : emptyState('fa-book-bookmark', 'Sem dados ainda', 'Estude alguma matéria pra ver a distribuição.')}
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-100 p-6">
-                    <h3 class="text-sm font-bold text-slate-700 mb-4">Sessões recentes</h3>
-                    ${history.length === 0 ? emptyState('fa-stopwatch','Nenhuma sessão registrada','Inicie uma sessão de estudo para ver o histórico aqui.') :
-                    `<div class="space-y-3">${history.slice(0,5).map(s => `
-                        <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-colors">
-                            <div class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center flex-shrink-0">
-                                <i class="fa-solid fa-book-open text-blue-500 text-sm"></i>
-                            </div>
+                <div class="lg:col-span-2 surface p-7">
+                    <div class="section-head mb-5">
+                        <h3 class="title">Sessões recentes</h3>
+                        ${history.length > 0 ? `<a href="#" onclick="showHistory();return false" class="ml-auto eyebrow hover:underline" style="color:var(--gold)">ver tudo →</a>` : ''}
+                    </div>
+                    ${history.length === 0 ? emptyState('fa-stopwatch', 'Nada por aqui ainda', 'Inicie uma sessão para registrar seu progresso.') :
+                    `<div class="divide-y" style="border-color: var(--line-soft)">
+                        ${history.slice(0,5).map(s => `
+                        <div class="flex items-baseline gap-5 py-4">
+                            <span class="mono text-[11px]" style="color:var(--ink-faint); width: 60px; flex-shrink: 0;">${fmtShortDate(s.start_time)}</span>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-semibold text-slate-800 truncate">${s.subject_name}</p>
-                                <p class="text-xs text-slate-400">${fmtDate(s.start_time)}</p>
+                                <p class="serif text-[16px] font-medium truncate" style="color:var(--ink)">${s.subject_name}</p>
+                                ${s.total_questions > 0 ? `<p class="text-[12px] mt-0.5" style="color:var(--ink-faint)">${s.correct_answers}/${s.total_questions} acertos</p>` : ''}
                             </div>
-                            <div class="text-right flex-shrink-0">
-                                <p class="text-sm font-bold text-slate-700">${fmtDuration(s.duration_seconds)}</p>
-                                ${s.total_questions > 0 ? `<p class="text-xs text-slate-400">${s.correct_answers}/${s.total_questions} acertos</p>` : ''}
-                            </div>
-                        </div>`).join('')}</div>`}
+                            <span class="mono text-[13px] tabular-nums" style="color:var(--ink)">${fmtDuration(s.duration_seconds)}</span>
+                        </div>`).join('')}
+                    </div>`}
                 </div>
 
-                <div class="space-y-4">
-                    <div class="bg-white rounded-2xl border border-slate-100 p-6">
-                        <h3 class="text-sm font-bold text-slate-700 mb-4">Matérias por status</h3>
-                        ${subjects.length === 0 ? `<p class="text-xs text-slate-400">Nenhuma matéria cadastrada.</p>` :
-                        `<div class="space-y-2">
+                <div class="space-y-6">
+                    <div class="surface p-7">
+                        <div class="section-head mb-5">
+                            <h3 class="title">Matérias</h3>
+                        </div>
+                        ${subjects.length === 0 ? `<p class="text-[13px]" style="color:var(--ink-faint)">Nenhuma matéria cadastrada.</p>` :
+                        `<div class="space-y-3">
                             ${Object.entries(subjects.reduce((acc, s) => { acc[s.status]=(acc[s.status]||0)+1; return acc; }, {})).map(([st, n]) => `
                             <div class="flex items-center justify-between">
                                 <span class="badge badge-${st.toLowerCase().replace(' ','-')}">${st}</span>
-                                <span class="text-sm font-bold text-slate-600">${n}</span>
+                                <span class="mono text-[18px] tabular-nums" style="color:var(--ink)">${String(n).padStart(2,'0')}</span>
                             </div>`).join('')}
                         </div>`}
                     </div>
                     ${fcStats && fcStats.due_today > 0 ? `
-                    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-                        <div class="flex items-center gap-3 mb-2">
-                            <i class="fa-solid fa-layer-group text-amber-500"></i>
-                            <p class="text-sm font-bold text-amber-800">Flashcards para revisar</p>
-                        </div>
-                        <p class="text-2xl font-black text-amber-700 mb-3">${fcStats.due_today}</p>
-                        <button onclick="showFlashcards()" class="w-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded-lg transition-colors">Revisar agora</button>
+                    <div class="surface-ink p-7">
+                        <p class="eyebrow" style="color:var(--gold-soft)">/ Revisão pendente</p>
+                        <p class="serif text-[42px] mt-3 mb-3" style="font-variation-settings:'opsz' 144; line-height: 1;">
+                            ${fcStats.due_today} <span class="text-[16px] mono" style="color:#a8aab6">cards</span>
+                        </p>
+                        <p class="text-[13px] mb-5" style="color:#a8aab6">A repetição espaçada só funciona se for diária.</p>
+                        <button onclick="showFlashcards()" class="btn btn-gold w-full">
+                            Revisar agora <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                        </button>
                     </div>` : ''}
                 </div>
             </div>
         </div>`;
 
-        // Render charts (após DOM existir)
         if (stats) renderDashboardCharts(stats);
 
     } catch (e) {
@@ -396,6 +586,10 @@ async function showDashboard() {
 function renderDashboardCharts(stats) {
     if (_activityChart) { _activityChart.destroy(); _activityChart = null; }
     if (_subjectsChart) { _subjectsChart.destroy(); _subjectsChart = null; }
+
+    const INK = '#0d1117', INK_FAINT = '#6b6f7a', LINE = '#e7dfc8';
+    Chart.defaults.font.family = "'IBM Plex Sans', sans-serif";
+    Chart.defaults.color = INK_FAINT;
 
     const actCanvas = document.getElementById('activityChart');
     if (actCanvas) {
@@ -410,17 +604,25 @@ function renderDashboardCharts(stats) {
                 datasets: [{
                     label: 'Minutos',
                     data: stats.last_30_days.map(d => d.minutes),
-                    backgroundColor: 'rgba(59, 130, 246, 0.85)',
-                    borderRadius: 4,
-                    maxBarThickness: 14,
+                    backgroundColor: '#0d1117',
+                    hoverBackgroundColor: '#b08b3e',
+                    borderRadius: 0,
+                    maxBarThickness: 10,
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: INK, titleFont: { weight: '500' }, padding: 10, borderRadius: 0,
+                        cornerRadius: 0,
+                        callbacks: { label: (c) => `${c.parsed.y} min` }
+                    }
+                },
                 scales: {
-                    y: { beginAtZero: true, ticks: { font: { size: 10 }, color: '#94a3b8' }, grid: { color: '#f1f5f9' } },
-                    x: { ticks: { font: { size: 9 }, color: '#94a3b8', maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } }
+                    y: { beginAtZero: true, ticks: { font: { size: 10, family: "'JetBrains Mono', monospace" }, color: INK_FAINT }, grid: { color: LINE, drawTicks: false }, border: { display: false } },
+                    x: { ticks: { font: { size: 9, family: "'JetBrains Mono', monospace" }, color: INK_FAINT, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false }, border: { color: LINE } }
                 }
             }
         });
@@ -428,7 +630,8 @@ function renderDashboardCharts(stats) {
 
     const subjCanvas = document.getElementById('subjectsChart');
     if (subjCanvas && stats.by_subject.length > 0) {
-        const palette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16'];
+        // Paleta editorial: tons quentes de terra + ink. Evita o circo arco-íris.
+        const palette = ['#0d1117', '#b08b3e', '#8b1538', '#1f5d3a', '#4a2a5c', '#6b4f15', '#a8aab6', '#d4b76a'];
         _subjectsChart = new Chart(subjCanvas, {
             type: 'doughnut',
             data: {
@@ -436,14 +639,17 @@ function renderDashboardCharts(stats) {
                 datasets: [{
                     data: stats.by_subject.map(b => b.minutes),
                     backgroundColor: stats.by_subject.map((_, i) => palette[i % palette.length]),
-                    borderWidth: 2, borderColor: '#fff',
+                    borderWidth: 2, borderColor: '#fbf7ee',
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false, cutout: '60%',
+                responsive: true, maintainAspectRatio: false, cutout: '64%',
                 plugins: {
-                    legend: { position: 'bottom', labels: { font: { size: 10 }, color: '#475569', boxWidth: 10, padding: 8 } },
-                    tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed}m` } }
+                    legend: { position: 'bottom', labels: { font: { size: 11 }, color: INK, boxWidth: 8, boxHeight: 8, padding: 10, usePointStyle: true, pointStyle: 'rect' } },
+                    tooltip: {
+                        backgroundColor: INK, padding: 10, borderRadius: 0, cornerRadius: 0,
+                        callbacks: { label: (ctx) => ` ${ctx.label}: ${ctx.parsed} min` }
+                    }
                 }
             }
         });
@@ -462,16 +668,18 @@ function fmtShortDate(iso) {
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`;
 }
 
-function statCard(icon, label, value, iconClass, bgClass) {
-    return `<div class="stat-card bg-white rounded-2xl border border-slate-100 p-5">
-        <div class="flex items-start justify-between">
-            <div class="${bgClass} w-10 h-10 rounded-xl flex items-center justify-center">
-                <i class="fa-solid ${icon} ${iconClass}"></i>
-            </div>
-        </div>
-        <p class="text-2xl font-black text-slate-800 mt-3">${value}</p>
-        <p class="text-xs text-slate-500 font-medium mt-0.5">${label}</p>
+/* Editorial stat card — number first, label second, no icon noise */
+function editorialStat(icon, label, valueHtml) {
+    return `<div class="stat-card" style="border-right:1px solid var(--line); border-bottom:1px solid var(--line); margin:-1px;">
+        <i class="fa-solid ${icon} stat-icon"></i>
+        <p class="stat-eyebrow">${label}</p>
+        <p class="stat-value">${valueHtml}</p>
     </div>`;
+}
+
+/* Legacy statCard — wrapper pra compatibilidade com chamadas existentes */
+function statCard(icon, label, value) {
+    return editorialStat(icon, label, `<span class="serif">${value}</span>`);
 }
 
 function formatHours(secs) {
@@ -482,13 +690,15 @@ function formatHours(secs) {
 }
 
 function emptyState(icon, title, msg) {
-    return `<div class="text-center py-10">
-        <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i class="fa-solid ${icon} text-slate-300 text-xl"></i>
-        </div>
-        <p class="font-semibold text-slate-600 text-sm">${title}</p>
-        <p class="text-xs text-slate-400 mt-1">${msg}</p>
+    return `<div class="text-center py-12">
+        <i class="fa-solid ${icon} text-[28px] mb-4" style="color:var(--ink-faint); opacity:.35"></i>
+        <p class="serif text-[17px] font-medium" style="color:var(--ink)">${title}</p>
+        <p class="text-[12.5px] mt-1.5" style="color:var(--ink-faint)">${msg}</p>
     </div>`;
+}
+
+function loadingBlock() {
+    return `<div class="flex items-center justify-center h-32"><i class="fa-solid fa-circle-notch fa-spin text-2xl" style="color:var(--ink-faint)"></i></div>`;
 }
 
 // ── SUBJECTS ──────────────────────────────────────
@@ -501,44 +711,48 @@ async function showSubjects() {
 
 function renderSubjects() {
     const byPeriod = subjects.reduce((acc, s) => { (acc[s.period]=acc[s.period]||[]).push(s); return acc; }, {});
+    const totalLabel = subjects.length === 1 ? '1 matéria' : `${subjects.length} matérias`;
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-5xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <p class="text-sm text-slate-500">${subjects.length} matéria${subjects.length !== 1 ? 's' : ''} cadastrada${subjects.length !== 1 ? 's' : ''}</p>
-            <button onclick="openSubjectModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
-                <i class="fa-solid fa-plus"></i> Nova Matéria
+    <div class="max-w-5xl">
+        <div class="flex items-baseline justify-between mb-8">
+            <p class="eyebrow">${totalLabel}</p>
+            <button onclick="openSubjectModal()" class="btn btn-ink">
+                <i class="fa-solid fa-plus text-[11px]"></i> Nova matéria
             </button>
         </div>
-        ${subjects.length === 0 ? emptyState('fa-book-bookmark','Nenhuma matéria','Adicione sua primeira matéria clicando em "Nova Matéria".') :
+        ${subjects.length === 0 ? emptyState('fa-book-bookmark', 'Nenhuma matéria ainda', 'Adicione sua primeira matéria clicando em "Nova matéria".') :
         Object.entries(byPeriod).sort(([a],[b])=>a-b).map(([period, items]) => `
-            <div class="mb-6">
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">${period}º Período</p>
-                <div class="grid gap-3">
-                    ${items.map(s => `
-                    <div class="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 hover:border-blue-200 transition-colors group">
-                        <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-                            <i class="fa-solid fa-book-bookmark text-blue-500 text-sm"></i>
-                        </div>
+            <div class="mb-10">
+                <div class="flex items-baseline gap-4 mb-4">
+                    <span class="serif text-[28px] font-medium" style="color:var(--ink); letter-spacing:-.01em;">${String(period).padStart(2,'0')}</span>
+                    <span class="eyebrow" style="color:var(--gold)">/ período</span>
+                    <span class="flex-1 ml-2" style="height:1px;background:var(--line);"></span>
+                    <span class="eyebrow">${items.length === 1 ? '1 matéria' : items.length + ' matérias'}</span>
+                </div>
+                <div>
+                    ${items.map((s, i) => `
+                    <div class="flex items-baseline gap-5 py-4 group" style="border-bottom:1px solid var(--line-soft);">
+                        <span class="mono text-[11px]" style="color:var(--ink-faint); width: 28px;">${String(i+1).padStart(2,'0')}</span>
                         <div class="flex-1 min-w-0">
-                            <div class="flex items-center gap-2 flex-wrap">
-                                <p class="font-semibold text-slate-800 text-sm">${s.name}</p>
-                                ${s.sigla ? `<span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">${s.sigla}</span>` : ''}
+                            <div class="flex items-baseline gap-3 flex-wrap">
+                                <p class="serif text-[18px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${s.name}</p>
+                                ${s.sigla ? `<span class="mono text-[10px]" style="color:var(--ink-faint)">${s.sigla}</span>` : ''}
                                 <span class="badge badge-${s.status.toLowerCase().replace(' ','-')}">${s.status}</span>
                                 <span class="badge badge-${s.priority.toLowerCase()}">${s.priority}</span>
                             </div>
-                            <p class="text-xs text-slate-400 mt-0.5">${s.no_teacher ? 'Sem professor' : (s.teacher_name || 'Prof. não informado')}</p>
+                            <p class="text-[12.5px] mt-1" style="color:var(--ink-faint)">${s.no_teacher ? 'Sem professor designado' : (s.teacher_name || 'Prof. não informado')}</p>
                         </div>
-                        <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <select onchange="updateSubjectStatus('${s.id}',this.value)" class="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white cursor-pointer">
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <select onchange="updateSubjectStatus('${s.id}',this.value)" class="text-[11px] mono border bg-transparent px-2 py-1 cursor-pointer" style="border-color:var(--line-strong); color:var(--ink);">
                                 <option value="Pendente" ${s.status==='Pendente'?'selected':''}>Pendente</option>
                                 <option value="Em Curso" ${s.status==='Em Curso'?'selected':''}>Em Curso</option>
                                 <option value="Concluída" ${s.status==='Concluída'?'selected':''}>Concluída</option>
                             </select>
-                            <button onclick="openSubjectModal('${s.id}')" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
-                                <i class="fa-solid fa-pen text-xs"></i>
+                            <button onclick="openSubjectModal('${s.id}')" class="p-2 hover:bg-black/5 transition-colors" style="color:var(--ink-faint)">
+                                <i class="fa-solid fa-pen text-[11px]"></i>
                             </button>
-                            <button onclick="deleteSubject('${s.id}','${s.name}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                                <i class="fa-solid fa-trash text-xs"></i>
+                            <button onclick="deleteSubject('${s.id}','${s.name}')" class="p-2 hover:bg-black/5 transition-colors" style="color:var(--ink-faint)">
+                                <i class="fa-solid fa-trash text-[11px]"></i>
                             </button>
                         </div>
                     </div>`).join('')}
@@ -562,26 +776,29 @@ function openSubjectModal(id = null) {
     const teacherOpts = teachers.map(t => `<option value="${t.id}" ${s && s.teacher_id === t.id ? 'selected' : ''}>${t.name}</option>`).join('');
 
     openModal(`
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Nova'} Matéria</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-baseline justify-between mb-7">
+        <div>
+            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Nova'}</p>
+            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Matéria</h3>
+        </div>
+        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
     <form onsubmit="saveSubject(event)">
         <div class="form-group">
-            <label class="form-label">Nome *</label>
-            <input class="form-input" id="s-name" value="${s?.name||''}" required placeholder="Ex: Direito Civil">
+            <label class="form-label">Nome</label>
+            <input class="form-input" id="s-name" value="${s?.name||''}" required placeholder="Ex.: Direito Civil">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <label class="form-label">Sigla</label>
-                <input class="form-input" id="s-sigla" value="${s?.sigla||''}" placeholder="Ex: DIR_CIV">
+                <input class="form-input" id="s-sigla" value="${s?.sigla||''}" placeholder="Ex.: DIR_CIV">
             </div>
             <div class="form-group">
-                <label class="form-label">Período *</label>
+                <label class="form-label">Período</label>
                 <input type="number" class="form-input" id="s-period" value="${s?.period||1}" min="1" max="12" required>
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <label class="form-label">Prioridade</label>
                 <select class="form-select" id="s-priority">
@@ -593,15 +810,15 @@ function openSubjectModal(id = null) {
             <div class="form-group">
                 <label class="form-label">Professor</label>
                 <select class="form-select" id="s-teacher" onchange="toggleNoTeacher(this.value)">
-                    <option value="">Selecione...</option>
+                    <option value="">Selecione…</option>
                     ${teacherOpts}
                     <option value="NONE" ${s?.no_teacher?'selected':''}>Sem professor</option>
                 </select>
             </div>
         </div>
-        <div class="flex gap-3 mt-2">
-            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
+            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
         </div>
     </form>`);
 }
@@ -653,30 +870,28 @@ async function showTeachers() {
 
 function renderTeachers() {
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <p class="text-sm text-slate-500">${teachers.length} docente${teachers.length !== 1 ? 's' : ''}</p>
-            <button onclick="openTeacherModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
-                <i class="fa-solid fa-plus"></i> Novo Docente
+    <div class="max-w-4xl">
+        <div class="flex items-baseline justify-between mb-8">
+            <p class="eyebrow">${teachers.length === 1 ? '1 docente' : teachers.length + ' docentes'}</p>
+            <button onclick="openTeacherModal()" class="btn btn-ink">
+                <i class="fa-solid fa-plus text-[11px]"></i> Novo docente
             </button>
         </div>
-        ${teachers.length === 0 ? emptyState('fa-chalkboard-user','Nenhum docente','Cadastre os professores das suas disciplinas.') :
-        `<div class="grid gap-3">
-            ${teachers.map(t => `
-            <div class="bg-white border border-slate-100 rounded-2xl p-5 flex items-center gap-4 group hover:border-blue-200 transition-colors">
-                <div class="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                    <i class="fa-solid fa-user-tie text-purple-500 text-sm"></i>
-                </div>
+        ${teachers.length === 0 ? emptyState('fa-chalkboard-user', 'Nenhum docente cadastrado', 'Adicione os professores das suas disciplinas.') :
+        `<div>
+            ${teachers.map((t, i) => `
+            <div class="flex items-baseline gap-5 py-4 group" style="border-bottom:1px solid var(--line-soft);">
+                <span class="mono text-[11px]" style="color:var(--ink-faint); width: 28px;">${String(i+1).padStart(2,'0')}</span>
                 <div class="flex-1 min-w-0">
-                    <p class="font-semibold text-slate-800 text-sm">${t.name}</p>
-                    <p class="text-xs text-slate-400 mt-0.5">${[t.email, t.contact].filter(Boolean).join(' · ') || 'Sem contato cadastrado'}</p>
+                    <p class="serif text-[18px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${t.name}</p>
+                    <p class="text-[12.5px] mt-0.5" style="color:var(--ink-faint)">${[t.email, t.contact].filter(Boolean).join(' · ') || 'Sem contato cadastrado'}</p>
                 </div>
-                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openTeacherModal('${t.id}')" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-pen text-xs"></i>
+                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openTeacherModal('${t.id}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
+                        <i class="fa-solid fa-pen text-[11px]"></i>
                     </button>
-                    <button onclick="deleteTeacher('${t.id}','${t.name}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                        <i class="fa-solid fa-trash text-xs"></i>
+                    <button onclick="deleteTeacher('${t.id}','${t.name.replace(/'/g,"\\'")}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
+                        <i class="fa-solid fa-trash text-[11px]"></i>
                     </button>
                 </div>
             </div>`).join('')}
@@ -687,13 +902,16 @@ function renderTeachers() {
 function openTeacherModal(id = null) {
     const t = id ? teachers.find(x => x.id === id) : null;
     openModal(`
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Novo'} Docente</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-baseline justify-between mb-7">
+        <div>
+            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Novo'}</p>
+            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Docente</h3>
+        </div>
+        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
     <form onsubmit="saveTeacher(event,'${id||''}')">
         <div class="form-group">
-            <label class="form-label">Nome *</label>
+            <label class="form-label">Nome</label>
             <input class="form-input" id="t-name" value="${t?.name||''}" required placeholder="Nome do professor">
         </div>
         <div class="form-group">
@@ -704,9 +922,9 @@ function openTeacherModal(id = null) {
             <label class="form-label">Contato</label>
             <input class="form-input" id="t-contact" value="${t?.contact||''}" placeholder="Telefone ou lattes">
         </div>
-        <div class="flex gap-3 mt-2">
-            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
+            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
         </div>
     </form>`);
 }
@@ -750,47 +968,46 @@ async function showBooks() {
     renderBooks(books);
 }
 
-const COVER_COLORS = ['#1e40af','#7c3aed','#be185d','#065f46','#92400e','#b91c1c','#0e7490'];
+/* Paleta editorial — tons de capa de livro encadernado */
+const COVER_COLORS = ['#0d1117','#8b1538','#1f5d3a','#4a2a5c','#b08b3e','#6b4f15','#1e3a52'];
 
 function renderBooks(books) {
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-5xl mx-auto">
-        <div class="flex items-center justify-between mb-6">
-            <p class="text-sm text-slate-500">${books.length} livro${books.length !== 1 ? 's' : ''}</p>
-            <button onclick="openBookModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl flex items-center gap-2 transition-colors">
-                <i class="fa-solid fa-plus"></i> Adicionar Livro
+    <div class="max-w-5xl">
+        <div class="flex items-baseline justify-between mb-8">
+            <p class="eyebrow">${books.length === 1 ? '1 livro' : books.length + ' livros'}</p>
+            <button onclick="openBookModal()" class="btn btn-ink">
+                <i class="fa-solid fa-plus text-[11px]"></i> Adicionar livro
             </button>
         </div>
-        ${books.length === 0 ? emptyState('fa-book-open','Nenhum livro','Adicione PDFs e livros para estudar com grifos e anotações.') :
-        `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        ${books.length === 0 ? emptyState('fa-book-open', 'Sua biblioteca está vazia', 'Adicione PDFs com URL pública e estude com grifos e anotações.') :
+        `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-7">
             ${books.map(b => {
-                const color = b.cover_color || '#1e40af';
+                const color = b.cover_color || '#0d1117';
                 const pct = b.progress_pct || 0;
                 return `
-                <div class="bg-white border border-slate-100 rounded-2xl overflow-hidden hover:shadow-md transition-shadow cursor-pointer group" onclick="openBookReader('${b.id}')">
-                    <div class="h-32 flex items-center justify-center relative" style="background:${color}20; border-bottom:3px solid ${color}">
-                        <i class="fa-solid fa-book-open text-4xl" style="color:${color}80"></i>
+                <div class="group cursor-pointer" onclick="openBookReader('${b.id}')">
+                    <!-- Capa estilo lombada de livro -->
+                    <div class="relative" style="aspect-ratio: 3/4; background:${color}; box-shadow: inset -8px 0 12px -8px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.1);">
+                        <div class="absolute inset-0 flex items-center justify-center p-4 text-center">
+                            <p class="serif text-[15px] font-medium text-white/95 leading-tight" style="letter-spacing:-.01em;">${b.name}</p>
+                        </div>
+                        <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+                            <span class="mono text-[9px] tracking-widest text-white/60">${pct}%</span>
+                            <span class="mono text-[9px] text-white/60">${b.current_page}/${b.total_pages}</span>
+                        </div>
                         <div class="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
-                            <button onclick="openBookModal('${b.id}')" class="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 shadow-sm">
-                                <i class="fa-solid fa-pen text-xs"></i>
+                            <button onclick="openBookModal('${b.id}')" class="w-6 h-6 bg-white/90 flex items-center justify-center text-[10px]" style="color:var(--ink)">
+                                <i class="fa-solid fa-pen"></i>
                             </button>
-                            <button onclick="deleteBook('${b.id}','${b.name.replace(/'/g,"\\'")}',event)" class="w-7 h-7 bg-white/90 rounded-lg flex items-center justify-center text-slate-500 hover:text-red-600 shadow-sm">
-                                <i class="fa-solid fa-trash text-xs"></i>
+                            <button onclick="deleteBook('${b.id}','${b.name.replace(/'/g,"\\'")}',event)" class="w-6 h-6 bg-white/90 flex items-center justify-center text-[10px]" style="color:var(--crimson)">
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
                     </div>
-                    <div class="p-4">
-                        <p class="font-semibold text-slate-800 text-sm truncate">${b.name}</p>
-                        ${b.author ? `<p class="text-xs text-slate-400 truncate">${b.author}</p>` : ''}
-                        <div class="mt-3">
-                            <div class="flex justify-between text-xs text-slate-500 mb-1">
-                                <span>Pg. ${b.current_page}/${b.total_pages}</span>
-                                <span>${pct}%</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width:${pct}%;background:${color}"></div>
-                            </div>
-                        </div>
+                    <div class="mt-3">
+                        ${b.author ? `<p class="text-[12px] truncate" style="color:var(--ink-faint)">${b.author}</p>` : ''}
+                        <div class="progress-bar mt-2"><div class="progress-fill" style="width:${pct}%"></div></div>
                     </div>
                 </div>`;
             }).join('')}
@@ -803,29 +1020,32 @@ function openBookModal(id = null) {
     const subjectOpts = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     const colorPicker = COVER_COLORS.map(c => `
         <button type="button" onclick="selectColor('${c}',this)" data-color="${c}"
-            class="color-btn w-7 h-7 rounded-full border-2 border-transparent hover:scale-110 transition-transform" style="background:${c}"></button>`).join('');
+            class="color-btn" style="width:28px;height:28px;background:${c};border:2px solid transparent;transition:transform .15s, border-color .15s;cursor:pointer;"></button>`).join('');
 
     openModal(`
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Adicionar'} Livro</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-baseline justify-between mb-7">
+        <div>
+            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Adicionar'}</p>
+            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Livro</h3>
+        </div>
+        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
     <form onsubmit="saveBook(event)">
         <div class="form-group">
-            <label class="form-label">Título *</label>
+            <label class="form-label">Título</label>
             <input class="form-input" id="b-name" required placeholder="Título do livro">
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <label class="form-label">Autor</label>
                 <input class="form-input" id="b-author" placeholder="Autor">
             </div>
             <div class="form-group">
                 <label class="form-label">Gênero</label>
-                <input class="form-input" id="b-genre" placeholder="Ex: Doutrina">
+                <input class="form-input" id="b-genre" placeholder="Ex.: Doutrina">
             </div>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <label class="form-label">Total de páginas</label>
                 <input type="number" class="form-input" id="b-pages" value="1" min="1">
@@ -836,9 +1056,9 @@ function openBookModal(id = null) {
             </div>
         </div>
         <div class="form-group">
-            <label class="form-label">URL do PDF (link externo)</label>
+            <label class="form-label">URL do PDF</label>
             <input type="url" class="form-input" id="b-url" placeholder="https://...">
-            <p class="text-xs text-slate-400 mt-1">Cole o link direto para um PDF público</p>
+            <p class="text-[11px] mt-1.5" style="color:var(--ink-faint)">Link direto para um PDF público</p>
         </div>
         <div class="form-group">
             <label class="form-label">Matéria</label>
@@ -852,14 +1072,14 @@ function openBookModal(id = null) {
             <div class="flex gap-2 flex-wrap mt-1" id="color-picker">${colorPicker}</div>
             <input type="hidden" id="b-color" value="${COVER_COLORS[0]}">
         </div>
-        <div class="flex gap-3 mt-2">
-            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
+            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
         </div>
     </form>`);
 
     // Pre-select first color
-    document.querySelector('.color-btn').classList.add('border-white', 'scale-110');
+    selectColor(COVER_COLORS[0], document.querySelector('.color-btn'));
 
     if (id) {
         api(`/books/${id}`).then(b => {
@@ -871,19 +1091,17 @@ function openBookModal(id = null) {
             document.getElementById('b-url').value = b.url || '';
             document.getElementById('b-subject').value = b.subject_id || '';
             if (b.cover_color) {
-                document.getElementById('b-color').value = b.cover_color;
-                document.querySelectorAll('.color-btn').forEach(btn => {
-                    btn.classList.remove('border-white','scale-110');
-                    if (btn.dataset.color === b.cover_color) btn.classList.add('border-white','scale-110');
-                });
+                const btn = document.querySelector(`.color-btn[data-color="${b.cover_color}"]`);
+                if (btn) selectColor(b.cover_color, btn);
             }
         });
     }
 }
 
 function selectColor(color, btn) {
-    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('border-white','scale-110'));
-    btn.classList.add('border-white','scale-110');
+    document.querySelectorAll('.color-btn').forEach(b => { b.style.borderColor = 'transparent'; b.style.transform = ''; });
+    btn.style.borderColor = 'var(--gold)';
+    btn.style.transform = 'scale(1.15)';
     document.getElementById('b-color').value = color;
 }
 
@@ -936,110 +1154,101 @@ async function openBookReader(bookId) {
         api(`/books/${bookId}/highlights`).catch(() => []),
     ]);
 
+    const hlBg = { yellow:'#fcf2bf', green:'#d8ecd9', blue:'#d4e3f5', pink:'#f5d4dd' };
+    const hlIn = { yellow:'#7a5d00', green:'#1f5d3a', blue:'#1e3a52', pink:'#8b1538' };
+
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-6xl mx-auto h-full flex flex-col">
-        <!-- Progress bar top -->
-        <div class="flex items-center gap-4 mb-4">
-            <button onclick="showBooks()" class="text-slate-400 hover:text-slate-700 transition-colors">
+    <div class="h-full flex flex-col">
+        <div class="flex items-center gap-5 mb-5">
+            <button onclick="showBooks()" class="hover:opacity-100" style="color:var(--ink-faint); opacity:.7">
                 <i class="fa-solid fa-arrow-left"></i>
             </button>
             <div class="flex-1">
-                <div class="flex justify-between text-xs text-slate-500 mb-1">
-                    <span>Progresso</span>
-                    <span>${book.progress_pct}% · Pg. ${book.current_page}/${book.total_pages}</span>
+                <div class="flex justify-between mb-1.5">
+                    <span class="eyebrow">Leitura</span>
+                    <span class="mono text-[11px]" style="color:var(--ink-faint)">${book.progress_pct}% · pg. ${book.current_page}/${book.total_pages}</span>
                 </div>
                 <div class="progress-bar"><div class="progress-fill" style="width:${book.progress_pct}%"></div></div>
             </div>
-            <button onclick="openBookModal('${bookId}')" class="text-xs text-slate-400 hover:text-slate-700 transition-colors">
-                <i class="fa-solid fa-gear"></i>
+            <button onclick="openBookModal('${bookId}')" class="btn btn-ghost text-[11px] py-2 px-3">
+                <i class="fa-solid fa-gear text-[11px]"></i> Editar
             </button>
         </div>
 
         <div class="flex gap-6 flex-1 min-h-0">
-            <!-- PDF/Content area -->
-            <div class="flex-1 bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col">
+            <div class="flex-1 surface overflow-hidden flex flex-col">
                 ${book.url ? `
-                <div class="p-3 border-b border-slate-100 flex items-center gap-3 bg-slate-50">
-                    <span class="text-xs text-slate-500">Visualizando PDF externo</span>
-                    <a href="${book.url}" target="_blank" class="text-xs text-blue-600 hover:underline ml-auto flex items-center gap-1">
-                        <i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir em nova aba
+                <div class="px-4 py-2.5 flex items-center gap-3" style="border-bottom:1px solid var(--line); background:var(--paper-soft)">
+                    <span class="eyebrow">PDF externo</span>
+                    <a href="${book.url}" target="_blank" class="ml-auto text-[12px] hover:underline flex items-center gap-1.5" style="color:var(--gold)">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Abrir em nova aba
                     </a>
                 </div>
-                <iframe src="${book.url}" class="flex-1 w-full" style="border:none"></iframe>` :
-                `<div class="flex-1 flex flex-col items-center justify-center text-center p-8">
-                    <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
-                        <i class="fa-solid fa-link text-slate-300 text-2xl"></i>
-                    </div>
-                    <p class="font-semibold text-slate-600 text-sm mb-1">Nenhum PDF vinculado</p>
-                    <p class="text-xs text-slate-400 mb-4">Edite o livro e cole a URL de um PDF público</p>
-                    <button onclick="openBookModal('${bookId}')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-colors">
-                        <i class="fa-solid fa-link mr-2"></i>Vincular PDF
+                <iframe src="${book.url}" class="flex-1 w-full" style="border:none; background:white"></iframe>` :
+                `<div class="flex-1 flex flex-col items-center justify-center text-center p-10">
+                    <i class="fa-solid fa-link text-[32px] mb-4" style="color:var(--ink-faint); opacity:.4"></i>
+                    <p class="serif text-[20px] font-medium mb-1" style="color:var(--ink)">Nenhum PDF vinculado</p>
+                    <p class="text-[13px] mb-6" style="color:var(--ink-faint)">Edite o livro e cole a URL de um PDF público.</p>
+                    <button onclick="openBookModal('${bookId}')" class="btn btn-ink">
+                        <i class="fa-solid fa-link text-[11px]"></i> Vincular PDF
                     </button>
                 </div>`}
             </div>
 
-            <!-- Sidebar: annotations & highlights -->
             <div class="w-80 flex-shrink-0 flex flex-col gap-4">
-                <!-- Page progress -->
-                <div class="bg-white rounded-2xl border border-slate-100 p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Atualizar página</p>
-                    <div class="flex items-center gap-2">
+                <div class="surface p-5">
+                    <p class="eyebrow mb-3">Página atual</p>
+                    <div class="flex items-center gap-3">
                         <input type="number" id="book-page-input" value="${book.current_page}" min="0" max="${book.total_pages}"
-                            class="form-input text-center font-bold text-lg w-24">
-                        <span class="text-sm text-slate-400">/ ${book.total_pages}</span>
-                        <button onclick="saveBookPage('${bookId}')" class="ml-auto bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">Salvar</button>
+                            class="form-input mono text-center text-[16px]" style="width:90px; font-weight: 500;">
+                        <span class="mono text-[13px]" style="color:var(--ink-faint)">/ ${book.total_pages}</span>
+                        <button onclick="saveBookPage('${bookId}')" class="btn btn-ink ml-auto text-[11px] py-2 px-3">Salvar</button>
                     </div>
                 </div>
 
-                <!-- Add highlight -->
-                <div class="bg-white rounded-2xl border border-slate-100 p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Adicionar grifo</p>
-                    <textarea id="hl-text" rows="2" class="form-input text-sm resize-none mb-2" placeholder="Cole o trecho grifado..."></textarea>
+                <div class="surface p-5">
+                    <p class="eyebrow mb-3">Adicionar grifo</p>
+                    <textarea id="hl-text" rows="2" class="form-input resize-none mb-2" placeholder="Cole o trecho grifado…"></textarea>
                     <div class="flex items-center gap-2">
-                        <input type="number" id="hl-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input w-20 text-sm">
-                        <select id="hl-color" class="form-select flex-1 text-sm">
+                        <input type="number" id="hl-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input mono" style="width:64px">
+                        <select id="hl-color" class="form-select flex-1">
                             <option value="yellow">Amarelo</option>
                             <option value="green">Verde</option>
                             <option value="blue">Azul</option>
                             <option value="pink">Rosa</option>
                         </select>
-                        <button onclick="addHighlight('${bookId}')" class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">Salvar</button>
+                        <button onclick="addHighlight('${bookId}')" class="btn btn-gold text-[11px] py-2 px-3">Grifar</button>
                     </div>
                 </div>
 
-                <!-- Add annotation -->
-                <div class="bg-white rounded-2xl border border-slate-100 p-4">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Anotação</p>
-                    <textarea id="ann-text" rows="3" class="form-input text-sm resize-none mb-2" placeholder="Sua anotação para esta página..."></textarea>
+                <div class="surface p-5">
+                    <p class="eyebrow mb-3">Anotação</p>
+                    <textarea id="ann-text" rows="3" class="form-input resize-none mb-2" placeholder="Sua anotação para esta página…"></textarea>
                     <div class="flex items-center gap-2">
-                        <input type="number" id="ann-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input w-20 text-sm">
-                        <button onclick="addAnnotation('${bookId}')" class="ml-auto bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition-colors">Salvar</button>
+                        <input type="number" id="ann-page" value="${book.current_page}" min="1" max="${book.total_pages}" class="form-input mono" style="width:64px">
+                        <button onclick="addAnnotation('${bookId}')" class="btn btn-ink ml-auto text-[11px] py-2 px-3">Salvar</button>
                     </div>
                 </div>
 
-                <!-- Existing notes -->
-                <div class="bg-white rounded-2xl border border-slate-100 p-4 flex-1 overflow-y-auto no-scrollbar">
-                    <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3">Salvos (${annotations.length + highlights.length})</p>
+                <div class="surface p-5 flex-1 overflow-y-auto no-scrollbar">
+                    <p class="eyebrow mb-3">Salvos (${annotations.length + highlights.length})</p>
                     ${[...highlights.map(h => ({...h,type:'highlight'})), ...annotations.map(a => ({...a,type:'annotation'}))]
                         .sort((a,b) => a.page_number - b.page_number)
                         .map(item => {
                             const isHL = item.type === 'highlight';
-                            const hlBg = { yellow:'bg-yellow-50 border-yellow-200', green:'bg-green-50 border-green-200', blue:'bg-blue-50 border-blue-200', pink:'bg-pink-50 border-pink-200' };
-                            const bg = isHL ? (hlBg[item.color] || 'bg-yellow-50 border-yellow-200') : 'bg-slate-50 border-slate-200';
+                            const bg = isHL ? (hlBg[item.color] || hlBg.yellow) : 'var(--paper-soft)';
+                            const ink = isHL ? (hlIn[item.color] || hlIn.yellow) : 'var(--ink)';
                             return `
-                            <div id="item-${item.id}" class="border rounded-xl p-3 mb-2 ${bg}">
-                                <div class="flex items-start justify-between gap-2">
-                                    <div class="flex items-center gap-1.5 mb-1">
-                                        <i class="fa-solid fa-${isHL ? 'highlighter' : 'pencil'} text-xs text-slate-500"></i>
-                                        <span class="text-[10px] font-bold text-slate-500 uppercase">Pg. ${item.page_number}</span>
-                                    </div>
-                                    <button onclick="deleteNote('${item.id}','${isHL ? 'highlight' : 'annotation'}')" class="text-slate-300 hover:text-red-500 transition-colors flex-shrink-0">
-                                        <i class="fa-solid fa-xmark text-xs"></i>
+                            <div id="item-${item.id}" class="p-3 mb-2" style="background:${bg}; border-left: 2px solid ${ink};">
+                                <div class="flex items-start justify-between gap-2 mb-1">
+                                    <span class="mono text-[10px] tracking-widest" style="color:${ink}">${isHL ? 'GRIFO' : 'NOTA'} · pg.${item.page_number}</span>
+                                    <button onclick="deleteNote('${item.id}','${isHL ? 'highlight' : 'annotation'}')" style="color:${ink};opacity:.5">
+                                        <i class="fa-solid fa-xmark text-[10px]"></i>
                                     </button>
                                 </div>
-                                <p class="text-xs text-slate-700">${isHL ? item.selected_text : item.note_text}</p>
+                                <p class="text-[12.5px] leading-relaxed" style="color:var(--ink)">${isHL ? item.selected_text : item.note_text}</p>
                             </div>`;
-                        }).join('') || '<p class="text-xs text-slate-400">Nenhum grifo ou anotação ainda.</p>'}
+                        }).join('') || '<p class="text-[12px]" style="color:var(--ink-faint)">Nenhum grifo ou anotação ainda.</p>'}
                 </div>
             </div>
         </div>
@@ -1102,31 +1311,30 @@ async function showFlashcards() {
 function renderFlashcards(cards, stats) {
     const due = cards.filter(c => c.is_due);
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-5xl mx-auto">
-        <!-- Stats row -->
-        ${stats ? `<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            ${statCard('fa-layer-group','Total de cards',stats.total_cards,'text-blue-500','bg-blue-50')}
-            ${statCard('fa-clock','Para revisar hoje',stats.due_today,'text-amber-500','bg-amber-50')}
-            ${statCard('fa-repeat','Total de revisões',stats.total_reviews,'text-purple-500','bg-purple-50')}
-            ${statCard('fa-bullseye','Taxa de acerto',stats.overall_accuracy_pct != null ? `${stats.overall_accuracy_pct}%` : '—','text-green-500','bg-green-50')}
+    <div class="max-w-5xl">
+        ${stats ? `<div class="grid grid-cols-2 md:grid-cols-4 gap-0 mb-10" style="border:1px solid var(--line); margin:0;">
+            ${editorialStat('fa-layer-group', 'Cards', `<span class="serif">${stats.total_cards}</span>`)}
+            ${editorialStat('fa-clock', 'Hoje', `<span class="serif">${stats.due_today}</span>`)}
+            ${editorialStat('fa-repeat', 'Revisões', `<span class="serif">${stats.total_reviews}</span>`)}
+            ${editorialStat('fa-bullseye', 'Acerto', stats.overall_accuracy_pct != null ? `<span class="serif">${stats.overall_accuracy_pct}</span><span class="mono text-[16px] ml-1" style="color:var(--ink-faint)">%</span>` : '—')}
         </div>` : ''}
 
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex gap-2">
-                <button id="tab-all" onclick="filterCards('all')" class="section-tab active">Todos (${cards.length})</button>
-                <button id="tab-due" onclick="filterCards('due')" class="section-tab">Para revisar (${due.length})</button>
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex">
+                <button id="tab-all" onclick="filterCards('all')" class="section-tab active">Todos · ${cards.length}</button>
+                <button id="tab-due" onclick="filterCards('due')" class="section-tab">Para revisar · ${due.length}</button>
             </div>
             <div class="flex gap-2">
-                ${due.length > 0 ? `<button onclick="startReview()" class="bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
-                    <i class="fa-solid fa-play"></i> Revisar ${due.length} card${due.length>1?'s':''}
+                ${due.length > 0 ? `<button onclick="startReview()" class="btn btn-gold">
+                    <i class="fa-solid fa-play text-[10px]"></i> Revisar ${due.length}
                 </button>` : ''}
-                <button onclick="openFlashcardModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 transition-colors">
-                    <i class="fa-solid fa-plus"></i> Novo card
+                <button onclick="openFlashcardModal()" class="btn btn-ink">
+                    <i class="fa-solid fa-plus text-[11px]"></i> Novo card
                 </button>
             </div>
         </div>
 
-        <div id="fc-list" class="grid gap-3">
+        <div id="fc-list">
             ${renderCardList(cards)}
         </div>
     </div>`;
@@ -1142,32 +1350,33 @@ function filterCards(type) {
 }
 
 function renderCardList(cards) {
-    if (cards.length === 0) return `<div class="col-span-full">${emptyState('fa-layer-group','Nenhum flashcard','Crie cards para revisar conceitos importantes com revisão espaçada.')}</div>`;
-    return cards.map(c => {
+    if (cards.length === 0) return emptyState('fa-layer-group', 'Nenhum flashcard', 'Crie cards para revisar conceitos com repetição espaçada.');
+    return cards.map((c, i) => {
         const acc = c.accuracy_pct != null ? `${c.accuracy_pct}%` : '—';
         const isDue = c.is_due;
         return `
-        <div class="bg-white border ${isDue ? 'border-amber-200' : 'border-slate-100'} rounded-2xl p-5 group hover:shadow-sm transition-shadow">
-            <div class="flex items-start justify-between gap-4">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-2 flex-wrap">
-                        ${c.subject_name ? `<span class="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-md">${c.subject_name}</span>` : ''}
-                        ${isDue ? `<span class="text-[10px] bg-amber-50 text-amber-700 font-bold px-2 py-0.5 rounded-md"><i class="fa-solid fa-clock mr-1"></i>Para revisar</span>` : ''}
-                        ${c.tags ? c.tags.split(',').map(t=>`<span class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md">${t.trim()}</span>`).join('') : ''}
-                    </div>
-                    <p class="text-sm font-semibold text-slate-800 line-clamp-1">${c.front}</p>
-                    <p class="text-xs text-slate-400 mt-0.5 line-clamp-1">${c.back}</p>
+        <div class="flex items-start gap-5 py-5 group" style="border-bottom:1px solid var(--line-soft);">
+            <span class="mono text-[11px]" style="color:var(--ink-faint); width:28px; padding-top:4px;">${String(i+1).padStart(2,'0')}</span>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1.5 flex-wrap">
+                    ${c.subject_name ? `<span class="eyebrow" style="color:var(--gold)">/ ${c.subject_name}</span>` : ''}
+                    ${isDue ? `<span class="badge badge-pendente">Revisar</span>` : ''}
+                    ${c.tags ? c.tags.split(',').map(t=>`<span class="mono text-[10px]" style="color:var(--ink-faint)">#${t.trim()}</span>`).join(' ') : ''}
                 </div>
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    <div class="text-right mr-3">
-                        <p class="text-sm font-bold text-slate-700">${acc}</p>
-                        <p class="text-[10px] text-slate-400">${c.total_reviews} rev.</p>
-                    </div>
-                    <button onclick="openFlashcardModal('${c.id}')" class="p-2 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-blue-600 transition-colors">
-                        <i class="fa-solid fa-pen text-xs"></i>
+                <p class="serif text-[17px] font-medium" style="color:var(--ink); letter-spacing:-.005em;">${c.front}</p>
+                <p class="text-[13px] mt-1 leading-relaxed" style="color:var(--ink-soft)">${c.back}</p>
+            </div>
+            <div class="flex items-start gap-3 flex-shrink-0">
+                <div class="text-right">
+                    <p class="mono text-[16px]" style="color:var(--ink)">${acc}</p>
+                    <p class="text-[10px] mt-0.5 tracking-wider uppercase" style="color:var(--ink-faint)">${c.total_reviews} rev.</p>
+                </div>
+                <div class="flex items-start opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openFlashcardModal('${c.id}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
+                        <i class="fa-solid fa-pen text-[11px]"></i>
                     </button>
-                    <button onclick="deleteFlashcard('${c.id}')" class="p-2 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-600 transition-colors">
-                        <i class="fa-solid fa-trash text-xs"></i>
+                    <button onclick="deleteFlashcard('${c.id}')" class="p-2 hover:bg-black/5" style="color:var(--ink-faint)">
+                        <i class="fa-solid fa-trash text-[11px]"></i>
                     </button>
                 </div>
             </div>
@@ -1179,20 +1388,23 @@ function openFlashcardModal(id = null) {
     editingFlashcardId = id;
     const subjectOpts = subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     openModal(`
-    <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold text-slate-800">${id ? 'Editar' : 'Novo'} Flashcard</h3>
-        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+    <div class="flex items-baseline justify-between mb-7">
+        <div>
+            <p class="eyebrow" style="color:var(--gold)">/ ${id ? 'Editar' : 'Novo'}</p>
+            <h3 class="serif text-[26px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Flashcard</h3>
+        </div>
+        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
     </div>
     <form onsubmit="saveFlashcard(event)">
         <div class="form-group">
-            <label class="form-label">Frente (pergunta/conceito) *</label>
-            <textarea id="fc-front" rows="3" class="form-input resize-none" required placeholder="O que é...? Defina..."></textarea>
+            <label class="form-label">Pergunta</label>
+            <textarea id="fc-front" rows="3" class="form-input resize-none" required placeholder="O que é…? Defina…"></textarea>
         </div>
         <div class="form-group">
-            <label class="form-label">Verso (resposta/explicação) *</label>
-            <textarea id="fc-back" rows="3" class="form-input resize-none" required placeholder="A resposta ou definição..."></textarea>
+            <label class="form-label">Resposta</label>
+            <textarea id="fc-back" rows="3" class="form-input resize-none" required placeholder="A resposta ou definição…"></textarea>
         </div>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 gap-4">
             <div class="form-group">
                 <label class="form-label">Matéria</label>
                 <select class="form-select" id="fc-subject">
@@ -1205,9 +1417,9 @@ function openFlashcardModal(id = null) {
                 <input class="form-input" id="fc-tags" placeholder="tag1, tag2">
             </div>
         </div>
-        <div class="flex gap-3 mt-2">
-            <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Cancelar</button>
-            <button type="submit" class="flex-1 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">Salvar</button>
+        <div class="flex gap-3 mt-6">
+            <button type="button" onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
+            <button type="submit" class="btn btn-ink flex-1">Salvar</button>
         </div>
     </form>`);
 
@@ -1263,12 +1475,10 @@ function showReviewCard() {
     if (reviewIndex >= reviewQueue.length) {
         document.getElementById('mainContent').innerHTML = `
         <div class="max-w-lg mx-auto text-center py-20">
-            <div class="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-trophy text-green-500 text-3xl"></i>
-            </div>
-            <h3 class="text-2xl font-black text-slate-800 mb-2">Revisão concluída!</h3>
-            <p class="text-slate-500 mb-8">Você revisou ${reviewQueue.length} flashcard${reviewQueue.length>1?'s':''}.</p>
-            <button onclick="showFlashcards()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-3 rounded-xl transition-colors">Ver todos os cards</button>
+            <p class="eyebrow mb-3" style="color:var(--emerald)">/ Concluído</p>
+            <h3 class="serif text-[42px] font-medium mb-3" style="color:var(--ink); letter-spacing:-.015em;">Revisão encerrada</h3>
+            <p class="text-[14px] mb-10" style="color:var(--ink-soft)">Você revisou <span class="mono">${reviewQueue.length}</span> flashcard${reviewQueue.length>1?'s':''} nesta sessão.</p>
+            <button onclick="showFlashcards()" class="btn btn-ink">Ver todos os cards <i class="fa-solid fa-arrow-right text-[11px]"></i></button>
         </div>`;
         loadFlashcardBadge();
         return;
@@ -1279,54 +1489,50 @@ function showReviewCard() {
 
     document.getElementById('mainContent').innerHTML = `
     <div class="max-w-2xl mx-auto">
-        <div class="flex items-center gap-4 mb-6">
-            <button onclick="showFlashcards()" class="text-slate-400 hover:text-slate-700"><i class="fa-solid fa-arrow-left"></i></button>
+        <div class="flex items-center gap-5 mb-8">
+            <button onclick="showFlashcards()" style="color:var(--ink-faint)"><i class="fa-solid fa-arrow-left"></i></button>
             <div class="flex-1">
-                <div class="flex justify-between text-xs text-slate-500 mb-1">
-                    <span>Card ${reviewIndex+1} de ${reviewQueue.length}</span>
-                    <span>${progress}%</span>
+                <div class="flex justify-between mb-1.5">
+                    <span class="eyebrow">Card ${reviewIndex+1} / ${reviewQueue.length}</span>
+                    <span class="mono text-[11px]" style="color:var(--ink-faint)">${progress}%</span>
                 </div>
                 <div class="progress-bar"><div class="progress-fill" style="width:${progress}%"></div></div>
             </div>
         </div>
 
-        ${card.subject_name ? `<p class="text-center text-xs font-bold text-blue-500 uppercase tracking-widest mb-3">${card.subject_name}</p>` : ''}
+        ${card.subject_name ? `<p class="text-center eyebrow mb-4" style="color:var(--gold)">/ ${card.subject_name}</p>` : ''}
 
-        <div class="card-scene mb-6" style="height:220px">
+        <div class="card-scene mb-7" style="height:260px">
             <div class="card-flip" id="review-card" style="height:100%">
-                <div class="card-face bg-white border-2 border-slate-100 shadow-sm" style="border-radius:20px">
-                    <div class="text-center p-8">
-                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">Pergunta</p>
-                        <p class="text-lg font-semibold text-slate-800">${card.front}</p>
-                    </div>
+                <div class="card-face">
+                    <p class="eyebrow mb-5" style="color:var(--ink-faint)">Pergunta</p>
+                    <p class="serif text-[24px] font-medium text-center leading-tight" style="color:var(--ink); letter-spacing:-.01em;">${card.front}</p>
                 </div>
-                <div class="card-face card-back bg-blue-600" style="border-radius:20px">
-                    <div class="text-center p-8">
-                        <p class="text-[11px] font-bold text-blue-200 uppercase tracking-widest mb-4">Resposta</p>
-                        <p class="text-lg font-semibold text-white">${card.back}</p>
-                    </div>
+                <div class="card-face card-back">
+                    <p class="eyebrow mb-5" style="color:var(--gold-soft)">Resposta</p>
+                    <p class="serif text-[22px] font-medium text-center leading-tight" style="color:var(--paper); letter-spacing:-.01em;">${card.back}</p>
                 </div>
             </div>
         </div>
 
-        <div class="text-center mb-6">
-            <button onclick="flipCard()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-6 py-2.5 rounded-xl text-sm transition-colors">
-                <i class="fa-solid fa-rotate mr-2"></i>Virar card
+        <div class="text-center mb-7">
+            <button onclick="flipCard()" class="btn btn-ghost">
+                <i class="fa-solid fa-rotate text-[11px]"></i> Virar card
             </button>
         </div>
 
         <div id="confidence-section" class="hidden">
-            <p class="text-center text-sm font-semibold text-slate-600 mb-4">Como você se saiu?</p>
+            <p class="text-center eyebrow mb-4">Como foi?</p>
             <div class="grid grid-cols-5 gap-2">
                 ${[
-                    {v:1, label:'Nada', color:'bg-red-500 hover:bg-red-600'},
-                    {v:2, label:'Pouco', color:'bg-orange-500 hover:bg-orange-600'},
-                    {v:3, label:'Regular', color:'bg-yellow-500 hover:bg-yellow-600'},
-                    {v:4, label:'Bem', color:'bg-lime-500 hover:bg-lime-600'},
-                    {v:5, label:'Perfeito', color:'bg-green-500 hover:bg-green-600'},
+                    {v:1, label:'Nada', bg:'var(--crimson)', fg:'#fff'},
+                    {v:2, label:'Pouco', bg:'#b87333', fg:'#fff'},
+                    {v:3, label:'Regular', bg:'var(--gold)', fg:'#1d1404'},
+                    {v:4, label:'Bem', bg:'#5d8a4e', fg:'#fff'},
+                    {v:5, label:'Perfeito', bg:'var(--emerald)', fg:'#fff'},
                 ].map(opt => `
                 <button onclick="submitReview('${card.id}',${opt.v})"
-                    class="${opt.color} text-white font-bold py-3 rounded-xl text-xs transition-colors">
+                    class="py-3 transition-transform hover:-translate-y-0.5" style="background:${opt.bg}; color:${opt.fg}; font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase;">
                     ${opt.label}
                 </button>`).join('')}
             </div>
@@ -1366,49 +1572,49 @@ async function showSessions() {
     sessionTasks = [];
 
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-2xl mx-auto space-y-6">
-        <div class="bg-white rounded-2xl border border-slate-100 p-8">
-            <div class="text-center mb-8">
-                <p class="timer-display text-slate-800" id="timer-display">00:00:00</p>
-                <p class="text-xs text-slate-400 mt-2">Tempo de estudo</p>
-            </div>
-            <div class="flex justify-center gap-3 mb-8">
-                <button onclick="toggleTimer()" id="btn-timer"
-                    class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors">
-                    <i class="fa-solid fa-play" id="timer-icon"></i><span id="timer-label">Iniciar</span>
+    <div class="max-w-2xl space-y-6">
+        <div class="surface-ink p-10 text-center">
+            <p class="eyebrow mb-4" style="color:var(--gold-soft)">/ Tempo de estudo</p>
+            <p class="timer-display" id="timer-display" style="color:var(--paper)">00:00:00</p>
+            <div class="flex justify-center gap-3 mt-8">
+                <button onclick="toggleTimer()" id="btn-timer" class="btn btn-gold" style="padding: 12px 28px;">
+                    <i class="fa-solid fa-play text-[11px]" id="timer-icon"></i><span id="timer-label">Iniciar</span>
                 </button>
-                <button onclick="resetTimer()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold px-5 py-3 rounded-xl transition-colors">
-                    <i class="fa-solid fa-rotate-left"></i>
+                <button onclick="resetTimer()" class="btn" style="background:rgba(255,255,255,.06); color:var(--paper); border:1px solid rgba(255,255,255,.15); padding: 12px 18px;">
+                    <i class="fa-solid fa-rotate-left text-[11px]"></i>
                 </button>
             </div>
+        </div>
 
+        <div class="surface p-7">
+            <div class="section-head mb-6"><h3 class="title">Configurar sessão</h3></div>
             <div class="form-group">
-                <label class="form-label">Matéria *</label>
+                <label class="form-label">Matéria</label>
                 <select class="form-select" id="session-subject">${subjectOpts}</select>
             </div>
-            <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="grid grid-cols-2 gap-4">
                 <div class="form-group mb-0">
                     <label class="form-label">Questões feitas</label>
-                    <input type="number" class="form-input" id="session-total" value="0" min="0">
+                    <input type="number" class="form-input mono" id="session-total" value="0" min="0">
                 </div>
                 <div class="form-group mb-0">
                     <label class="form-label">Acertos</label>
-                    <input type="number" class="form-input" id="session-correct" value="0" min="0">
+                    <input type="number" class="form-input mono" id="session-correct" value="0" min="0">
                 </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-100 p-6">
-            <h3 class="text-sm font-bold text-slate-700 mb-4">Tarefas da sessão</h3>
-            <div id="task-list" class="space-y-2 mb-3"></div>
+        <div class="surface p-7">
+            <div class="section-head mb-5"><h3 class="title">Tarefas da sessão</h3></div>
+            <div id="task-list" class="mb-4"></div>
             <div class="flex gap-2">
-                <input class="form-input flex-1 text-sm" id="task-input" placeholder="Adicionar tarefa..." onkeydown="if(event.key==='Enter'){event.preventDefault();addTask()}">
-                <button onclick="addTask()" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-4 py-2 rounded-xl text-sm font-semibold transition-colors">Adicionar</button>
+                <input class="form-input flex-1" id="task-input" placeholder="Adicionar tarefa…" onkeydown="if(event.key==='Enter'){event.preventDefault();addTask()}">
+                <button onclick="addTask()" class="btn btn-ghost">Adicionar</button>
             </div>
         </div>
 
-        <button onclick="saveSession()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-4 rounded-2xl text-sm flex items-center justify-center gap-2 transition-colors">
-            <i class="fa-solid fa-floppy-disk"></i> Salvar Sessão
+        <button onclick="saveSession()" class="btn btn-ink w-full" style="padding:16px;">
+            <i class="fa-solid fa-floppy-disk text-[11px]"></i> Salvar sessão
         </button>
     </div>`;
 }
@@ -1423,14 +1629,12 @@ function toggleTimer() {
             const s = String(timerSeconds%60).padStart(2,'0');
             document.getElementById('timer-display').textContent = `${h}:${m}:${s}`;
         }, 1000);
-        document.getElementById('timer-icon').className = 'fa-solid fa-pause';
+        document.getElementById('timer-icon').className = 'fa-solid fa-pause text-[11px]';
         document.getElementById('timer-label').textContent = 'Pausar';
-        document.getElementById('btn-timer').className = 'bg-amber-500 hover:bg-amber-600 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors';
     } else {
         clearInterval(timerInterval);
-        document.getElementById('timer-icon').className = 'fa-solid fa-play';
+        document.getElementById('timer-icon').className = 'fa-solid fa-play text-[11px]';
         document.getElementById('timer-label').textContent = 'Retomar';
-        document.getElementById('btn-timer').className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors';
     }
 }
 
@@ -1438,10 +1642,12 @@ function resetTimer() {
     clearInterval(timerInterval);
     timerRunning = false;
     timerSeconds = 0;
-    document.getElementById('timer-display').textContent = '00:00:00';
-    document.getElementById('timer-icon').className = 'fa-solid fa-play';
-    document.getElementById('timer-label').textContent = 'Iniciar';
-    document.getElementById('btn-timer').className = 'bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl flex items-center gap-2 transition-colors';
+    const td = document.getElementById('timer-display');
+    if (td) td.textContent = '00:00:00';
+    const ti = document.getElementById('timer-icon');
+    if (ti) ti.className = 'fa-solid fa-play text-[11px]';
+    const tl = document.getElementById('timer-label');
+    if (tl) tl.textContent = 'Iniciar';
 }
 
 function addTask() {
@@ -1465,12 +1671,12 @@ function removeTask(i) {
 
 function renderTaskList() {
     document.getElementById('task-list').innerHTML = sessionTasks.map((t, i) => `
-    <div class="flex items-center gap-3 p-3 rounded-xl ${t.is_done ? 'bg-green-50' : 'bg-slate-50'}">
-        <button onclick="toggleTask(${i})" class="w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${t.is_done ? 'bg-green-500 border-green-500 text-white' : 'border-slate-300'}">
-            ${t.is_done ? '<i class="fa-solid fa-check text-[10px]"></i>' : ''}
+    <div class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid var(--line-soft)">
+        <button onclick="toggleTask(${i})" class="w-4 h-4 flex items-center justify-center flex-shrink-0 transition-colors" style="border: 1.5px solid ${t.is_done ? 'var(--emerald)' : 'var(--line-strong)'}; background: ${t.is_done ? 'var(--emerald)' : 'transparent'}; color: var(--paper);">
+            ${t.is_done ? '<i class="fa-solid fa-check text-[8px]"></i>' : ''}
         </button>
-        <span class="flex-1 text-sm ${t.is_done ? 'line-through text-slate-400' : 'text-slate-700'}">${t.description}</span>
-        <button onclick="removeTask(${i})" class="text-slate-300 hover:text-red-500 transition-colors"><i class="fa-solid fa-xmark text-xs"></i></button>
+        <span class="flex-1 text-[13.5px]" style="color:${t.is_done ? 'var(--ink-faint)' : 'var(--ink)'}; ${t.is_done ? 'text-decoration: line-through;' : ''}">${t.description}</span>
+        <button onclick="removeTask(${i})" style="color:var(--ink-faint);opacity:.5"><i class="fa-solid fa-xmark text-[11px]"></i></button>
     </div>`).join('');
 }
 
@@ -1509,40 +1715,44 @@ async function showHistory() {
     const acc = totalQ > 0 ? Math.round(totalC/totalQ*100) : 0;
 
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-4xl mx-auto">
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="sr-only">Histórico</h2>
-            ${history.length > 0 ? `
-            <button onclick="exportHistoryPdf()" class="ml-auto flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors">
-                <i class="fa-solid fa-file-pdf"></i> Exportar PDF
-            </button>` : ''}
+    <div class="max-w-4xl">
+        ${history.length > 0 ? `
+        <div class="flex justify-end mb-6">
+            <button onclick="exportHistoryPdf()" class="btn btn-ghost">
+                <i class="fa-solid fa-file-pdf text-[11px]"></i> Exportar PDF
+            </button>
+        </div>` : ''}
+
+        <div class="grid grid-cols-3 gap-0 mb-10" style="border:1px solid var(--line);">
+            ${editorialStat('fa-clock', 'Tempo total', `<span class="serif">${totalH}</span>`)}
+            ${editorialStat('fa-list', 'Sessões', `<span class="serif">${history.length}</span>`)}
+            ${editorialStat('fa-bullseye', 'Acerto', totalQ>0 ? `<span class="serif">${acc}</span><span class="mono text-[16px] ml-1" style="color:var(--ink-faint)">%</span>` : '—')}
         </div>
-        <div class="grid grid-cols-3 gap-4 mb-6">
-            ${statCard('fa-clock','Tempo total',totalH,'text-blue-500','bg-blue-50')}
-            ${statCard('fa-list','Sessões',history.length,'text-purple-500','bg-purple-50')}
-            ${statCard('fa-bullseye','Taxa de acerto',totalQ>0?`${acc}%`:'—','text-green-500','bg-green-50')}
-        </div>
-        ${history.length === 0 ? emptyState('fa-clock-rotate-left','Nenhuma sessão','Registre sua primeira sessão de estudo.') :
-        `<div class="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <table class="w-full text-sm">
-                <thead class="bg-slate-50 border-b border-slate-100">
-                    <tr class="text-left">
-                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Matéria</th>
-                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Data</th>
-                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Duração</th>
-                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Questões</th>
-                        <th class="px-5 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">Acerto</th>
+
+        ${history.length === 0 ? emptyState('fa-clock-rotate-left', 'Nenhuma sessão registrada', 'Registre sua primeira sessão de estudo.') :
+        `<div class="surface">
+            <table class="tbl">
+                <thead>
+                    <tr>
+                        <th style="width:32px">#</th>
+                        <th>Matéria</th>
+                        <th>Data</th>
+                        <th class="text-right">Duração</th>
+                        <th class="text-right">Questões</th>
+                        <th class="text-right">Acerto</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-slate-50">
-                    ${history.map(s => {
+                <tbody>
+                    ${history.map((s, i) => {
                         const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
-                        return `<tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-5 py-4 font-semibold text-slate-800">${s.subject_name}</td>
-                            <td class="px-5 py-4 text-slate-500">${fmtDate(s.start_time)}</td>
-                            <td class="px-5 py-4 font-mono text-slate-700">${fmtDuration(s.duration_seconds)}</td>
-                            <td class="px-5 py-4 text-slate-500">${s.total_questions > 0 ? `${s.correct_answers}/${s.total_questions}` : '—'}</td>
-                            <td class="px-5 py-4">${a != null ? `<span class="font-bold ${a>=70?'text-green-600':a>=50?'text-yellow-600':'text-red-500'}">${a}%</span>` : '—'}</td>
+                        const accColor = a == null ? 'var(--ink-faint)' : a>=70 ? 'var(--emerald)' : a>=50 ? 'var(--amber-ink)' : 'var(--crimson)';
+                        return `<tr>
+                            <td class="mono text-[11px]" style="color:var(--ink-faint)">${String(i+1).padStart(2,'0')}</td>
+                            <td class="serif text-[15px]" style="color:var(--ink); font-weight:500;">${s.subject_name}</td>
+                            <td class="mono text-[12px]" style="color:var(--ink-soft)">${fmtDate(s.start_time)}</td>
+                            <td class="mono text-[13px] text-right" style="color:var(--ink)">${fmtDuration(s.duration_seconds)}</td>
+                            <td class="mono text-[13px] text-right" style="color:var(--ink-soft)">${s.total_questions > 0 ? `${s.correct_answers}/${s.total_questions}` : '—'}</td>
+                            <td class="mono text-[13px] text-right" style="color:${accColor}; font-weight: 500;">${a != null ? a+'%' : '—'}</td>
                         </tr>`;
                     }).join('')}
                 </tbody>
@@ -1557,24 +1767,25 @@ async function showProfile() {
     setPage('Meu Perfil', 'Informações e configurações');
     const u = me;
     document.getElementById('mainContent').innerHTML = `
-    <div class="max-w-2xl mx-auto space-y-5">
-        <div class="bg-white rounded-2xl border border-slate-100 p-6">
-            <div class="flex items-center gap-5 mb-6">
+    <div class="max-w-2xl space-y-6">
+        <div class="surface p-8">
+            <div class="flex items-start gap-6 mb-8 pb-6" style="border-bottom: 1px solid var(--line);">
                 <div class="relative group">
                     ${u.photo_url
-                        ? `<img src="${u.photo_url}" class="w-16 h-16 rounded-2xl object-cover border border-slate-200" onerror="this.outerHTML='<div class=\\'w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center\\'><span class=\\'text-2xl font-black text-blue-600\\'>${u.full_name.charAt(0).toUpperCase()}</span></div>'">`
-                        : `<div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center"><span class="text-2xl font-black text-blue-600">${u.full_name.charAt(0).toUpperCase()}</span></div>`}
-                    <button onclick="openPhotoModal()" class="absolute -bottom-1 -right-1 w-7 h-7 bg-slate-900 hover:bg-slate-700 text-white rounded-full flex items-center justify-center shadow-md transition-colors" title="Alterar foto">
-                        <i class="fa-solid fa-camera text-[10px]"></i>
+                        ? `<img src="${u.photo_url}" style="width:84px;height:84px;object-fit:cover;border:1px solid var(--line-strong)" onerror="this.outerHTML='<div style=\\'width:84px;height:84px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;border:1px solid var(--gold-soft);font-family:Fraunces,serif;font-weight:500;font-size:32px;color:var(--ink);\\'>${getInitials(u.full_name)}</div>'">`
+                        : `<div style="width:84px;height:84px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;border:1px solid var(--gold-soft);font-family:Fraunces,serif;font-weight:500;font-size:32px;color:var(--ink);">${getInitials(u.full_name)}</div>`}
+                    <button onclick="openPhotoModal()" style="position:absolute;bottom:-8px;right:-8px;width:28px;height:28px;background:var(--ink);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Alterar foto">
+                        <i class="fa-solid fa-camera text-[11px]"></i>
                     </button>
                 </div>
-                <div>
-                    <p class="text-lg font-bold text-slate-800">${u.full_name}</p>
-                    <p class="text-sm text-slate-400">${u.email}</p>
-                    <span class="inline-block mt-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full ${u.role==='admin' ? 'bg-amber-100 text-amber-700' : 'bg-blue-50 text-blue-600'}">${u.role==='admin'?'Administrador':'Estudante'}</span>
+                <div class="pt-1">
+                    <p class="serif text-[26px] font-medium" style="color:var(--ink); letter-spacing:-.01em; line-height:1;">${u.full_name}</p>
+                    <p class="text-[13px] mt-1.5" style="color:var(--ink-soft)">${u.email}</p>
+                    <span class="badge ${u.role==='admin' ? 'badge-pendente' : 'badge-em-curso'} mt-3">${u.role==='admin'?'Administrador':'Estudante'}</span>
                 </div>
             </div>
-            <form onsubmit="saveProfile(event)" class="space-y-4">
+
+            <form onsubmit="saveProfile(event)" class="space-y-5">
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group mb-0">
                         <label class="form-label">Nome completo</label>
@@ -1582,45 +1793,45 @@ async function showProfile() {
                     </div>
                     <div class="form-group mb-0">
                         <label class="form-label">Curso</label>
-                        <input class="form-input" id="p-curso" value="${u.curso||''}" placeholder="Ex: Direito">
+                        <input class="form-input" id="p-curso" value="${u.curso||''}" placeholder="Ex.: Direito">
                     </div>
                 </div>
                 <div class="grid grid-cols-3 gap-4">
                     <div class="form-group mb-0">
                         <label class="form-label">Período atual</label>
-                        <input type="number" class="form-input" id="p-period" value="${u.current_period||''}" min="1" max="12">
+                        <input type="number" class="form-input mono" id="p-period" value="${u.current_period||''}" min="1" max="12">
                     </div>
                     <div class="form-group mb-0">
                         <label class="form-label">Total de períodos</label>
-                        <input type="number" class="form-input" id="p-total" value="${u.total_periods||''}" min="1" max="12">
+                        <input type="number" class="form-input mono" id="p-total" value="${u.total_periods||''}" min="1" max="12">
                     </div>
                     <div class="form-group mb-0">
-                        <label class="form-label">Previsão de conclusão</label>
-                        <input class="form-input" id="p-estimate" value="${u.completion_estimate||''}" placeholder="Ex: Dez/2027">
+                        <label class="form-label">Conclusão</label>
+                        <input class="form-input" id="p-estimate" value="${u.completion_estimate||''}" placeholder="Ex.: Dez/2027">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="form-group mb-0">
                         <label class="form-label">Telefone</label>
-                        <input class="form-input" id="p-phone" value="${u.phone||''}" placeholder="(11) 99999-0000">
+                        <input class="form-input mono" id="p-phone" value="${u.phone||''}" placeholder="(11) 99999-0000">
                     </div>
                     <div class="form-group mb-0">
                         <label class="form-label">CPF</label>
-                        <input class="form-input" id="p-cpf" value="${u.cpf||''}" placeholder="000.000.000-00" ${u.cpf ? 'disabled' : ''}>
-                        ${u.cpf ? '<p class="text-[11px] text-slate-400 mt-1">CPF não pode ser alterado</p>' : ''}
+                        <input class="form-input mono" id="p-cpf" value="${u.cpf||''}" placeholder="000.000.000-00" ${u.cpf ? 'disabled' : ''}>
+                        ${u.cpf ? '<p class="text-[10.5px] mt-1.5" style="color:var(--ink-faint)">CPF não pode ser alterado</p>' : ''}
                     </div>
                 </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors">
-                    <i class="fa-solid fa-floppy-disk mr-2"></i>Salvar alterações
+                <button type="submit" class="btn btn-ink w-full mt-3">
+                    <i class="fa-solid fa-floppy-disk text-[11px]"></i> Salvar alterações
                 </button>
             </form>
         </div>
 
-        <div class="bg-white rounded-2xl border border-slate-100 p-6">
-            <h3 class="text-sm font-bold text-slate-700 mb-1">Conta</h3>
-            <p class="text-xs text-slate-400 mb-4">E-mail: ${u.email}</p>
-            <button onclick="logout()" class="text-red-500 hover:text-red-700 text-sm font-semibold transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair do sistema
+        <div class="surface p-7">
+            <p class="eyebrow mb-1.5">Conta</p>
+            <p class="text-[13px] mb-5" style="color:var(--ink-soft)">${u.email}</p>
+            <button onclick="logout()" class="btn btn-danger">
+                <i class="fa-solid fa-arrow-right-from-bracket text-[11px]"></i> Sair do sistema
             </button>
         </div>
     </div>`;
@@ -1628,14 +1839,18 @@ async function showProfile() {
 
 function openPhotoModal() {
     openModal(`
-    <div class="p-6">
-        <h3 class="text-lg font-bold text-slate-800 mb-2">Foto de perfil</h3>
-        <p class="text-xs text-slate-500 mb-4">Cole a URL de uma imagem (https://...) ou deixe em branco para remover.</p>
-        <input id="photo-url-input" class="form-input w-full" placeholder="https://i.imgur.com/exemplo.jpg" value="${me.photo_url || ''}">
-        <div class="flex gap-2 mt-4">
-            <button onclick="closeModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-sm transition-colors">Cancelar</button>
-            <button onclick="savePhoto()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors">Salvar</button>
+    <div class="flex items-baseline justify-between mb-6">
+        <div>
+            <p class="eyebrow" style="color:var(--gold)">/ Foto de perfil</p>
+            <h3 class="serif text-[24px] font-medium mt-1" style="color:var(--ink); letter-spacing:-.01em;">Atualizar imagem</h3>
         </div>
+        <button onclick="closeModal()" style="color:var(--ink-faint)"><i class="fa-solid fa-xmark text-lg"></i></button>
+    </div>
+    <p class="text-[12.5px] mb-5" style="color:var(--ink-soft)">Cole a URL de uma imagem pública. Deixe em branco para remover.</p>
+    <input id="photo-url-input" class="form-input" placeholder="https://i.imgur.com/exemplo.jpg" value="${me.photo_url || ''}">
+    <div class="flex gap-3 mt-6">
+        <button onclick="closeModal()" class="btn btn-ghost flex-1">Cancelar</button>
+        <button onclick="savePhoto()" class="btn btn-ink flex-1">Salvar</button>
     </div>`);
 }
 

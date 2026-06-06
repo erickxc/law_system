@@ -1,295 +1,386 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Law System - Acesso</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .fade-in { animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        .hidden { display: none; }
-        .tooltip-box { position: relative; display: inline-block; }
-        .tooltip-box .tooltip-text {
-            visibility: hidden; width: 160px; background-color: #1e293b; color: #fff;
-            text-align: center; border-radius: 6px; padding: 5px; position: absolute;
-            z-index: 1; bottom: 125%; left: 50%; margin-left: -80px; opacity: 0;
-            transition: opacity 0.3s; font-size: 10px; font-weight: normal;
-        }
-        .tooltip-box:hover .tooltip-text { visibility: visible; opacity: 1; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Law System — Entrar</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+    --paper:       #f6f1e7;
+    --paper-soft:  #ede5d2;
+    --ink:         #0d1117;
+    --ink-soft:    #2a2f3a;
+    --ink-faint:   #6b6f7a;
+    --line:        #d8cfb8;
+    --line-strong: #b9ad8f;
+    --gold:        #b08b3e;
+    --gold-soft:   #d4b76a;
+    --gold-bg:     #f1e8cf;
+    --emerald:     #1f5d3a;
+    --crimson:     #8b1538;
+}
+* { font-family: 'IBM Plex Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+body {
+    background: var(--paper);
+    color: var(--ink);
+    font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+.serif { font-family: 'Fraunces', Georgia, serif; font-feature-settings: 'ss01' 1; }
+.mono  { font-family: 'JetBrains Mono', monospace; }
+
+/* Editorial type */
+.display-1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(3.5rem, 7vw, 6rem);
+    line-height: 0.92;
+    letter-spacing: -0.035em;
+    font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 0;
+}
+.display-1 em { font-style: italic; font-weight: 500; font-variation-settings: 'opsz' 144, 'WONK' 1; }
+.eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+}
+.rule-decor {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+.rule-decor::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: currentColor;
+}
+
+/* Left panel atmospherics */
+.paper-grain {
+    background-image:
+        radial-gradient(circle at 20% 10%, rgba(176,139,62,.08), transparent 60%),
+        radial-gradient(circle at 90% 80%, rgba(31,93,58,.06), transparent 50%),
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='3'/><feColorMatrix values='0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 0 0.05  0 0 0 .04 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+/* Right panel form */
+.field {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line-strong);
+    color: var(--ink);
+    padding: 12px 0 10px;
+    font-size: 15px;
+    width: 100%;
+    transition: border-color .2s;
+}
+.field:focus {
+    outline: none;
+    border-bottom-color: var(--ink);
+}
+.field::placeholder { color: var(--ink-faint); opacity: .55; }
+
+.btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 14px 24px;
+    font-weight: 500;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: background .2s, transform .15s;
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+.btn-primary:hover { background: var(--ink-soft); }
+.btn-primary:active { transform: translateY(1px); }
+.btn-primary:disabled { opacity: .55; cursor: wait; transform: none; }
+
+.tab-pill {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding: 10px 0;
+    border-bottom: 1px solid transparent;
+    transition: color .15s, border-color .15s;
+    cursor: pointer;
+    background: none;
+    border-top: none; border-left: none; border-right: none;
+}
+.tab-pill.active { color: var(--ink); border-bottom-color: var(--gold); }
+
+.alert {
+    display: none;
+    padding: 12px 16px;
+    border-left: 3px solid;
+    font-size: 13px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(0,0,0,0.025);
+}
+.alert i { margin-top: 2px; }
+.alert-error   { border-color: var(--crimson); color: var(--crimson); }
+.alert-success { border-color: var(--emerald); color: var(--emerald); }
+.alert-warning { border-color: var(--gold);    color: #6b4f15; }
+
+@keyframes riseIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.rise-in   { animation: riseIn .55s cubic-bezier(.22,1,.36,1) both; }
+.rise-in-d { animation: riseIn .55s .12s cubic-bezier(.22,1,.36,1) both; }
+
+.strength-bar { height: 2px; background: var(--line); }
+.strength-bar.on-1 { background: var(--crimson); }
+.strength-bar.on-2 { background: #b87333; }
+.strength-bar.on-3 { background: var(--gold); }
+.strength-bar.on-4 { background: var(--emerald); }
+
+.figure-mark {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--ink);
+    color: var(--ink);
+}
+.figure-mark i { font-size: 18px; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+</style>
 </head>
-<body class="bg-slate-900 flex items-center justify-center min-h-screen font-sans p-4">
+<body class="min-h-screen">
 
-    <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md fade-in">
-        <h1 class="text-3xl font-extrabold text-slate-800 mb-2 text-center">Law System ⚖️</h1>
-        <p id="form-subtitle" class="text-slate-500 text-center mb-8 text-sm">Gestão de Alta Performance Jurídica</p>
-        
-        <form id="loginForm" class="space-y-5">
+<div class="grid lg:grid-cols-12 min-h-screen">
+
+    <!-- LEFT — editorial -->
+    <section class="paper-grain lg:col-span-7 px-8 md:px-16 lg:px-24 py-12 lg:py-16 flex flex-col justify-between">
+        <header class="flex items-center gap-4 rise-in">
+            <div class="figure-mark"><i class="fa-solid fa-scale-balanced"></i></div>
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail</label>
-                <input type="email" id="email" required placeholder="seu@email.com"
-                    class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+                <p class="serif text-[20px] font-semibold tracking-tight" style="color:var(--ink)">Law System</p>
+                <p class="eyebrow" style="margin-top:2px">Estudos jurídicos · Edição 2026</p>
             </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Senha</label>
-                <input type="password" id="password" required placeholder="••••••••"
-                    class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
+        </header>
+
+        <div class="max-w-2xl rise-in-d">
+            <span class="eyebrow rule-decor" style="color:var(--gold)">A casa</span>
+            <h1 class="display-1 mt-6" style="color:var(--ink)">
+                Estudar Direito,<br>
+                como quem <em>constrói</em><br>
+                um repertório.
+            </h1>
+            <p class="mt-8 max-w-md text-[15px] leading-relaxed" style="color:var(--ink-soft)">
+                Tempo cronometrado, matérias por prioridade, flashcards com repetição espaçada e livros marcados pelo que importa. Tudo no seu nome, do seu jeito.
+            </p>
+        </div>
+
+        <footer class="flex items-end justify-between gap-6">
+            <p class="serif italic text-[15px] leading-relaxed max-w-sm" style="color:var(--ink-soft)">
+                "Quem deseja ser livre, primeiro precisa ser justo."
+                <span class="block eyebrow mt-2" style="color:var(--ink-faint)">— Voltaire</span>
+            </p>
+            <p class="eyebrow text-right" style="color:var(--ink-faint)">
+                v2.0<br>
+                <span class="mono normal-case tracking-normal" style="font-size:11px">/ acesso restrito</span>
+            </p>
+        </footer>
+    </section>
+
+    <!-- RIGHT — form -->
+    <section class="lg:col-span-5 bg-white border-l flex items-center justify-center px-8 md:px-12 py-12" style="border-color: var(--line)">
+        <div class="w-full max-w-sm rise-in-d">
+
+            <div class="flex gap-8 mb-10 border-b" style="border-color: var(--line)">
+                <button onclick="showTab('login')" id="tab-login" class="tab-pill active">Entrar</button>
+                <button onclick="showTab('register')" id="tab-register" class="tab-pill">Criar conta</button>
             </div>
-            <button type="submit" class="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition-all shadow-lg text-sm">Acessar Dashboard</button>
-            <p class="text-center text-xs text-slate-500">Não tem acesso? <a href="#" onclick="toggleForm()" class="text-blue-600 font-bold">Solicitar Inscrição</a></p>
-        </form>
 
-        <form id="registerForm" class="space-y-4 hidden">
-            <div class="grid grid-cols-1 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nome Completo</label>
-                    <input type="text" id="reg-name" required placeholder="Ex: João Silva" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
-                        CPF 
-                        <span class="tooltip-box ml-1 text-blue-500 cursor-help">
-                            <i class="fa-solid fa-circle-question text-[10px]"></i>
-                            <span class="tooltip-text">Apenas números. O sistema validará se o CPF é seu.</span>
-                        </span>
-                    </label>
-                    <input type="text" id="reg-cpf" required placeholder="000.000.000-00" maxlength="14" oninput="maskCPF(this)" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Curso</label>
-                    <input type="text" id="reg-curso" required placeholder="Ex: Direito" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">E-mail Acadêmico</label>
-                    <input type="email" id="reg-email" required placeholder="seu@email.com" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Senha</label>
-                    <input type="password" id="reg-password" required placeholder="••••••••" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                </div>
-            </div>
-            <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg text-sm mt-2">Enviar Solicitação</button>
-            <p class="text-center text-xs text-slate-500"><a href="#" onclick="toggleForm()" class="text-slate-800 font-bold">Voltar para o Login</a></p>
-        </form>
+            <div id="alert" class="alert"></div>
 
-        <p id="message" class="mt-4 text-center text-sm font-semibold min-h-[20px]"></p>
-    </div>
+            <form id="form-login" onsubmit="handleLogin(event)" class="space-y-7">
+                <div>
+                    <p class="eyebrow mb-2">E-mail</p>
+                    <input type="email" id="login-email" required placeholder="você@exemplo.com" class="field">
+                </div>
+                <div>
+                    <p class="eyebrow mb-2">Senha</p>
+                    <div class="relative">
+                        <input type="password" id="login-password" required placeholder="••••••••" class="field pr-9">
+                        <button type="button" onclick="togglePwd('login-password', this)" class="absolute right-0 bottom-2.5" style="color:var(--ink-faint)">
+                            <i class="fa-regular fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" id="btn-login" class="btn-primary mt-2">
+                    Entrar <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+            <form id="form-register" onsubmit="handleRegister(event)" class="space-y-7 hidden">
+                <div>
+                    <p class="eyebrow mb-2">Nome completo</p>
+                    <input type="text" id="reg-name" required placeholder="Como você assina" class="field">
+                </div>
+                <div>
+                    <p class="eyebrow mb-2">E-mail</p>
+                    <input type="email" id="reg-email" required placeholder="você@exemplo.com" class="field">
+                </div>
+                <div>
+                    <p class="eyebrow mb-2">Curso</p>
+                    <input type="text" id="reg-curso" placeholder="Ex.: Direito" class="field">
+                </div>
+                <div>
+                    <p class="eyebrow mb-2">Senha</p>
+                    <div class="relative">
+                        <input type="password" id="reg-password" required placeholder="Mínimo 8 caracteres" oninput="checkStrength(this.value)" class="field pr-9">
+                        <button type="button" onclick="togglePwd('reg-password', this)" class="absolute right-0 bottom-2.5" style="color:var(--ink-faint)">
+                            <i class="fa-regular fa-eye text-sm"></i>
+                        </button>
+                    </div>
+                    <div class="mt-3 grid grid-cols-4 gap-1">
+                        <div id="s1" class="strength-bar"></div>
+                        <div id="s2" class="strength-bar"></div>
+                        <div id="s3" class="strength-bar"></div>
+                        <div id="s4" class="strength-bar"></div>
+                    </div>
+                    <p id="strength-label" class="text-[11px] mt-1.5 h-4 mono" style="color:var(--ink-faint)"></p>
+                </div>
+                <button type="submit" id="btn-register" class="btn-primary mt-2">
+                    Criar conta <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+
+            <p class="text-[12px] mt-8 leading-relaxed" style="color:var(--ink-faint)">
+                Novo cadastro é liberado manualmente pelo administrador.<br>
+                Você receberá acesso quando aprovado.
+            </p>
+        </div>
+    </section>
+</div>
+
+<script src="config.js"></script>
 <script>
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    const message = document.getElementById('message');
+if (localStorage.getItem('access_token')) location.href = 'dash.html';
 
-    function toggleForm() {
-        loginForm.classList.toggle('hidden');
-        registerForm.classList.toggle('hidden');
-        message.innerText = "";
-        document.getElementById('form-subtitle').innerText = loginForm.classList.contains('hidden') ? "Crie sua conta para análise" : "Gestão de Alta Performance Jurídica";
+function showTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('form-login').classList.toggle('hidden', !isLogin);
+    document.getElementById('form-register').classList.toggle('hidden', isLogin);
+    document.getElementById('tab-login').classList.toggle('active', isLogin);
+    document.getElementById('tab-register').classList.toggle('active', !isLogin);
+    clearAlert();
+}
+
+function showAlert(msg, type = 'error') {
+    const el = document.getElementById('alert');
+    const icons = { error: 'circle-xmark', success: 'circle-check', warning: 'triangle-exclamation' };
+    el.className = `alert alert-${type}`;
+    el.style.display = 'flex';
+    el.innerHTML = `<i class="fa-solid fa-${icons[type] || 'info'}"></i><span>${msg}</span>`;
+}
+
+function clearAlert() { document.getElementById('alert').style.display = 'none'; }
+
+function togglePwd(id, btn) {
+    const inp = document.getElementById(id);
+    const hide = inp.type === 'text';
+    inp.type = hide ? 'password' : 'text';
+    btn.querySelector('i').className = `fa-regular fa-eye${hide ? '' : '-slash'} text-sm`;
+}
+
+function checkStrength(pwd) {
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    const labels = ['Fraca', 'Regular', 'Boa', 'Forte'];
+    for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`s${i}`);
+        el.className = `strength-bar${i <= score ? ' on-' + score : ''}`;
     }
+    const label = document.getElementById('strength-label');
+    label.textContent = pwd.length > 0 ? (labels[score-1] || '') : '';
+}
 
-    // ✅ VALIDAÇÃO DE CPF
-    function validarCPF(cpf) {
-        cpf = cpf.replace(/\D/g, ''); // Remove pontos e traços
-        
-        if (cpf.length !== 11) return false;
-        if (/^(\d)\1{10}$/.test(cpf)) return false; // Rejeita sequências iguais (111.111.111-11)
-        
-        // Validação dos dígitos verificadores
-        let soma = 0;
-        let resto;
-        
-        for (let i = 1; i <= 9; i++) {
-            soma += parseInt(cpf.substring(i - 1, i)) * (11 - i);
-        }
-        resto = (soma * 10) % 11;
-        if (resto === 10 || resto === 11) resto = 0;
-        if (resto !== parseInt(cpf.substring(9, 10))) return false;
-        
-        soma = 0;
-        for (let i = 1; i <= 10; i++) {
-            soma += parseInt(cpf.substring(i - 1, i)) * (12 - i);
-        }
-        resto = (soma * 10) % 11;
-        if (resto === 10 || resto === 11) resto = 0;
-        if (resto !== parseInt(cpf.substring(10, 11))) return false;
-        
-        return true;
-    }
-
-    // ✅ MÁSCARA DE CPF COM VALIDAÇÃO
-    function maskCPF(input) {
-        let v = input.value.replace(/\D/g, "");
-        
-        if (v.length <= 11) {
-            v = v.replace(/(\d{3})(\d)/, "$1.$2");
-            v = v.replace(/(\d{3})(\d)/, "$1.$2");
-            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-        }
-        
-        input.value = v;
-        
-        // Valida CPF quando completo
-        const cpfLimpo = v.replace(/\D/g, '');
-        const feedbackElement = document.getElementById('cpf-feedback');
-        
-        if (cpfLimpo.length === 11) {
-            if (validarCPF(cpfLimpo)) {
-                input.classList.remove('border-red-500');
-                input.classList.add('border-green-500');
-                if (feedbackElement) feedbackElement.remove();
-            } else {
-                input.classList.remove('border-green-500');
-                input.classList.add('border-red-500');
-                
-                if (!feedbackElement) {
-                    const feedback = document.createElement('p');
-                    feedback.id = 'cpf-feedback';
-                    feedback.className = 'text-red-500 text-xs mt-1 font-bold';
-                    feedback.innerText = '❌ CPF inválido';
-                    input.parentElement.appendChild(feedback);
-                }
-            }
+async function handleLogin(e) {
+    e.preventDefault();
+    clearAlert();
+    const btn = document.getElementById('btn-login');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando…';
+    try {
+        const res = await fetch(`${API_BASE}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: document.getElementById('login-email').value.trim(),
+                password: document.getElementById('login-password').value,
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showAlert(data.detail || 'Erro ao entrar.');
         } else {
-            input.classList.remove('border-red-500', 'border-green-500');
-            if (feedbackElement) feedbackElement.remove();
+            localStorage.setItem('access_token', data.access_token);
+            location.href = 'dash.html';
         }
+    } catch {
+        showAlert('Erro de conexão. Verifique sua internet.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
     }
+}
 
-    // ✅ VALIDAÇÃO DE SENHA EM TEMPO REAL
-    const passwordInput = document.getElementById('reg-password');
-    passwordInput.addEventListener('input', function() {
-        const senha = this.value;
-        const feedbackElement = document.getElementById('password-feedback');
-        
-        const requisitos = {
-            tamanho: senha.length >= 8,
-            maiuscula: /[A-Z]/.test(senha),
-            minuscula: /[a-z]/.test(senha),
-            numero: /[0-9]/.test(senha)
-        };
-        
-        const todasOk = Object.values(requisitos).every(v => v);
-        
-        // Remove feedback anterior
-        if (feedbackElement) feedbackElement.remove();
-        
-        if (senha.length > 0 && !todasOk) {
-            this.classList.add('border-red-500');
-            this.classList.remove('border-green-500');
-            
-            const feedback = document.createElement('div');
-            feedback.id = 'password-feedback';
-            feedback.className = 'text-xs mt-2 space-y-1';
-            
-            feedback.innerHTML = `
-                <p class="${requisitos.tamanho ? 'text-green-500' : 'text-red-500'}">
-                    ${requisitos.tamanho ? '✓' : '✗'} Mínimo 8 caracteres
-                </p>
-                <p class="${requisitos.maiuscula ? 'text-green-500' : 'text-red-500'}">
-                    ${requisitos.maiuscula ? '✓' : '✗'} Uma letra maiúscula
-                </p>
-                <p class="${requisitos.minuscula ? 'text-green-500' : 'text-red-500'}">
-                    ${requisitos.minuscula ? '✓' : '✗'} Uma letra minúscula
-                </p>
-                <p class="${requisitos.numero ? 'text-green-500' : 'text-red-500'}">
-                    ${requisitos.numero ? '✓' : '✗'} Um número
-                </p>
-            `;
-            
-            this.parentElement.appendChild(feedback);
-        } else if (todasOk) {
-            this.classList.remove('border-red-500');
-            this.classList.add('border-green-500');
+async function handleRegister(e) {
+    e.preventDefault();
+    clearAlert();
+    const pwd = document.getElementById('reg-password').value;
+    if (pwd.length < 8) { showAlert('A senha deve ter pelo menos 8 caracteres.'); return; }
+    const btn = document.getElementById('btn-register');
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando…';
+    try {
+        const res = await fetch(`${API_BASE}/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                full_name: document.getElementById('reg-name').value.trim(),
+                email: document.getElementById('reg-email').value.trim(),
+                password: pwd,
+                curso: document.getElementById('reg-curso').value.trim() || null,
+            })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            showAlert(data.detail || 'Erro ao criar conta.');
         } else {
-            this.classList.remove('border-red-500', 'border-green-500');
+            showAlert('Conta criada. Aguarde a aprovação do administrador.', 'warning');
+            document.getElementById('form-register').reset();
+            setTimeout(() => showTab('login'), 3500);
         }
-    });
-
-    // ✅ VALIDAÇÃO AO ENVIAR
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const cpfInput = document.getElementById('reg-cpf');
-        const cpfLimpo = cpfInput.value.replace(/\D/g, '');
-        
-        // Valida CPF antes de enviar
-        if (!validarCPF(cpfLimpo)) {
-            message.innerText = "❌ CPF inválido! Digite um CPF válido.";
-            message.className = "mt-4 text-center text-sm font-semibold text-red-600";
-            cpfInput.focus();
-            return;
-        }
-        
-        // Valida senha
-        const senha = passwordInput.value;
-        if (senha.length < 8 || !/[A-Z]/.test(senha) || !/[a-z]/.test(senha) || !/[0-9]/.test(senha)) {
-            message.innerText = "❌ Senha não atende aos requisitos!";
-            message.className = "mt-4 text-center text-sm font-semibold text-red-600";
-            passwordInput.focus();
-            return;
-        }
-        
-        const data = {
-            full_name: document.getElementById('reg-name').value,
-            email: document.getElementById('reg-email').value,
-            password: senha,
-            cpf: cpfLimpo,  // ✅ Envia CPF sem formatação
-            curso: document.getElementById('reg-curso').value
-        };
-
-        try {
-            const response = await fetch('http://127.0.0.1:8000/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            
-            const resData = await response.json();
-            
-            if(response.ok) {
-                message.innerText = "✅ " + resData.message;
-                message.className = "mt-4 text-center text-sm font-semibold text-green-600 fade-in";
-                registerForm.reset();
-                setTimeout(toggleForm, 3000);
-            } else {
-                message.innerText = "❌ " + (resData.detail || "Erro na solicitação.");
-                message.className = "mt-4 text-center text-sm font-semibold text-red-600";
-            }
-        } catch (err) { 
-            console.error('Erro:', err);
-            message.innerText = "❌ Erro ao conectar com o servidor.";
-            message.className = "mt-4 text-center text-sm font-semibold text-red-600";
-        }
-    });
-
-    // LOGIN
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        
-        try {
-            const response = await fetch('http://127.0.0.1:8000/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
-            });
-            const data = await response.json();
-            
-            if (response.ok) {
-                localStorage.setItem('access_token', data.access_token);
-                window.location.href = 'dash.html';
-            } else {
-                message.innerText = "❌ " + (data.detail || "Erro no login");
-                message.className = "mt-4 text-center text-sm font-semibold text-red-600 fade-in";
-            }
-        } catch (err) { 
-            message.innerText = "❌ Erro ao conectar ao servidor.";
-            message.className = "mt-4 text-center text-sm font-semibold text-red-600";
-        }
-    });
+    } catch {
+        showAlert('Erro de conexão. Verifique sua internet.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = orig;
+    }
+}
 </script>
 </body>
 </html>
