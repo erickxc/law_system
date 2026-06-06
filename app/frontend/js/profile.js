@@ -53,6 +53,19 @@ async function showProfile() {
                 </div>
             </div>
 
+            <!-- Metas -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title"><i class="fa-solid fa-bullseye text-[11px]" style="color:var(--accent)"></i> Metas de estudo</span>
+                    <span class="card-sub">diária · semanal · mensal</span>
+                </div>
+                <div class="card-body">
+                    ${renderGoalsTable()}
+                    <button onclick="saveGoals()" class="btn btn-primary mt-4"><i class="fa-solid fa-floppy-disk text-[10px]"></i> Salvar metas</button>
+                    <p class="help mt-2">Valor 0 = sem meta. As metas aparecem no dashboard.</p>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-body flex items-center justify-between">
                     <div>
@@ -64,6 +77,70 @@ async function showProfile() {
             </div>
         </div>
     </div>`;
+}
+
+function renderGoalsTable() {
+    const g = me.goals || {};
+    const periods = [
+        { key: 'daily',   label: 'Diária'  },
+        { key: 'weekly',  label: 'Semanal' },
+        { key: 'monthly', label: 'Mensal'  },
+    ];
+    const metrics = [
+        { key: 'minutes',   label: 'Minutos',   icon: 'fa-clock',         unit: 'min'    },
+        { key: 'cards',     label: 'Flashcards', icon: 'fa-layer-group',  unit: 'cards'  },
+        { key: 'questions', label: 'Questões',   icon: 'fa-circle-question', unit: 'q' },
+        { key: 'pages',     label: 'Páginas',    icon: 'fa-book-open',    unit: 'pgs'    },
+    ];
+    return `
+    <div style="overflow-x: auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
+            <thead>
+                <tr style="background: var(--bg-2);">
+                    <th style="text-align:left; padding: 8px 10px; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em;">Métrica</th>
+                    ${periods.map(p => `<th style="text-align:center; padding:8px 10px; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; letter-spacing:.04em;">${p.label}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${metrics.map(m => `
+                <tr style="border-top: 1px solid var(--border);">
+                    <td style="padding: 10px; color:var(--text);">
+                        <i class="fa-solid ${m.icon} text-[11px]" style="color:var(--text-4); margin-right:6px;"></i>
+                        ${m.label}
+                        <span class="text-[10.5px] mono ml-1" style="color:var(--text-4);">${m.unit}</span>
+                    </td>
+                    ${periods.map(p => {
+                        const val = (g[p.key] && g[p.key][m.key]) || (m.key === 'minutes' && p.key === 'daily' ? (me.daily_goal_minutes || 0) : 0);
+                        return `<td style="padding:6px 10px; text-align:center;">
+                            <input type="number" min="0" max="100000" value="${val}"
+                                data-period="${p.key}" data-metric="${m.key}"
+                                class="goal-input input mono"
+                                style="width:80px; text-align:center; padding: 5px 8px; font-size: 12.5px;">
+                        </td>`;
+                    }).join('')}
+                </tr>`).join('')}
+            </tbody>
+        </table>
+    </div>`;
+}
+
+async function saveGoals() {
+    const goals = { daily: {}, weekly: {}, monthly: {} };
+    document.querySelectorAll('.goal-input').forEach(inp => {
+        const p = inp.dataset.period;
+        const m = inp.dataset.metric;
+        const v = parseInt(inp.value) || 0;
+        if (v > 0) {
+            if (!goals[p]) goals[p] = {};
+            goals[p][m] = v;
+        }
+    });
+    try {
+        const r = await api('/users/me/goals', { method: 'PUT', body: JSON.stringify({ goals }) });
+        me.goals = r.goals;
+        if (r.daily_goal_minutes) me.daily_goal_minutes = r.daily_goal_minutes;
+        toast('Metas atualizadas', 'success');
+    } catch (e) { toast(e.message, 'error'); }
 }
 
 function openPhotoModal() {

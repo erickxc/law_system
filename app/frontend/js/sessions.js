@@ -15,13 +15,17 @@ async function showSessions() {
     setActive('menu-sessoes');
     setPage('Sessão de estudo', 'Estudo');
 
+    // Se já existe sessão ativa, mostrar painel da sessão em andamento
+    const active = getActiveSession();
+    if (active) {
+        renderActiveSessionPage(active);
+        return;
+    }
+
     const subjectOpts = subjects.length === 0
         ? '<option value="">Nenhuma matéria cadastrada</option>'
         : subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
 
-    timerSeconds = 0;
-    clearInterval(timerInterval);
-    timerRunning = false;
     sessionTasks = [];
     _pomodoroEnabled = false;
     _pomodoroPhase = 'work';
@@ -33,7 +37,51 @@ async function showSessions() {
         <div class="flex items-baseline justify-between mb-5">
             <div>
                 <h1 class="page-title">Nova sessão de estudo</h1>
-                <p class="page-sub">Cronômetro, Pomodoro e tarefas</p>
+                <p class="page-sub">Escolha uma matéria e inicie. Você pode navegar para livros e flashcards durante a sessão.</p>
+            </div>
+        </div>
+
+        <div class="max-w-md mx-auto">
+            <div class="card">
+                <div class="card-body" style="padding: 28px;">
+                    <i class="fa-solid fa-stopwatch text-[40px] mb-4 block text-center" style="color:var(--accent)"></i>
+                    <h2 class="text-[18px] font-semibold text-center mb-1" style="color:var(--text)">Iniciar sessão</h2>
+                    <p class="text-[12.5px] text-center mb-5" style="color:var(--text-4)">A sessão fica ativa mesmo se navegar para outras telas. Um cronômetro flutuante acompanha.</p>
+
+                    <div class="space-y-3">
+                        <div><label class="label">Matéria</label><select class="input" id="session-subject">${subjectOpts}</select></div>
+                    </div>
+
+                    <button onclick="startNewSession()" class="btn btn-primary btn-lg w-full mt-5">
+                        <i class="fa-solid fa-play text-[11px]"></i> Iniciar agora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function startNewSession() {
+    const subjectSel = document.getElementById('session-subject');
+    const subjectId = subjectSel.value;
+    if (!subjectId) { toast('Selecione uma matéria.', 'warning'); return; }
+    const subjectName = subjectSel.options[subjectSel.selectedIndex].text;
+    if (startActiveSession(subjectId, subjectName)) {
+        showSessions(); // re-render para mostrar tela de sessão ativa
+    }
+}
+
+function renderActiveSessionPage(active) {
+    const subjectOpts = subjects.length === 0
+        ? '<option value="">—</option>'
+        : subjects.map(s => `<option value="${s.id}" ${s.id === active.subject_id ? 'selected' : ''}>${s.name}</option>`).join('');
+
+    document.getElementById('mainContent').innerHTML = `
+    <div class="page-shell">
+        <div class="flex items-baseline justify-between mb-5">
+            <div>
+                <h1 class="page-title">Sessão em andamento</h1>
+                <p class="page-sub">${active.subject_name}</p>
             </div>
             <button onclick="toggleFocusMode()" class="btn btn-ghost" id="btn-focus">
                 <i class="fa-solid fa-expand text-[11px]"></i> Modo foco
@@ -41,9 +89,9 @@ async function showSessions() {
         </div>
 
         <div class="max-w-3xl space-y-3">
-            <div class="card" id="timer-card">
+            <div class="card" style="border-color: var(--danger); border-left-width: 3px;">
                 <div class="card-header">
-                    <span class="card-title">Cronômetro</span>
+                    <span class="card-title"><i class="fa-solid fa-circle text-[8px]" style="color:var(--danger)"></i> Cronômetro ao vivo</span>
                     <span id="pomo-status" class="hidden ml-2"></span>
                     <label class="ml-auto flex items-center gap-2 cursor-pointer">
                         <input type="checkbox" id="pomo-toggle" onchange="togglePomodoro(this.checked)">
@@ -52,14 +100,16 @@ async function showSessions() {
                 </div>
                 <div class="card-body">
                     <div class="text-center py-4">
-                        <p class="timer-display" id="timer-display">00:00:00</p>
+                        <p class="timer-display" id="timer-display" style="color:var(--danger);">00:00:00</p>
                         <p class="text-[11px] mono mt-2" id="pomo-cycle" style="color:var(--text-4); height: 14px;"></p>
                     </div>
                     <div class="flex justify-center gap-2">
-                        <button onclick="toggleTimer()" id="btn-timer" class="btn btn-primary btn-lg" style="min-width:140px">
-                            <i class="fa-solid fa-play text-[11px]" id="timer-icon"></i><span id="timer-label">Iniciar</span>
+                        <button onclick="toggleActiveRunning(); refreshActiveTimerLocal();" id="btn-timer" class="btn btn-primary btn-lg" style="min-width:140px">
+                            <i class="fa-solid fa-pause text-[11px]" id="timer-icon"></i><span id="timer-label">Pausar</span>
                         </button>
-                        <button onclick="resetTimer()" class="btn btn-lg"><i class="fa-solid fa-rotate-left text-[11px]"></i> Zerar</button>
+                        <button onclick="if(confirm('Descartar sessão atual?')){cancelActiveSession();showSessions();}" class="btn btn-lg btn-danger">
+                            <i class="fa-solid fa-trash text-[11px]"></i> Descartar
+                        </button>
                     </div>
                 </div>
             </div>
@@ -67,16 +117,19 @@ async function showSessions() {
             <div class="card">
                 <div class="card-header"><span class="card-title">Dados da sessão</span></div>
                 <div class="card-body space-y-3">
-                    <div><label class="label">Matéria *</label><select class="input" id="session-subject">${subjectOpts}</select></div>
+                    <div><label class="label">Matéria</label><select class="input" id="session-subject" onchange="updateActiveSubject(this)">${subjectOpts}</select></div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="label">Questões feitas</label><input type="number" class="input mono" id="session-total" value="0" min="0"></div>
-                        <div><label class="label">Acertos</label><input type="number" class="input mono" id="session-correct" value="0" min="0"></div>
+                        <div><label class="label">Questões feitas</label><input type="number" class="input mono" id="session-total" value="${active.total_questions || 0}" min="0" onchange="updateActiveQuestions()"></div>
+                        <div><label class="label">Acertos</label><input type="number" class="input mono" id="session-correct" value="${active.correct_answers || 0}" min="0" onchange="updateActiveQuestions()"></div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header"><span class="card-title">Tarefas</span></div>
+                <div class="card-header">
+                    <span class="card-title">Atividades & tarefas</span>
+                    <span class="card-sub ml-auto" id="task-count">${active.tasks.length} ite${active.tasks.length===1?'m':'ns'}</span>
+                </div>
                 <div class="card-body">
                     <div id="task-list" class="mb-3"></div>
                     <div class="flex gap-2">
@@ -86,15 +139,61 @@ async function showSessions() {
                 </div>
             </div>
 
-            <button onclick="saveSession()" class="btn btn-primary btn-lg w-full">
-                <i class="fa-solid fa-floppy-disk text-[11px]"></i> Salvar sessão
+            <div class="card" style="background:var(--accent-bg); border-color:var(--accent);">
+                <div class="card-body" style="padding: 14px 16px;">
+                    <p class="text-[12px]" style="color:var(--text-2)"><i class="fa-solid fa-circle-info text-[10px]" style="color:var(--accent)"></i> Enquanto a sessão estiver ativa, leituras em livros e revisões de flashcards são registradas automaticamente como atividades.</p>
+                </div>
+            </div>
+
+            <button onclick="saveActiveSession()" class="btn btn-primary btn-lg w-full" style="background:var(--success); border-color:var(--success);">
+                <i class="fa-solid fa-floppy-disk text-[11px]"></i> Finalizar e salvar
             </button>
         </div>
     </div>
-    <!-- Exit Modo Foco (fixed) -->
     <button onclick="toggleFocusMode()" class="focus-exit btn btn-ghost hidden" id="btn-focus-exit">
         <i class="fa-solid fa-compress text-[11px]"></i> Sair do foco (ESC)
     </button>`;
+
+    refreshActiveTimerLocal();
+    renderTaskList();
+}
+
+function refreshActiveTimerLocal() {
+    // Atualiza display local em sync com state global
+    const s = getActiveSession();
+    if (!s) return;
+    const sec = getElapsedSeconds(s);
+    const h = String(Math.floor(sec/3600)).padStart(2,'0');
+    const m = String(Math.floor((sec%3600)/60)).padStart(2,'0');
+    const ss = String(sec%60).padStart(2,'0');
+    const td = document.getElementById('timer-display');
+    if (td) td.textContent = `${h}:${m}:${ss}`;
+    const icon = document.getElementById('timer-icon');
+    const label = document.getElementById('timer-label');
+    if (icon) icon.className = `fa-solid fa-${s.running ? 'pause' : 'play'} text-[11px]`;
+    if (label) label.textContent = s.running ? 'Pausar' : 'Retomar';
+
+    // Re-agendar atualização local
+    if (s.running) {
+        clearTimeout(window._localTimerRefresh);
+        window._localTimerRefresh = setTimeout(refreshActiveTimerLocal, 1000);
+    }
+}
+
+function updateActiveSubject(sel) {
+    const s = getActiveSession();
+    if (!s) return;
+    s.subject_id = sel.value;
+    s.subject_name = sel.options[sel.selectedIndex].text;
+    setActiveSession(s);
+}
+
+function updateActiveQuestions() {
+    const s = getActiveSession();
+    if (!s) return;
+    s.total_questions = parseInt(document.getElementById('session-total').value) || 0;
+    s.correct_answers = parseInt(document.getElementById('session-correct').value) || 0;
+    setActiveSession(s);
 }
 
 function togglePomodoro(enabled) {
@@ -148,8 +247,6 @@ function timerTick() {
             pomodoroBell();
             if (_pomodoroPhase === 'work') {
                 _pomodoroCycle++;
-                // Acumula tempo trabalhado
-                timerSeconds += POMODORO_WORK;
                 // Troca para pausa (longa a cada 4 ciclos)
                 const isLong = _pomodoroCycle % 4 === 0;
                 _pomodoroPhase = 'break';
@@ -231,15 +328,42 @@ function addTask() {
     const inp = document.getElementById('task-input');
     const desc = inp.value.trim();
     if (!desc) return;
-    sessionTasks.push({ description: desc, is_done: false });
-    inp.value = '';
+    const s = getActiveSession();
+    if (s) {
+        addActiveTask(desc, false);
+        inp.value = '';
+        renderTaskList();
+    }
+}
+
+function toggleTask(i) {
+    const s = getActiveSession();
+    if (!s || !s.tasks[i]) return;
+    s.tasks[i].is_done = !s.tasks[i].is_done;
+    setActiveSession(s);
     renderTaskList();
 }
-function toggleTask(i) { sessionTasks[i].is_done = !sessionTasks[i].is_done; renderTaskList(); }
-function removeTask(i) { sessionTasks.splice(i, 1); renderTaskList(); }
+
+function removeTask(i) {
+    const s = getActiveSession();
+    if (!s || !s.tasks[i]) return;
+    s.tasks.splice(i, 1);
+    setActiveSession(s);
+    renderTaskList();
+}
 
 function renderTaskList() {
-    document.getElementById('task-list').innerHTML = sessionTasks.map((t, i) => `
+    const el = document.getElementById('task-list');
+    if (!el) return;
+    const s = getActiveSession();
+    const tasks = s ? s.tasks : [];
+    const count = document.getElementById('task-count');
+    if (count) count.textContent = `${tasks.length} ite${tasks.length===1?'m':'ns'}`;
+    if (!tasks.length) {
+        el.innerHTML = `<p class="text-[12px] py-2" style="color:var(--text-4)">Nenhuma tarefa ainda. Atividades em livros e flashcards aparecem aqui automaticamente.</p>`;
+        return;
+    }
+    el.innerHTML = tasks.map((t, i) => `
     <div class="flex items-center gap-2 py-2" style="border-bottom: 1px solid var(--border)">
         <button onclick="toggleTask(${i})" class="w-4 h-4 flex items-center justify-center transition-colors" style="border: 1.5px solid ${t.is_done ? 'var(--success)' : 'var(--border-2)'}; background: ${t.is_done ? 'var(--success)' : 'transparent'}; color: white; border-radius: 3px;">
             ${t.is_done ? '<i class="fa-solid fa-check text-[8px]"></i>' : ''}
@@ -249,28 +373,9 @@ function renderTaskList() {
     </div>`).join('');
 }
 
-async function saveSession() {
-    const subjectId = document.getElementById('session-subject').value;
-    if (!subjectId) { toast('Selecione uma matéria.', 'warning'); return; }
-    if (timerSeconds === 0) { toast('Inicie o timer.', 'warning'); return; }
-    const data = {
-        subject_id: subjectId,
-        duration_seconds: timerSeconds,
-        total_questions: parseInt(document.getElementById('session-total').value) || 0,
-        correct_answers: parseInt(document.getElementById('session-correct').value) || 0,
-        tasks: sessionTasks,
-    };
-    try {
-        await api('/sessions/', { method: 'POST', body: JSON.stringify(data) });
-        toast('Sessão salva', 'success');
-        resetTimer();
-        sessionTasks = [];
-        renderTaskList();
-        document.getElementById('session-total').value = '0';
-        document.getElementById('session-correct').value = '0';
-        invalidateSearchCache && invalidateSearchCache();
-    } catch (e) { toast(e.message, 'error'); }
-}
+// Legado — toggleTimer / resetTimer ainda chamados pelo Pomodoro
+function toggleTimer() { toggleActiveRunning(); }
+function resetTimer() { /* legado: descartar não pause; sessão global controla */ }
 
 // ─── Modo Foco ───────────────────────────────────────────────────────────
 function toggleFocusMode() {

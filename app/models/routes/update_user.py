@@ -19,6 +19,10 @@ class GoalUpdate(BaseModel):
     daily_goal_minutes: int  # 5..600
 
 
+class GoalsUpdate(BaseModel):
+    goals: dict  # {"daily": {minutes, cards, questions, pages}, "weekly": {...}, "monthly": {...}}
+
+
 @router.put("/users/me/update", response_model=UserResponse)
 def update_user_profile(
     user_data: UserUpdate,
@@ -77,3 +81,48 @@ def update_daily_goal(
     current_user.daily_goal_minutes = body.daily_goal_minutes
     db.commit()
     return {"daily_goal_minutes": current_user.daily_goal_minutes}
+
+
+VALID_PERIODS = {"daily", "weekly", "monthly"}
+VALID_METRICS = {"minutes", "cards", "questions", "pages"}
+
+
+@router.put("/users/me/goals")
+def update_goals(
+    body: GoalsUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Atualiza metas multi-período.
+    Estrutura esperada:
+    {
+      "daily":   {"minutes": 30, "cards": 10, "questions": 20, "pages": 15},
+      "weekly":  {"minutes": 180, ...},
+      "monthly": {"minutes": 700, ...}
+    }
+    Valores zero = sem meta. Ignora chaves desconhecidas."""
+    sanitized = {}
+    for period, metrics in (body.goals or {}).items():
+        if period not in VALID_PERIODS:
+            continue
+        if not isinstance(metrics, dict):
+            continue
+        clean = {}
+        for k, v in metrics.items():
+            if k not in VALID_METRICS:
+                continue
+            try:
+                iv = int(v)
+                if iv < 0 or iv > 100000:
+                    continue
+                clean[k] = iv
+            except (TypeError, ValueError):
+                continue
+        if clean:
+            sanitized[period] = clean
+    current_user.goals = sanitized
+    # Manter retro-compat: daily.minutes → daily_goal_minutes
+    if sanitized.get("daily", {}).get("minutes"):
+        current_user.daily_goal_minutes = sanitized["daily"]["minutes"]
+    db.commit()
+    return {"goals": sanitized, "daily_goal_minutes": current_user.daily_goal_minutes}

@@ -126,6 +126,7 @@ def get_me(current_user: User = Depends(get_current_user)):
         "phone": current_user.phone,
         "photo_url": current_user.photo_url,
         "daily_goal_minutes": current_user.daily_goal_minutes or 30,
+        "goals": current_user.goals or {},
         "is_approved": current_user.is_approved,
         "is_active": current_user.is_active,
     }

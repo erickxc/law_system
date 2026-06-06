@@ -248,6 +248,7 @@ def run_migration(
         "002_calendar_schedule_difficulty",
         "003_goal_and_share",
         "004_sticky_notes",
+        "005_multi_goals",
     }
     if name not in allowed:
         raise HTTPException(status_code=404, detail=f"Migration '{name}' não existe")

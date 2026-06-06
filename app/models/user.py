@@ -1,10 +1,10 @@
 from app.database import Base
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy import text, String, Text, ForeignKey, Boolean, Integer, DateTime
 import uuid
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 
 # 1. Tabela de Grupos de Usuário
 class Group(Base):
@@ -63,7 +63,9 @@ class User(Base):
     )
 
     photo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    daily_goal_minutes: Mapped[int] = mapped_column(Integer, default=30, server_default=text("30"))  # meta diária em minutos
+    daily_goal_minutes: Mapped[int] = mapped_column(Integer, default=30, server_default=text("30"))  # legado: meta diária em minutos
+    # Metas múltiplas: {"daily": {"minutes": 30, "cards": 10, "questions": 20, "pages": 20}, "weekly": {...}, "monthly": {...}}
+    goals: Mapped[Optional[Dict[str, Any]]] = mapped_column(JSONB, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("TRUE"))

@@ -531,6 +531,8 @@ function flipCard() {
 async function submitReview(id, confidence) {
     try {
         await api(`/flashcards/${id}/review`, { method: 'POST', body: JSON.stringify({ confidence }) });
+        // Tracking: se houver sessão ativa, contabiliza
+        if (typeof trackFlashcardReview === 'function') trackFlashcardReview(confidence >= 3);
         reviewIndex++;
         showReviewCard();
     } catch (e) { toast(e.message, 'error'); }

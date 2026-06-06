@@ -307,6 +307,9 @@ async function openBookReader(bookId) {
     setActive('menu-livros');
     setPage(book.name, 'Acervo');
 
+    // Tracking: se houver sessão ativa, registra leitura
+    if (typeof trackBookOpen === 'function') trackBookOpen(book.id, book.name);
+
     const [annotations, highlights] = await Promise.all([
         api(`/books/${bookId}/annotations`).catch(() => []),
         api(`/books/${bookId}/highlights`).catch(() => []),
