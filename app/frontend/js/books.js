@@ -409,7 +409,7 @@ async function renderReader(book) {
         if (book.url && book.url.startsWith(LOCAL_PDF_PREFIX)) {
             const blob = await getPdfLocal(book.id);
             if (!blob) {
-                throw new Error('Arquivo local não encontrado neste navegador. Use outro dispositivo? Re-suba o PDF.');
+                throw new Error('Arquivo local não encontrado neste navegador. Reabra o livro e reenvie o PDF (PDFs locais ficam apenas no navegador onde foram enviados).');
             }
             const arrayBuf = await blob.arrayBuffer();
             docOpts.data = arrayBuf;
@@ -427,8 +427,8 @@ async function renderReader(book) {
             if (inp) inp.max = book.total_pages;
         }
 
-        // Renderizar a página inicial
-        await readerGoToPage(book.current_page || 1);
+        // Renderizar TODAS as páginas (lazy via IntersectionObserver)
+        await renderAllPages(book.current_page || 1);
 
         // Bind selection listener
         const container = document.getElementById('pdf-container');
@@ -447,52 +447,173 @@ async function renderReader(book) {
     }
 }
 
-let _readerScale = 1.2;
+let _readerScale = 1.5;
+let _pageWraps = [];          // [{wrap, pageNum, rendered}]
+let _renderQueue = new Set(); // páginas em fila pra render
+let _pageObserver = null;
 
 function readerZoom(delta) {
-    _readerScale = Math.max(0.6, Math.min(2.5, _readerScale + delta));
-    document.getElementById('reader-zoom').textContent = `${Math.round(_readerScale * 100 / 1.2)}%`;
-    if (_renderedPage != null) readerGoToPage(_renderedPage);
+    const old = _readerScale;
+    _readerScale = Math.max(0.6, Math.min(3.0, _readerScale + delta));
+    if (_readerScale === old) return;
+    document.getElementById('reader-zoom').textContent = `${Math.round(_readerScale * 100 / 1.5)}%`;
+    // Re-render TUDO (placeholders ganham nova dimensão)
+    if (_pdfDoc) renderAllPages(_renderedPage || 1);
 }
 
-async function readerGoToPage(pageNum) {
-    if (!_pdfDoc) return;
-    pageNum = Math.max(1, Math.min(_pdfDoc.numPages, pageNum));
-    _renderedPage = pageNum;
-    document.getElementById('reader-page-input').value = pageNum;
+// Limpa observer e estado prévio
+function disposePages() {
+    if (_pageObserver) { try { _pageObserver.disconnect(); } catch {} _pageObserver = null; }
+    _pageWraps = [];
+    _renderQueue.clear();
+}
 
+// Cria os placeholders de TODAS as páginas com dimensão calculada e
+// configura IntersectionObserver pra renderizar sob demanda.
+async function renderAllPages(scrollToPage) {
+    if (!_pdfDoc) return;
     const container = document.getElementById('pdf-container');
+    if (!container) return;
+    disposePages();
     container.innerHTML = '';
+
+    // Pega a primeira página pra estimar dimensão base (todas similares na maioria dos PDFs)
+    const firstPage = await _pdfDoc.getPage(1);
+    const baseViewport = firstPage.getViewport({ scale: _readerScale });
+
+    // Cria placeholders
+    for (let p = 1; p <= _pdfDoc.numPages; p++) {
+        const wrap = document.createElement('div');
+        wrap.className = 'pdf-page-wrap';
+        wrap.style.width = `${baseViewport.width}px`;
+        wrap.style.height = `${baseViewport.height}px`;
+        wrap.dataset.page = p;
+        wrap.dataset.rendered = '0';
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'pdf-placeholder';
+        placeholder.innerHTML = `<span class="mono text-[11px]" style="color:var(--text-5)">pg. ${p}</span>`;
+        wrap.appendChild(placeholder);
+
+        container.appendChild(wrap);
+        _pageWraps.push(wrap);
+    }
+
+    // Observer: renderiza quando entra na viewport (com root margin pra antecipar)
+    _pageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(en => {
+            if (en.isIntersecting) {
+                const p = parseInt(en.target.dataset.page);
+                if (en.target.dataset.rendered === '0') queuePageRender(p);
+            }
+        });
+        // Detecta página atual (mais visível) e atualiza input + progresso
+        updateCurrentPageFromScroll();
+    }, {
+        root: document.getElementById('pdf-scroll'),
+        rootMargin: '400px 0px',  // pre-render 400px antes/depois
+        threshold: 0,
+    });
+    _pageWraps.forEach(w => _pageObserver.observe(w));
+
+    // Renderiza imediatamente as primeiras 2 (sem esperar IntersectionObserver)
+    queuePageRender(1);
+    if (_pdfDoc.numPages >= 2) queuePageRender(2);
+
+    // Scroll pra página alvo
+    if (scrollToPage > 1) {
+        setTimeout(() => scrollToPdfPage(scrollToPage, false), 100);
+    }
+}
+
+function scrollToPdfPage(pageNum, smooth = true) {
+    const wrap = _pageWraps[pageNum - 1];
+    if (!wrap) return;
+    const scrollEl = document.getElementById('pdf-scroll');
+    if (!scrollEl) return;
+    scrollEl.scrollTo({
+        top: wrap.offsetTop - 8,
+        behavior: smooth ? 'smooth' : 'auto',
+    });
+}
+
+// Detecta a página mais centrada no scroll e atualiza input + progresso
+let _scrollUpdateTimer = null;
+function updateCurrentPageFromScroll() {
+    clearTimeout(_scrollUpdateTimer);
+    _scrollUpdateTimer = setTimeout(() => {
+        const scrollEl = document.getElementById('pdf-scroll');
+        if (!scrollEl || !_pageWraps.length) return;
+        const center = scrollEl.scrollTop + scrollEl.clientHeight / 2;
+        let best = 1, bestDist = Infinity;
+        _pageWraps.forEach(w => {
+            const wTop = w.offsetTop, wBot = w.offsetTop + w.offsetHeight;
+            const wCenter = (wTop + wBot) / 2;
+            const dist = Math.abs(wCenter - center);
+            if (dist < bestDist) { bestDist = dist; best = parseInt(w.dataset.page); }
+        });
+        if (best !== _renderedPage) {
+            _renderedPage = best;
+            const inp = document.getElementById('reader-page-input');
+            if (inp) inp.value = best;
+            queueSavePage(best);
+        }
+    }, 120);
+}
+
+// Render assíncrono de uma página específica
+async function queuePageRender(pageNum) {
+    if (_renderQueue.has(pageNum)) return;
+    _renderQueue.add(pageNum);
+    try {
+        await renderPdfPage(pageNum);
+    } catch (e) {
+        console.warn(`Render page ${pageNum} failed:`, e);
+    } finally {
+        _renderQueue.delete(pageNum);
+    }
+}
+
+async function renderPdfPage(pageNum) {
+    const wrap = _pageWraps[pageNum - 1];
+    if (!wrap || wrap.dataset.rendered === '1') return;
+    wrap.dataset.rendered = '1';
 
     const page = await _pdfDoc.getPage(pageNum);
     const viewport = page.getViewport({ scale: _readerScale });
 
-    // Wrapper relativo
-    const wrap = document.createElement('div');
-    wrap.className = 'pdf-page-wrap';
+    // Ajusta dimensão do wrap (algumas páginas podem ter tamanho diferente)
     wrap.style.width = `${viewport.width}px`;
     wrap.style.height = `${viewport.height}px`;
-    wrap.dataset.page = pageNum;
 
-    // Canvas
+    // Limpa placeholder
+    wrap.innerHTML = '';
+
+    // Canvas com DPR (alta resolução em telas Retina/4K)
+    const dpr = window.devicePixelRatio || 1;
     const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
+    canvas.width = Math.floor(viewport.width * dpr);
+    canvas.height = Math.floor(viewport.height * dpr);
+    canvas.style.width = `${viewport.width}px`;
+    canvas.style.height = `${viewport.height}px`;
+    const ctx = canvas.getContext('2d');
     wrap.appendChild(canvas);
 
-    // Text layer (para seleção)
+    // Text layer
     const textLayerDiv = document.createElement('div');
     textLayerDiv.className = 'pdf-textLayer';
     textLayerDiv.style.width = `${viewport.width}px`;
     textLayerDiv.style.height = `${viewport.height}px`;
     wrap.appendChild(textLayerDiv);
 
-    container.appendChild(wrap);
+    // Render canvas com transform DPR
+    await page.render({
+        canvasContext: ctx,
+        viewport,
+        transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null,
+    }).promise;
 
-    // Renderizar canvas
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-    // Renderizar text layer (PDF.js 4.x usa textContentSource; classe TextLayer em 4.4+)
+    // Text layer (PDF.js 4.x)
     try {
         const textContent = await page.getTextContent();
         const pdfjs = await loadPdfJs();
@@ -503,13 +624,21 @@ async function readerGoToPage(pageNum) {
             await pdfjs.renderTextLayer({ textContentSource: textContent, container: textLayerDiv, viewport, textDivs: [] }).promise;
         }
     } catch (textErr) {
-        console.warn('Text layer failed (PDF readable, sem seleção de texto):', textErr);
+        console.warn('Text layer failed:', textErr);
     }
 
-    // Render existing highlights/annotations for this page
+    // Overlays (stickies, highlights, etc)
     renderOverlaysForPage(pageNum, wrap);
+}
 
-    // Atualizar progresso no backend (debounced)
+// API pública usada pelos botões/input (compatibilidade) — só faz scroll agora
+async function readerGoToPage(pageNum) {
+    if (!_pdfDoc) return;
+    pageNum = Math.max(1, Math.min(_pdfDoc.numPages, pageNum));
+    _renderedPage = pageNum;
+    const inp = document.getElementById('reader-page-input');
+    if (inp) inp.value = pageNum;
+    scrollToPdfPage(pageNum, true);
     queueSavePage(pageNum);
 }
 

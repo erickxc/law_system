@@ -181,6 +181,11 @@ aside.sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08
 /* Cursor PDF em modo post-it */
 body.postit-mode .pdf-page-wrap { cursor: crosshair; }
 
+/* Placeholder de página ainda não renderizada */
+.pdf-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #fafafa; }
+[data-theme="dark"] .pdf-placeholder { background: #1a1a1a; }
+.pdf-page-wrap canvas { display: block; }
+
 /* ── Topbar / page header ────────────────────────────────────────────── */
 .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 48px; display: flex; align-items: center; justify-content: space-between; }
 .crumb { font-size: 13px; color: var(--text-3); }
