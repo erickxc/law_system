@@ -369,10 +369,20 @@ async function openBookReader(bookId) {
             </div>
 
             <!-- Painel de notas (toggle) -->
-            <div id="notes-panel" class="hidden flex-shrink-0" style="width: 320px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto;">
-                <div class="card-header" style="position: sticky; top: 0; background: var(--surface); z-index: 1;">
-                    <span class="card-title">Grifos e anotações</span>
-                    <button onclick="toggleNotesPanel()" class="ml-auto btn btn-icon btn-sm"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+            <div id="notes-panel" class="hidden flex-shrink-0" style="width: 340px; background: var(--surface); border-left: 1px solid var(--border); overflow-y: auto;">
+                <div class="card-header" style="position: sticky; top: 0; background: var(--surface); z-index: 2; flex-direction: column; align-items: stretch; gap: 8px;">
+                    <div class="flex items-center gap-2">
+                        <span class="card-title">Grifos e anotações</span>
+                        <button onclick="toggleNotesPanel()" class="ml-auto btn btn-icon btn-sm"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-[11px]">
+                        <button onclick="toggleNotesSelectMode()" id="notes-select-btn" class="btn btn-sm" style="padding: 3px 8px;">
+                            <i class="fa-solid fa-check-double text-[10px]"></i> Selecionar
+                        </button>
+                        <button onclick="openCardsFromNotesModal()" id="notes-tocards-btn" class="btn btn-primary btn-sm hidden" style="padding: 3px 8px;">
+                            <i class="fa-solid fa-layer-group text-[10px]"></i> <span id="notes-tocards-count">0</span> → flashcards
+                        </button>
+                    </div>
                 </div>
                 <div id="notes-list" class="p-3 space-y-2"></div>
             </div>
@@ -1229,10 +1239,52 @@ function toggleNotesPanel() {
     if (!panel.classList.contains('hidden')) renderNotesList();
 }
 
+// Estado do modo de seleção do painel de notas
+let _notesSelectMode = false;
+let _selectedHighlights = new Set();   // BookHighlight.id
+let _selectedAnnotations = new Set();  // BookAnnotation.id
+
+function toggleNotesSelectMode() {
+    _notesSelectMode = !_notesSelectMode;
+    if (!_notesSelectMode) {
+        _selectedHighlights.clear();
+        _selectedAnnotations.clear();
+    }
+    const btn = document.getElementById('notes-select-btn');
+    if (btn) {
+        if (_notesSelectMode) {
+            btn.classList.add('btn-primary');
+            btn.innerHTML = '<i class="fa-solid fa-xmark text-[10px]"></i> Cancelar';
+        } else {
+            btn.classList.remove('btn-primary');
+            btn.innerHTML = '<i class="fa-solid fa-check-double text-[10px]"></i> Selecionar';
+        }
+    }
+    updateNotesSelectionUI();
+    renderNotesList();
+}
+
+function toggleNoteSelection(id, type) {
+    const set = type === 'highlight' ? _selectedHighlights : _selectedAnnotations;
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+    updateNotesSelectionUI();
+}
+
+function updateNotesSelectionUI() {
+    const count = _selectedHighlights.size + _selectedAnnotations.size;
+    const btn = document.getElementById('notes-tocards-btn');
+    const cn = document.getElementById('notes-tocards-count');
+    if (cn) cn.textContent = count;
+    if (btn) {
+        if (_notesSelectMode && count > 0) btn.classList.remove('hidden');
+        else btn.classList.add('hidden');
+    }
+}
+
 function renderNotesList() {
     const el = document.getElementById('notes-list');
     if (!el) return;
-    // Separar: stickies (com tag) vs anotações comuns vs highlights
     const stickies = _readerAnnotations.filter(a => a.tag);
     const annsPlain = _readerAnnotations.filter(a => !a.tag);
     const all = [
@@ -1242,21 +1294,39 @@ function renderNotesList() {
     ].sort((a, b) => a.page_number - b.page_number);
 
     if (all.length === 0) {
-        el.innerHTML = emptyState('fa-bookmark', 'Sem grifos ou notas', 'Selecione texto ou ative o modo etiquetas.');
+        el.innerHTML = emptyState('fa-bookmark', 'Sem grifos ou notas', 'Selecione texto ou arraste etiquetas no PDF.');
         return;
     }
     const hlBgs = { yellow:'#fef9c3', green:'#dcfce7', blue:'#dbeafe', pink:'#fce7f3' };
     const stickyAccent = {check:'#16a34a',done:'#2563eb',review:'#d97706',important:'#fbbf24',question:'#7c3aed',pin:'#dc2626'};
 
+    const checkbox = (id, type) => {
+        if (!_notesSelectMode) return '';
+        const set = type === 'highlight' ? _selectedHighlights : _selectedAnnotations;
+        const checked = set.has(id) ? 'checked' : '';
+        return `<input type="checkbox" ${checked} onclick="event.stopPropagation();toggleNoteSelection('${id}','${type}')" style="margin-right:6px;flex-shrink:0;">`;
+    };
+    // sticky e annotation são ambos da tabela book_annotations
+    const annType = (t) => (t === 'highlight' ? 'highlight' : 'annotation');
+
     el.innerHTML = all.map(it => {
+        const itemType = annType(it.type);
+        const cb = checkbox(it.id, itemType);
+        // Em modo seleção, click no card alterna; senão, navega/edita
+        const cardClick = _notesSelectMode
+            ? `toggleNoteSelection('${it.id}','${itemType}'); renderNotesList()`
+            : (it.type === 'sticky'
+                ? `readerGoToPage(${it.page_number});setTimeout(()=>openStickyEditModal(${JSON.stringify(it).replace(/"/g,'&quot;')}),100)`
+                : `readerGoToPage(${it.page_number})`);
+
         if (it.type === 'sticky') {
             const t = STICKY_TAGS[it.tag] || STICKY_TAGS.pin;
-            return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="readerGoToPage(${it.page_number});setTimeout(()=>openStickyEditModal(${JSON.stringify(it).replace(/"/g,'&quot;')}),100)" style="background:var(--bg-2); border-radius: 3px; border-left: 3px solid ${stickyAccent[it.tag] || '#dc2626'};">
+            return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="${cardClick}" style="background:var(--bg-2); border-radius: 3px; border-left: 3px solid ${stickyAccent[it.tag] || '#dc2626'};">
                 <div class="flex items-center justify-between mb-1">
-                    <span class="sticky-note sticky-tag-${it.tag}" style="position:static;box-shadow:none;padding:2px 7px;font-size:10px;cursor:default;">
+                    <div class="flex items-center">${cb}<span class="sticky-note sticky-tag-${it.tag}" style="position:static;box-shadow:none;padding:2px 7px;font-size:10px;cursor:default;">
                         <i class="fa-solid ${t.icon}"></i>${t.label}
-                    </span>
-                    <button onclick="event.stopPropagation();deleteSticky('${it.id}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                    </span></div>
+                    ${_notesSelectMode ? '' : `<button onclick="event.stopPropagation();deleteSticky('${it.id}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>`}
                 </div>
                 <p class="text-[10.5px] mono mt-1" style="color:var(--text-4)">pg. ${it.page_number}</p>
                 ${it.note_text ? `<p class="text-[12px] mt-1" style="color:var(--text)">${it.note_text}</p>` : ''}
@@ -1267,16 +1337,125 @@ function renderNotesList() {
         const preview = isHL
             ? `<p class="text-[12px] line-clamp-3" style="color:var(--text); white-space: pre-wrap;">${it.selected_text}</p>`
             : `<div class="md-body" style="font-size:11.5px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${renderMarkdown(it.note_text)}</div>`;
-        return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="readerGoToPage(${it.page_number})" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? '#ca8a04' : 'var(--warning)'};">
+        return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="${cardClick}" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? '#ca8a04' : 'var(--warning)'};">
             <div class="flex items-center justify-between mb-1">
-                <span class="text-[10px] mono uppercase font-medium" style="color:var(--text-4); letter-spacing:.04em;">
+                <div class="flex items-center">${cb}<span class="text-[10px] mono uppercase font-medium" style="color:var(--text-4); letter-spacing:.04em;">
                     <i class="fa-solid fa-${isHL ? 'highlighter' : 'note-sticky'} text-[9px]"></i> pg. ${it.page_number}
-                </span>
-                <button onclick="event.stopPropagation();deleteNote('${it.id}','${it.type}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>
+                </span></div>
+                ${_notesSelectMode ? '' : `<button onclick="event.stopPropagation();deleteNote('${it.id}','${it.type}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>`}
             </div>
             ${preview}
         </div>`;
     }).join('');
+}
+
+// ─── Modal de conversão para flashcards ──────────────────────────────────
+function openCardsFromNotesModal() {
+    const count = _selectedHighlights.size + _selectedAnnotations.size;
+    if (count === 0) { toast('Selecione ao menos um item.', 'warning'); return; }
+
+    const subjectOpts = (typeof subjects !== 'undefined' && subjects.length)
+        ? subjects.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+        : '';
+    // Pré-popular título com nome do livro
+    const defaultTitle = _currentBook ? _currentBook.name : '';
+    const bookSubject = _currentBook?.subject_id || '';
+
+    openModal(`
+    <div class="modal-head">
+        <h3>Converter em Flashcards</h3>
+        <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <p class="text-[12.5px] mb-3" style="color:var(--text-3)"><strong>${count}</strong> ${count === 1 ? 'item selecionado' : 'itens selecionados'} virarão flashcards.</p>
+
+    <div class="space-y-3">
+        <div>
+            <label class="label">Título da coleção *</label>
+            <input type="text" id="ntc-title" class="input" placeholder="Ex.: Art. 5º da Constituição Federal" value="${defaultTitle.replace(/"/g, '&quot;')}" required>
+            <p class="help">Cada card vai herdar este título como referência. Vira tag automática <code style="font-family:monospace;background:var(--bg-2);padding:0 4px;border-radius:2px">coleção:&lt;título&gt;</code>.</p>
+        </div>
+
+        <div>
+            <label class="label">Matéria</label>
+            <select id="ntc-subject" class="input">
+                <option value="">Nenhuma</option>
+                ${subjectOpts}
+            </select>
+        </div>
+
+        <div>
+            <label class="label">Tags adicionais (opcional)</label>
+            <input type="text" id="ntc-tags" class="input" placeholder="constituição, direitos fundamentais, artigo 5">
+            <p class="help">Separadas por vírgula.</p>
+        </div>
+
+        <div>
+            <label class="label">Formato da pergunta (frente)</label>
+            <div class="flex gap-2 mt-1">
+                <label class="flex items-center gap-1.5 cursor-pointer text-[12.5px] flex-1 p-2" style="border:1px solid var(--border); border-radius:3px;">
+                    <input type="radio" name="ntc-style" value="literal" checked>
+                    <span><b>Literal</b><br><span class="text-[10.5px]" style="color:var(--text-4)">"Título (pg. N) — item X/Y"</span></span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer text-[12.5px] flex-1 p-2" style="border:1px solid var(--border); border-radius:3px;">
+                    <input type="radio" name="ntc-style" value="concept">
+                    <span><b>Conceito</b><br><span class="text-[10.5px]" style="color:var(--text-4)">"Sobre X — qual é o trecho/anotação?"</span></span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <label class="label">Dificuldade inicial</label>
+            <select id="ntc-difficulty" class="input">
+                <option value="easy">Fácil</option>
+                <option value="medium" selected>Média</option>
+                <option value="hard">Difícil</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="flex gap-2 justify-end pt-3 mt-3" style="border-top:1px solid var(--border)">
+        <button onclick="closeModal()" class="btn">Cancelar</button>
+        <button onclick="submitCardsFromNotes()" class="btn btn-primary"><i class="fa-solid fa-bolt text-[10px]"></i> Criar ${count} ${count === 1 ? 'card' : 'cards'}</button>
+    </div>`);
+
+    // Pré-seleciona matéria do livro se houver
+    setTimeout(() => {
+        const ss = document.getElementById('ntc-subject');
+        if (ss && bookSubject) ss.value = bookSubject;
+        document.getElementById('ntc-title')?.focus();
+    }, 50);
+}
+
+async function submitCardsFromNotes() {
+    const title = document.getElementById('ntc-title').value.trim();
+    if (!title) { toast('Informe o título da coleção.', 'warning'); return; }
+    const subject_id = document.getElementById('ntc-subject').value || null;
+    const tags = document.getElementById('ntc-tags').value.trim() || null;
+    const style = document.querySelector('input[name="ntc-style"]:checked')?.value || 'literal';
+    const difficulty = document.getElementById('ntc-difficulty').value || 'medium';
+
+    const body = {
+        highlight_ids: Array.from(_selectedHighlights),
+        annotation_ids: Array.from(_selectedAnnotations),
+        collection_title: title,
+        subject_id,
+        tags,
+        question_style: style,
+        difficulty,
+    };
+    try {
+        const r = await api('/flashcards/from-notes', { method: 'POST', body: JSON.stringify(body) });
+        closeModal();
+        toast(`${r.created} flashcard${r.created > 1 ? 's' : ''} criado${r.created > 1 ? 's' : ''} em "${r.collection_title}"`, 'success', 4500);
+        _selectedHighlights.clear();
+        _selectedAnnotations.clear();
+        // Sair do modo seleção
+        if (_notesSelectMode) toggleNotesSelectMode();
+        // Atualizar badge de flashcards a revisar
+        if (typeof loadFlashcardBadge === 'function') loadFlashcardBadge();
+    } catch (e) {
+        toast('Erro ao criar flashcards: ' + e.message, 'error');
+    }
 }
 
 async function saveBookPage(bookId) {

@@ -13,7 +13,7 @@ import csv
 
 from app.database import get_db
 from app.core.auth import get_current_user
-from app.models.academic import Flashcard, FlashcardReview, Subject
+from app.models.academic import Flashcard, FlashcardReview, Subject, Book, BookHighlight, BookAnnotation
 
 router = APIRouter(prefix="/flashcards", tags=["Flashcards"])
 
@@ -274,6 +274,139 @@ def export_flashcards(
 class ImportInput(BaseModel):
     cards: List[dict]
     auto_create_subjects: bool = True
+
+
+# ── Converter grifos/anotações em flashcards ──────────────────────────────
+
+VALID_QUESTION_STYLE = {"literal", "concept"}
+
+
+class NotesToCardsInput(BaseModel):
+    highlight_ids: List[UUID] = []
+    annotation_ids: List[UUID] = []
+    collection_title: str  # vira parte do front + tags
+    subject_id: Optional[UUID] = None
+    tags: Optional[str] = None  # vírgula-separado
+    question_style: str = "literal"  # literal | concept
+    difficulty: str = "medium"
+
+    @field_validator("question_style")
+    @classmethod
+    def _qstyle(cls, v):
+        if v not in VALID_QUESTION_STYLE:
+            raise ValueError(f"question_style deve ser: {', '.join(VALID_QUESTION_STYLE)}")
+        return v
+
+    @field_validator("difficulty")
+    @classmethod
+    def _diff(cls, v):
+        if v not in VALID_DIFFICULTY:
+            raise ValueError(f"difficulty deve ser: {', '.join(VALID_DIFFICULTY)}")
+        return v
+
+
+def _make_front(style: str, title: str, page: int, source: str, idx: int, total: int) -> str:
+    """Gera a pergunta (front) do card a partir do trecho/anotação."""
+    pos = f" — item {idx + 1}/{total}" if total > 1 else ""
+    if style == "concept":
+        return f"Sobre **{title}** (pg. {page}){pos} — qual é o {source.lower()}?"
+    # literal
+    return f"{title} (pg. {page}){pos}"
+
+
+@router.post("/from-notes", status_code=status.HTTP_201_CREATED)
+def create_from_notes(
+    body: NotesToCardsInput,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Converte uma seleção de grifos e/ou anotações em uma coleção de flashcards.
+    Cada item vira um card. Tag da coleção é compartilhada entre eles."""
+    if not body.highlight_ids and not body.annotation_ids:
+        raise HTTPException(400, "Selecione ao menos 1 grifo ou anotação.")
+
+    title = body.collection_title.strip()
+    if not title:
+        raise HTTPException(400, "Título da coleção é obrigatório.")
+
+    # Validar matéria do usuário
+    subj_id = body.subject_id
+    if subj_id:
+        subj = db.query(Subject).filter(
+            Subject.id == subj_id, Subject.user_id == current_user.id
+        ).first()
+        if not subj:
+            raise HTTPException(404, "Matéria não encontrada.")
+
+    # Buscar itens (filtra por user pra segurança)
+    highlights = []
+    if body.highlight_ids:
+        highlights = db.query(BookHighlight).filter(
+            BookHighlight.id.in_(body.highlight_ids),
+            BookHighlight.user_id == current_user.id,
+        ).order_by(BookHighlight.page_number, BookHighlight.created_at).all()
+    annotations = []
+    if body.annotation_ids:
+        annotations = db.query(BookAnnotation).filter(
+            BookAnnotation.id.in_(body.annotation_ids),
+            BookAnnotation.user_id == current_user.id,
+        ).order_by(BookAnnotation.page_number, BookAnnotation.created_at).all()
+
+    if not highlights and not annotations:
+        raise HTTPException(404, "Nenhum item válido encontrado.")
+
+    # Tag final = "coleção" + tags extras
+    base_tags = [f"coleção:{title}"]
+    if body.tags:
+        for t in body.tags.split(","):
+            t = t.strip()
+            if t:
+                base_tags.append(t)
+    tags_str = ", ".join(base_tags)
+
+    items = []  # (front, back, source_label)
+    total = len(highlights) + len(annotations)
+
+    for i, h in enumerate(highlights):
+        front = _make_front(body.question_style, title, h.page_number, "trecho grifado", i, total)
+        items.append((front, h.selected_text.strip()))
+
+    for j, a in enumerate(annotations):
+        idx = len(highlights) + j
+        text = (a.note_text or "").strip()
+        if not text:
+            continue
+        front = _make_front(body.question_style, title, a.page_number, "anotação", idx, total)
+        items.append((front, text))
+
+    if not items:
+        raise HTTPException(400, "Nenhum item com conteúdo válido para criar cards.")
+
+    # Criar cards
+    created_cards = []
+    now = datetime.utcnow()
+    for front, back in items:
+        card = Flashcard(
+            user_id=current_user.id,
+            subject_id=subj_id,
+            front=front,
+            back=back,
+            tags=tags_str,
+            difficulty=body.difficulty,
+            next_review_at=now,
+        )
+        db.add(card)
+        created_cards.append(card)
+
+    db.commit()
+
+    return {
+        "created": len(created_cards),
+        "collection_title": title,
+        "tags": tags_str,
+        "subject_id": str(subj_id) if subj_id else None,
+        "card_ids": [str(c.id) for c in created_cards],
+    }
 
 
 @router.post("/import")
