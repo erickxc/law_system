@@ -3,6 +3,6 @@
   "trailingSlash": false,
   "rewrites": [
     { "source": "/", "destination": "/index.html" },
-    { "source": "/d/:token", "destination": "/deck.html" }
+    { "source": "/d/:token", "destination": "/deck" }
   ]
 }
