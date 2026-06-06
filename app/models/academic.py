@@ -201,6 +201,7 @@ class Flashcard(Base):
     front: Mapped[str] = mapped_column(Text, nullable=False)
     back: Mapped[str] = mapped_column(Text, nullable=False)
     tags: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    difficulty: Mapped[str] = mapped_column(String(10), default="medium", server_default=text("'medium'"))  # easy | medium | hard
     # Spaced repetition fields (SM-2)
     interval_days: Mapped[float] = mapped_column(Float, default=1.0)
     ease_factor: Mapped[float] = mapped_column(Float, default=2.5)
@@ -245,4 +246,48 @@ class Payment(Base):
     description: Mapped[str] = mapped_column(String(255), nullable=False)
     payment_date: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="pendente")  # pago | pendente | inadimplente
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class CalendarEvent(Base):
+    __tablename__ = "calendar_events"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # event_type: revisao | estudo | aula | prova | outro
+    event_type: Mapped[str] = mapped_column(String(20), default="outro", server_default=text("'outro'"))
+    start_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
+    end_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    all_day: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True
+    )
+    color: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+
+
+class ClassSchedule(Base):
+    __tablename__ = "class_schedules"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False
+    )
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True
+    )
+    subject_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # fallback se sem subject_id
+    day_of_week: Mapped[int] = mapped_column(Integer, nullable=False)  # 0=domingo, 6=sábado
+    start_time: Mapped[str] = mapped_column(String(5), nullable=False)  # "HH:MM"
+    end_time: Mapped[str] = mapped_column(String(5), nullable=False)
+    location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    teacher_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    color: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

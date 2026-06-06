@@ -16,7 +16,10 @@ from pydantic import BaseModel, EmailStr, Field
 from app.database import engine, Base, get_db
 from app.models.user import User
 from app.models import academic
-from app.models.routes import sessions, subject, teacher, update_user, admin, flashcards, books
+from app.models.routes import (
+    sessions, subject, teacher, update_user, admin,
+    flashcards, books, calendar, schedule,
+)
 from app.core.auth import get_current_user
 from config import settings
 
@@ -69,6 +72,8 @@ app.include_router(update_user.router)
 app.include_router(admin.router)
 app.include_router(flashcards.router)
 app.include_router(books.router)
+app.include_router(calendar.router)
+app.include_router(schedule.router)
 
 
 class UserCreate(BaseModel):

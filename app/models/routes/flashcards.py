@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Optional, List
 from uuid import UUID
 from datetime import datetime, timedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import random
 
 from app.database import get_db
 from app.core.auth import get_current_user
@@ -12,11 +14,22 @@ from app.models.academic import Flashcard, FlashcardReview, Subject
 router = APIRouter(prefix="/flashcards", tags=["Flashcards"])
 
 
+VALID_DIFFICULTY = {"easy", "medium", "hard"}
+
+
 class FlashcardCreate(BaseModel):
     front: str
     back: str
     subject_id: Optional[UUID] = None
     tags: Optional[str] = None
+    difficulty: str = "medium"
+
+    @field_validator("difficulty")
+    @classmethod
+    def _diff(cls, v):
+        if v not in VALID_DIFFICULTY:
+            raise ValueError(f"difficulty deve ser: {', '.join(VALID_DIFFICULTY)}")
+        return v
 
 
 class FlashcardUpdate(BaseModel):
@@ -24,11 +37,37 @@ class FlashcardUpdate(BaseModel):
     back: Optional[str] = None
     subject_id: Optional[UUID] = None
     tags: Optional[str] = None
+    difficulty: Optional[str] = None
+
+    @field_validator("difficulty")
+    @classmethod
+    def _diff(cls, v):
+        if v is not None and v not in VALID_DIFFICULTY:
+            raise ValueError(f"difficulty deve ser: {', '.join(VALID_DIFFICULTY)}")
+        return v
 
 
 class ReviewInput(BaseModel):
     is_correct: bool
     confidence: int = 3  # 1 (blackout) to 5 (perfect)
+
+
+class SessionStartInput(BaseModel):
+    """Iniciar uma sessão de revisão configurável."""
+    subject_ids: List[UUID] = []           # vazio = todas
+    difficulties: List[str] = []            # vazio = todas
+    max_cards: int = 20                     # quantos cards mostrar
+    only_due: bool = False                  # só os com next_review <= now
+    shuffle: bool = True
+
+    @field_validator("max_cards")
+    @classmethod
+    def _max(cls, v):
+        if v < 1:
+            raise ValueError("max_cards deve ser >= 1")
+        if v > 200:
+            raise ValueError("max_cards no máximo 200")
+        return v
 
 
 def _sm2(card: Flashcard, confidence: int) -> tuple[float, float, datetime]:
@@ -58,6 +97,7 @@ def _card_dict(c: Flashcard) -> dict:
         "subject_id": str(c.subject_id) if c.subject_id else None,
         "subject_name": c.subject.name if c.subject else None,
         "tags": c.tags,
+        "difficulty": c.difficulty or "medium",
         "interval_days": c.interval_days,
         "next_review_at": c.next_review_at.isoformat(),
         "total_reviews": c.total_reviews,
@@ -87,6 +127,7 @@ def create_flashcard(
         front=data.front,
         back=data.back,
         tags=data.tags,
+        difficulty=data.difficulty,
         next_review_at=datetime.utcnow(),
     )
     db.add(card)
@@ -97,6 +138,47 @@ def create_flashcard(
         from sqlalchemy.orm import joinedload
         card = db.query(Flashcard).options(joinedload(Flashcard.subject)).filter(Flashcard.id == card.id).first()
     return _card_dict(card)
+
+
+@router.post("/session")
+def start_session(
+    body: SessionStartInput,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Inicia uma sessão de revisão configurável.
+    O frontend usa o array retornado como a fila do desafio."""
+    from sqlalchemy.orm import joinedload
+
+    invalid = [d for d in body.difficulties if d not in VALID_DIFFICULTY]
+    if invalid:
+        raise HTTPException(400, f"difficulties contém valores inválidos: {invalid}")
+
+    q = (
+        db.query(Flashcard)
+        .options(joinedload(Flashcard.subject))
+        .filter(Flashcard.user_id == current_user.id)
+    )
+    if body.subject_ids:
+        q = q.filter(Flashcard.subject_id.in_(body.subject_ids))
+    if body.difficulties:
+        q = q.filter(Flashcard.difficulty.in_(body.difficulties))
+    if body.only_due:
+        q = q.filter(Flashcard.next_review_at <= datetime.utcnow())
+
+    cards = q.all()
+    if body.shuffle:
+        random.shuffle(cards)
+    else:
+        cards.sort(key=lambda c: c.next_review_at or datetime.utcnow())
+
+    cards = cards[:body.max_cards]
+
+    return {
+        "total": len(cards),
+        "requested": body.max_cards,
+        "cards": [_card_dict(c) for c in cards],
+    }
 
 
 @router.get("/due")
