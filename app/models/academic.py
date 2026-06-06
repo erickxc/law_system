@@ -271,6 +271,8 @@ class CalendarEvent(Base):
     completed: Mapped[bool] = mapped_column(Boolean, default=False, server_default=text("FALSE"))
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
+    subject: Mapped[Optional["Subject"]] = relationship("Subject", foreign_keys=[subject_id])
+
 
 class ClassSchedule(Base):
     __tablename__ = "class_schedules"
