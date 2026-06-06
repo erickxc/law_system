@@ -132,7 +132,7 @@ async function showDashboard() {
                     <tbody>${history.slice(0,6).map(s => {
                         const a = s.total_questions > 0 ? Math.round(s.correct_answers/s.total_questions*100) : null;
                         return `<tr>
-                            <td style="color:var(--text)">${s.subject_name}</td>
+                            <td style="color:var(--text)">${esc(s.subject_name)}</td>
                             <td class="num text-[11.5px]">${fmtShortDate(s.start_time)}</td>
                             <td class="num text-right">${fmtDuration(s.duration_seconds)}</td>
                             <td class="num text-right" style="color:${a==null?'var(--text-5)':a>=70?'var(--success)':a>=50?'var(--warning)':'var(--danger)'}">${a!=null ? a+'%' : '—'}</td>

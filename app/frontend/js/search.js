@@ -122,7 +122,7 @@ function runSearch(query) {
     if (!container) return;
 
     if (groups.length === 0) {
-        container.innerHTML = `<div class="search-empty"><i class="fa-solid fa-magnifying-glass mb-2 text-[20px]" style="color:var(--text-5)"></i><p>Nada encontrado para "<strong>${q}</strong>"</p></div>`;
+        container.innerHTML = `<div class="search-empty"><i class="fa-solid fa-magnifying-glass mb-2 text-[20px]" style="color:var(--text-5)"></i><p>Nada encontrado para "<strong>${esc(q)}</strong>"</p></div>`;
         return;
     }
 
@@ -135,8 +135,8 @@ function runSearch(query) {
             html += `<div class="search-result ${flatIdx === 0 ? 'is-selected' : ''}" data-idx="${flatIdx}" onclick="executeSearchItem(${flatIdx})">
                 <div class="search-result-icon"><i class="fa-solid ${item.icon}"></i></div>
                 <div class="search-result-content">
-                    <div class="search-result-title">${item.title}</div>
-                    <div class="search-result-meta">${item.meta}</div>
+                    <div class="search-result-title">${esc(item.title)}</div>
+                    <div class="search-result-meta">${esc(item.meta)}</div>
                 </div>
             </div>`;
             flatItems.push(item);

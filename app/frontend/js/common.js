@@ -9,15 +9,65 @@
 
 const token = localStorage.getItem('access_token');
 
+// ─── Helpers seguros ─────────────────────────────────────────────────────
+// Escapa HTML para inserção segura em innerHTML quando o valor vem de usuário
+function escapeHTML(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+}
+// Alias curto pra usar em templates
+const esc = escapeHTML;
+
+// Detecta plataforma pra mostrar Ctrl/⌘ correto
+const IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
+const MOD_KEY = IS_MAC ? '⌘' : 'Ctrl';
+
 // ─── API ─────────────────────────────────────────────────────────────────
+// Mensagens humanas por código HTTP (fallback quando backend não tem detail bom)
+const HTTP_MSGS = {
+    400: 'Há algo errado nos dados enviados. Revise os campos e tente novamente.',
+    403: 'Você não tem permissão para esta ação.',
+    404: 'Registro não encontrado — talvez tenha sido removido.',
+    409: 'Operação em conflito com o estado atual. Atualize a página.',
+    422: 'Dados inválidos. Confira os campos destacados.',
+    429: 'Você fez muitas tentativas seguidas. Aguarde alguns minutos.',
+    500: 'O servidor teve um problema. Tente novamente em instantes.',
+    502: 'Servidor temporariamente indisponível. Tente novamente.',
+    503: 'Serviço em manutenção. Tente novamente em instantes.',
+    504: 'O servidor demorou demais para responder. Tente novamente.',
+};
+
 async function api(path, opts = {}) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...opts.headers },
-        ...opts
-    });
-    if (res.status === 401) { localStorage.removeItem('access_token'); location.href = 'index.html'; return; }
+    let res;
+    try {
+        res = await fetch(`${API_BASE}${path}`, {
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...opts.headers },
+            ...opts
+        });
+    } catch (netErr) {
+        // Falha de rede (offline, DNS, CORS, etc.) — TypeError do fetch
+        throw new Error('Sem conexão com o servidor. Verifique sua internet e tente novamente.');
+    }
+    if (res.status === 401) {
+        try { toast('Sua sessão expirou. Faça login novamente.', 'warning', 3500); } catch {}
+        localStorage.removeItem('access_token');
+        setTimeout(() => { location.href = 'index.html'; }, 600);
+        throw new Error('Sessão expirada');
+    }
     if (res.status === 204) return null;
-    return res.json().then(d => { if (!res.ok) throw new Error(d.detail || `Erro ${res.status}`); return d; });
+
+    let data = null;
+    try { data = await res.json(); } catch { /* sem corpo JSON */ }
+
+    if (!res.ok) {
+        // Prefere mensagem do backend se for clara (string não-vazia); senão usa fallback
+        const detail = (data && typeof data.detail === 'string') ? data.detail.trim() : '';
+        const msg = detail || HTTP_MSGS[res.status] || `Não foi possível concluir (código ${res.status}).`;
+        throw new Error(msg);
+    }
+    return data;
 }
 
 // ─── Toast ───────────────────────────────────────────────────────────────

@@ -38,11 +38,11 @@ function renderBooks(books) {
                                 <i class="fa-solid fa-trash"></i>
                             </button>
                         </div>
-                        <p class="ttl">${b.name}</p>
+                        <p class="ttl">${esc(b.name)}</p>
                         <div class="meta"><span>${b.current_page}/${b.total_pages}</span><span>${pct}%</span></div>
                     </div>
                     <div class="mt-2">
-                        ${b.author ? `<p class="text-[12px] truncate" style="color:var(--text-3)">${b.author}</p>` : '<p class="text-[12px]" style="color:var(--text-5)">—</p>'}
+                        ${b.author ? `<p class="text-[12px] truncate" style="color:var(--text-3)">${esc(b.author)}</p>` : '<p class="text-[12px]" style="color:var(--text-5)">—</p>'}
                         <div class="bar mt-1.5"><div style="width:${pct}%"></div></div>
                     </div>
                 </div>`;
@@ -323,7 +323,7 @@ async function openBookReader(bookId) {
             <div class="flex items-center gap-3">
                 <button onclick="showBooks()" class="btn btn-icon btn-sm"><i class="fa-solid fa-arrow-left text-[10px]"></i></button>
                 <div>
-                    <p class="text-[13px] font-medium" style="color:var(--text)">${book.name}</p>
+                    <p class="text-[13px] font-medium" style="color:var(--text)">${esc(book.name)}</p>
                     <p class="text-[11px] mono" id="page-status" style="color:var(--text-4)">pg. ${book.current_page}/${book.total_pages} · ${book.progress_pct}%</p>
                 </div>
             </div>
@@ -453,7 +453,7 @@ async function renderReader(book) {
             <div class="card" style="max-width: 480px;"><div class="card-body">
                 ${emptyState('fa-triangle-exclamation', 'Não consegui carregar o PDF', 'Verifique se a URL é pública e acessível (CORS).')}
                 <p class="text-[11px] mono mt-3 p-2" style="background:var(--bg-2); color:var(--text-4); border-radius:3px;">${e.message || e}</p>
-                <p class="text-[12px] mt-3" style="color:var(--text-4)"><a href="${_currentBook.url}" target="_blank" style="color:var(--accent)">Abrir PDF em nova aba ↗</a></p>
+                <p class="text-[12px] mt-3" style="color:var(--text-4)"><a href="${esc(_currentBook.url)}" target="_blank" rel="noopener" style="color:var(--accent)">Abrir PDF em nova aba ↗</a></p>
             </div></div>`;
     }
 }
@@ -706,7 +706,7 @@ function renderOverlaysForPage(pageNum, wrap) {
         el.style.left = `${s.x_pct}%`;
         el.style.top  = `${s.y_pct}%`;
         el.style.cursor = 'grab';
-        el.innerHTML = `<i class="fa-solid ${tag.icon}"></i><span>${s.note_text || tag.label}</span>`;
+        el.innerHTML = `<i class="fa-solid ${tag.icon}"></i><span>${esc(s.note_text || tag.label)}</span>`;
         el.title = `Arrastar para mover · clique para editar`;
         makeStickyDraggable(el, s, wrap);
         wrap.appendChild(el);
@@ -1020,7 +1020,7 @@ function openStickyEditModal(s) {
     <input type="hidden" id="sticky-edit-tag" value="${s.tag}">
     <div>
         <label class="label">Texto</label>
-        <input type="text" id="sticky-edit-text" class="input" value="${s.note_text || ''}" maxlength="80" autofocus>
+        <input type="text" id="sticky-edit-text" class="input" value="${esc(s.note_text || '')}" maxlength="80" autofocus>
     </div>
     <div class="flex gap-2 justify-between pt-3 mt-4" style="border-top:1px solid var(--border)">
         <button onclick="deleteSticky('${s.id}')" class="btn btn-danger"><i class="fa-solid fa-trash text-[10px]"></i> Remover</button>
@@ -1184,7 +1184,7 @@ function annotateFromSelection() {
     </div>
     <div class="p-2.5 mb-3" style="background:var(--bg-2); border-left: 2px solid var(--warning); border-radius: 0 3px 3px 0;">
         <p class="text-[11px] uppercase mono mb-1" style="color:var(--text-4); letter-spacing:.04em;">Trecho selecionado</p>
-        <p class="text-[12.5px] italic" style="color:var(--text-2);">"${sel.text}"</p>
+        <p class="text-[12.5px] italic" style="color:var(--text-2);">"${esc(sel.text)}"</p>
     </div>
     <div>
         <label class="label">Sua anotação</label>
@@ -1329,13 +1329,13 @@ function renderNotesList() {
                     ${_notesSelectMode ? '' : `<button onclick="event.stopPropagation();deleteSticky('${it.id}')" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[10px]"></i></button>`}
                 </div>
                 <p class="text-[10.5px] mono mt-1" style="color:var(--text-4)">pg. ${it.page_number}</p>
-                ${it.note_text ? `<p class="text-[12px] mt-1" style="color:var(--text)">${it.note_text}</p>` : ''}
+                ${it.note_text ? `<p class="text-[12px] mt-1" style="color:var(--text)">${esc(it.note_text)}</p>` : ''}
             </div>`;
         }
         const isHL = it.type === 'highlight';
         const bg = isHL ? (hlBgs[it.color] || hlBgs.yellow) : 'var(--bg-2)';
         const preview = isHL
-            ? `<p class="text-[12px] line-clamp-3" style="color:var(--text); white-space: pre-wrap;">${it.selected_text}</p>`
+            ? `<p class="text-[12px] line-clamp-3" style="color:var(--text); white-space: pre-wrap;">${esc(it.selected_text)}</p>`
             : `<div class="md-body" style="font-size:11.5px; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden;">${renderMarkdown(it.note_text)}</div>`;
         return `<div class="p-2.5 cursor-pointer hover:opacity-90" onclick="${cardClick}" style="background:${bg}; border-radius: 3px; border-left: 2px solid ${isHL ? '#ca8a04' : 'var(--warning)'};">
             <div class="flex items-center justify-between mb-1">

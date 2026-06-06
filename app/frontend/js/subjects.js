@@ -39,8 +39,8 @@ function renderSubjects() {
                     ${subjects.map((s, i) => `
                     <tr>
                         <td class="id">${String(i+1).padStart(2,'0')}</td>
-                        <td style="color:var(--text); font-weight: 500;">${s.name}</td>
-                        <td class="mono text-[11.5px]" style="color:var(--text-3)">${s.sigla || '—'}</td>
+                        <td style="color:var(--text); font-weight: 500;">${esc(s.name)}</td>
+                        <td class="mono text-[11.5px]" style="color:var(--text-3)">${esc(s.sigla || '—')}</td>
                         <td class="num">${s.period}º</td>
                         <td><span class="badge badge-${s.priority.toLowerCase()}">${s.priority}</span></td>
                         <td>
@@ -151,7 +151,7 @@ async function openShareModal(subjectId) {
             <h3>Compartilhar deck</h3>
             <button onclick="closeModal()" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
         </div>
-        <p class="text-[12.5px] mb-3" style="color:var(--text-3)">Compartilhe todos os flashcards de <strong>${s.name}</strong> em um link público (somente leitura). Útil pra estudar em grupo ou enviar pra colegas.</p>
+        <p class="text-[12.5px] mb-3" style="color:var(--text-3)">Compartilhe todos os flashcards de <strong>${esc(s.name)}</strong> em um link público (somente leitura). Útil pra estudar em grupo ou enviar pra colegas.</p>
         ${token ? `
         <div style="background:var(--bg-2); padding: 12px; border-radius: 6px; border: 1px solid var(--border);">
             <p class="text-[10.5px] uppercase tracking-wider mb-2" style="color:var(--text-4)">Link público</p>

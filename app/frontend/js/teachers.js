@@ -30,9 +30,9 @@ function renderTeachers() {
                     ${teachers.map((t, i) => `
                     <tr>
                         <td class="id">${String(i+1).padStart(2,'0')}</td>
-                        <td style="color:var(--text); font-weight: 500;">${t.name}</td>
-                        <td class="mono text-[12px]" style="color:var(--text-3)">${t.email || '—'}</td>
-                        <td style="color:var(--text-3)">${t.contact || '—'}</td>
+                        <td style="color:var(--text); font-weight: 500;">${esc(t.name)}</td>
+                        <td class="mono text-[12px]" style="color:var(--text-3)">${esc(t.email || '—')}</td>
+                        <td style="color:var(--text-3)">${esc(t.contact || '—')}</td>
                         <td class="actions">
                             <button onclick="openTeacherModal('${t.id}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-pen text-[10px]"></i></button>
                             <button onclick="deleteTeacher('${t.id}','${escAttr(t.name)}')" class="btn btn-icon btn-sm"><i class="fa-solid fa-trash text-[10px]"></i></button>

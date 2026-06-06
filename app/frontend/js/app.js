@@ -77,6 +77,14 @@ function setPage(title, section = '') {
     document.title = `${title} — Law System`;
 }
 
+// Detecta plataforma e ajusta atalho na topbar
+(function fixShortcutLabel() {
+    const label = document.getElementById('search-shortcut-label');
+    if (label && typeof MOD_KEY !== 'undefined') {
+        label.textContent = MOD_KEY === 'Ctrl' ? 'Ctrl K' : '⌘K';
+    }
+})();
+
 // ─── Init ────────────────────────────────────────────────────────────────
 async function init() {
     try {

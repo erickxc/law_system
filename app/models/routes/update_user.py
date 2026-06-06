@@ -53,16 +53,30 @@ def update_user_profile(
         raise HTTPException(status_code=500, detail="Erro interno ao salvar os dados.")
 
 
+MAX_PHOTO_DATA_URI_BYTES = 2 * 1024 * 1024  # 2 MB — cap pra evitar inchar o DB
+
+
 @router.put("/users/me/photo", response_model=UserResponse)
 def update_user_photo(
     body: PhotoUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Atualiza apenas a foto de perfil (URL externa). Use null pra remover."""
+    """Atualiza apenas a foto de perfil. Aceita https:// ou data:image/... (até 2MB).
+    Envie null pra remover."""
     url = body.photo_url
-    if url and not (url.startswith("http://") or url.startswith("https://") or url.startswith("data:image/")):
-        raise HTTPException(status_code=400, detail="photo_url deve ser uma URL http(s) ou data:image/...")
+    if url:
+        if url.startswith("data:image/"):
+            if len(url) > MAX_PHOTO_DATA_URI_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail="Imagem muito grande. Use uma foto de até 2 MB.",
+                )
+        elif not url.startswith("https://"):
+            raise HTTPException(
+                status_code=400,
+                detail="Use o endereço completo da foto (começa com https://) ou envie um arquivo.",
+            )
     current_user.photo_url = url
     db.commit()
     db.refresh(current_user)

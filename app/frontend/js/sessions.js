@@ -368,7 +368,7 @@ function renderTaskList() {
         <button onclick="toggleTask(${i})" class="w-4 h-4 flex items-center justify-center transition-colors" style="border: 1.5px solid ${t.is_done ? 'var(--success)' : 'var(--border-2)'}; background: ${t.is_done ? 'var(--success)' : 'transparent'}; color: white; border-radius: 3px;">
             ${t.is_done ? '<i class="fa-solid fa-check text-[8px]"></i>' : ''}
         </button>
-        <span class="flex-1 text-[13px]" style="color:${t.is_done ? 'var(--text-5)' : 'var(--text)'}; ${t.is_done ? 'text-decoration: line-through;' : ''}">${t.description}</span>
+        <span class="flex-1 text-[13px]" style="color:${t.is_done ? 'var(--text-5)' : 'var(--text)'}; ${t.is_done ? 'text-decoration: line-through;' : ''}">${esc(t.description)}</span>
         <button onclick="removeTask(${i})" style="color:var(--text-5)"><i class="fa-solid fa-xmark text-[11px]"></i></button>
     </div>`).join('');
 }

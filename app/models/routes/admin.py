@@ -266,4 +266,10 @@ def run_migration(
         return {"ok": True, "migration": name, "size_bytes": len(sql)}
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Erro ao executar migration: {e}")
+        # Não vaza stack/SQL para o cliente; loga server-side
+        import logging
+        logging.getLogger(__name__).exception("Migration %s falhou", name)
+        raise HTTPException(
+            status_code=500,
+            detail="Falha ao aplicar migration. Consulte os logs do servidor.",
+        )

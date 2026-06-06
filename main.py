@@ -107,8 +107,9 @@ def startup():
             conn.commit()
         Base.metadata.create_all(bind=engine)
         logger.info("Law System API v2 iniciada com sucesso!")
-    except Exception as e:
-        logger.error(f"Erro no startup: {e}")
+    except Exception:
+        # Não vaza credenciais que podem aparecer em mensagens de erro de DB
+        logger.exception("Erro no startup")
 
 
 @app.get("/users/me", tags=["Users"])
@@ -135,7 +136,7 @@ def get_me(current_user: User = Depends(get_current_user)):
 @app.post("/register", status_code=201, tags=["Auth"])
 def register(u: UserCreate, db: Session = Depends(get_db)):
     if db.query(User).filter(User.email == u.email).first():
-        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+        raise HTTPException(status_code=400, detail="Já existe uma conta com este e-mail. Tente entrar.")
 
     hashed = bcrypt.hashpw(u.password.encode("utf-8"), bcrypt.gensalt(rounds=settings.BCRYPT_ROUNDS)).decode("utf-8")
     new_user = User(
@@ -161,7 +162,7 @@ def login(l: LoginRequest, db: Session = Depends(get_db)):
         remaining = int((user.locked_until - now).total_seconds() / 60) + 1
         raise HTTPException(
             status_code=429,
-            detail=f"Muitas tentativas falhas. Tente novamente em {remaining} minuto(s).",
+            detail=f"Por segurança, sua conta foi pausada após várias tentativas. Tente novamente em {remaining} min.",
         )
 
     if not user or not bcrypt.checkpw(l.password.encode("utf-8"), user.password_hash.encode("utf-8")):
@@ -174,16 +175,16 @@ def login(l: LoginRequest, db: Session = Depends(get_db)):
                 db.commit()
                 raise HTTPException(
                     status_code=429,
-                    detail=f"Conta bloqueada por {settings.LOCKOUT_MINUTES} minutos após {settings.MAX_LOGIN_ATTEMPTS} tentativas.",
+                    detail=f"Conta bloqueada por {settings.LOCKOUT_MINUTES} minutos após {settings.MAX_LOGIN_ATTEMPTS} tentativas. Aguarde e tente de novo.",
                 )
             db.commit()
-        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos")
+        raise HTTPException(status_code=401, detail="E-mail ou senha incorretos. Verifique e tente novamente.")
 
     if not user.is_approved:
-        raise HTTPException(status_code=403, detail="Conta aguardando aprovação do administrador")
+        raise HTTPException(status_code=403, detail="Sua conta está em análise. Você receberá um aviso por e-mail quando for liberada.")
 
     if not user.is_active:
-        raise HTTPException(status_code=403, detail="Conta desativada. Entre em contato com o administrador.")
+        raise HTTPException(status_code=403, detail="Acesso suspenso. Fale com o administrador do sistema.")
 
     # Sucesso: reset contador
     if user.failed_login_attempts or user.locked_until:

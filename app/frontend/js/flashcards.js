@@ -157,14 +157,14 @@ function fcCard(c) {
         <div style="padding: 14px 16px;">
             <div class="flex items-center gap-1.5 mb-2 flex-wrap">
                 <span class="badge" style="background:${diff.color}1a;color:${diff.color};border-color:${diff.color}40">${diff.label}</span>
-                ${c.subject_name ? `<span class="badge badge-em-curso">${c.subject_name}</span>` : ''}
+                ${c.subject_name ? `<span class="badge badge-em-curso">${esc(c.subject_name)}</span>` : ''}
                 ${c.is_due ? `<span class="badge badge-due"><i class="fa-solid fa-clock text-[8px]"></i>Revisar</span>` : ''}
             </div>
 
-            <p class="text-[13.5px] font-semibold mb-2" style="color:var(--text); line-height: 1.4;"><i class="fa-solid fa-circle-question text-[10px]" style="color:var(--text-5); margin-right: 4px;"></i>${c.front}</p>
-            <p class="text-[12px] mb-3" style="color:var(--text-3); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><i class="fa-solid fa-lightbulb text-[10px]" style="color:var(--text-5); margin-right: 4px;"></i>${c.back}</p>
+            <p class="text-[13.5px] font-semibold mb-2" style="color:var(--text); line-height: 1.4;"><i class="fa-solid fa-circle-question text-[10px]" style="color:var(--text-5); margin-right: 4px;"></i>${esc(c.front)}</p>
+            <p class="text-[12px] mb-3" style="color:var(--text-3); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><i class="fa-solid fa-lightbulb text-[10px]" style="color:var(--text-5); margin-right: 4px;"></i>${esc(c.back)}</p>
 
-            ${c.tags ? `<div class="mb-3 text-[10.5px] mono" style="color:var(--text-4)">${c.tags.split(',').map(t => '#'+t.trim()).join(' ')}</div>` : ''}
+            ${c.tags ? `<div class="mb-3 text-[10.5px] mono" style="color:var(--text-4)">${esc(c.tags).split(',').map(t => '#'+t.trim()).join(' ')}</div>` : ''}
 
             <div class="flex items-center justify-between pt-2" style="border-top:1px solid var(--border);">
                 <div class="text-[11px] mono flex items-center gap-3" style="color:var(--text-4)">
@@ -447,12 +447,12 @@ function showReviewCard() {
                 <div class="card-flip" id="review-card" style="height:100%">
                     <div class="card-face front">
                         <p class="text-[10.5px] uppercase tracking-wider mb-5" style="color:var(--text-4); letter-spacing:.16em; font-weight: 600;"><i class="fa-solid fa-circle-question text-[11px]" style="color:var(--accent)"></i> Pergunta</p>
-                        <p class="text-[20px] font-medium text-center leading-snug" style="color:var(--text); max-width: 540px;">${card.front}</p>
+                        <p class="text-[20px] font-medium text-center leading-snug" style="color:var(--text); max-width: 540px;">${esc(card.front)}</p>
                         <p class="face-hint" style="color:var(--text-4)">Clique ou pressione espaço para revelar</p>
                     </div>
                     <div class="card-face back">
                         <p class="text-[10.5px] uppercase tracking-wider mb-5" style="color: #fbbf24; letter-spacing:.16em; font-weight: 600;"><i class="fa-solid fa-lightbulb text-[11px]"></i> Resposta</p>
-                        <p class="text-[19px] font-medium text-center leading-snug" style="max-width: 540px;">${card.back}</p>
+                        <p class="text-[19px] font-medium text-center leading-snug" style="max-width: 540px;">${esc(card.back)}</p>
                         <p class="face-hint" style="color: rgba(255,255,255,.4)">Avalie como foi sua resposta</p>
                     </div>
                 </div>

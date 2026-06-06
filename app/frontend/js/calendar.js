@@ -117,7 +117,7 @@ function renderDayCell(c, idx) {
             const t = EVENT_TYPES[ev.event_type] || EVENT_TYPES.outro;
             const color = ev.color || t.color;
             return `<div onclick="event.stopPropagation();openEventModal('${ev.id}')" class="text-[10.5px] truncate px-1 py-0.5 mb-0.5 cursor-pointer hover:opacity-80" style="background:${color}1a; color:${color}; border-left: 2px solid ${color}; border-radius: 2px; ${ev.completed ? 'opacity:.55;text-decoration:line-through;' : ''}">
-                ${ev.all_day ? '' : `<span class="mono" style="font-size:9px">${ev.start_at.slice(11,16)}</span> `}${ev.title}
+                ${ev.all_day ? '' : `<span class="mono" style="font-size:9px">${ev.start_at.slice(11,16)}</span> `}${esc(ev.title)}
             </div>`;
         }).join('')}
         ${(c.events || []).length > 3 ? `<div class="text-[10px]" style="color:var(--text-4)">+${c.events.length - 3} mais</div>` : ''}
