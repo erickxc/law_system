@@ -3,12 +3,14 @@ from sqlalchemy.orm import Session, joinedload
 from typing import Optional, List
 from uuid import UUID
 from pydantic import BaseModel, field_validator
+import secrets
 
 from app.database import get_db
 from app.core.auth import get_current_user
-from app.models.academic import Subject
+from app.models.academic import Subject, Flashcard
 
 router = APIRouter(prefix="/subjects", tags=["Subjects"])
+public_router = APIRouter(prefix="/public", tags=["Public"])
 
 VALID_PRIORITIES = {"Alta", "Média", "Baixa"}
 VALID_STATUSES = {"Pendente", "Em Curso", "Concluída"}
@@ -73,6 +75,7 @@ class SubjectResponse(BaseModel):
     no_teacher: bool
     teacher_id: Optional[UUID]
     teacher_name: Optional[str] = None
+    share_token: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -92,6 +95,7 @@ def _enrich(s: Subject) -> dict:
         "no_teacher": s.no_teacher,
         "teacher_id": s.teacher_id,
         "teacher_name": s.teacher.name if s.teacher else None,
+        "share_token": s.share_token,
     }
 
 
@@ -228,3 +232,75 @@ def delete_subject(
         raise HTTPException(status_code=404, detail="Matéria não encontrada.")
     db.delete(subject)
     db.commit()
+
+
+# ── Compartilhamento de matéria (read-only público) ───────────────────────
+
+@router.post("/{subject_id}/share")
+def enable_share(
+    subject_id: UUID,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Gera (ou regenera) um token público para compartilhar a matéria + flashcards.
+    O link compartilhado: GET /public/decks/{token} (sem auth)."""
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id,
+        Subject.user_id == current_user.id,
+    ).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Matéria não encontrada.")
+    subject.share_token = secrets.token_urlsafe(16)  # 22 chars
+    db.commit()
+    return {"share_token": subject.share_token}
+
+
+@router.delete("/{subject_id}/share", status_code=status.HTTP_204_NO_CONTENT)
+def revoke_share(
+    subject_id: UUID,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    subject = db.query(Subject).filter(
+        Subject.id == subject_id,
+        Subject.user_id == current_user.id,
+    ).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Matéria não encontrada.")
+    subject.share_token = None
+    db.commit()
+
+
+@public_router.get("/decks/{token}")
+def get_public_deck(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Retorna a matéria + flashcards em modo público (sem expor user_id)."""
+    subject = db.query(Subject).filter(Subject.share_token == token).first()
+    if not subject:
+        raise HTTPException(status_code=404, detail="Deck não encontrado ou link revogado")
+
+    cards = (
+        db.query(Flashcard)
+        .filter(Flashcard.subject_id == subject.id)
+        .order_by(Flashcard.created_at)
+        .all()
+    )
+    return {
+        "subject": {
+            "name": subject.name,
+            "sigla": subject.sigla,
+            "period": subject.period,
+        },
+        "cards": [
+            {
+                "front": c.front,
+                "back": c.back,
+                "tags": c.tags,
+                "difficulty": c.difficulty or "medium",
+            }
+            for c in cards
+        ],
+        "count": len(cards),
+    }

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional, List
@@ -6,6 +7,9 @@ from uuid import UUID
 from datetime import datetime, timedelta
 from pydantic import BaseModel, field_validator
 import random
+import json
+import io
+import csv
 
 from app.database import get_db
 from app.core.auth import get_current_user
@@ -206,6 +210,137 @@ def get_due_flashcards(
         q = q.filter(Flashcard.subject_id == subject_id)
     cards = q.order_by(Flashcard.next_review_at).all()
     return [_card_dict(c) for c in cards]
+
+
+@router.get("/export")
+def export_flashcards(
+    fmt: str = "json",
+    subject_id: Optional[UUID] = None,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Exporta flashcards do usuário em JSON ou CSV."""
+    from sqlalchemy.orm import joinedload
+    q = (
+        db.query(Flashcard)
+        .options(joinedload(Flashcard.subject))
+        .filter(Flashcard.user_id == current_user.id)
+    )
+    if subject_id:
+        q = q.filter(Flashcard.subject_id == subject_id)
+    cards = q.order_by(Flashcard.created_at).all()
+
+    if fmt == "csv":
+        buf = io.StringIO()
+        writer = csv.writer(buf, quoting=csv.QUOTE_MINIMAL)
+        writer.writerow(["front", "back", "subject", "tags", "difficulty"])
+        for c in cards:
+            writer.writerow([
+                c.front,
+                c.back,
+                c.subject.name if c.subject else "",
+                c.tags or "",
+                c.difficulty or "medium",
+            ])
+        return Response(
+            content=buf.getvalue(),
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f'attachment; filename="flashcards.csv"'},
+        )
+
+    # default: json
+    data = {
+        "version": 1,
+        "exported_at": datetime.utcnow().isoformat(),
+        "count": len(cards),
+        "cards": [
+            {
+                "front": c.front,
+                "back": c.back,
+                "subject": c.subject.name if c.subject else None,
+                "tags": c.tags,
+                "difficulty": c.difficulty or "medium",
+            }
+            for c in cards
+        ],
+    }
+    return Response(
+        content=json.dumps(data, ensure_ascii=False, indent=2),
+        media_type="application/json; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="flashcards.json"'},
+    )
+
+
+class ImportInput(BaseModel):
+    cards: List[dict]
+    auto_create_subjects: bool = True
+
+
+@router.post("/import")
+def import_flashcards(
+    body: ImportInput,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Importa um array de cards. Cada item: {front, back, subject?, tags?, difficulty?}."""
+    if not body.cards:
+        raise HTTPException(400, "Nenhum card fornecido")
+
+    # Cache de matérias existentes do usuário
+    user_subjects = {
+        s.name.lower(): s
+        for s in db.query(Subject).filter(Subject.user_id == current_user.id).all()
+    }
+
+    created = 0
+    failed = 0
+    errors = []
+
+    for i, card in enumerate(body.cards):
+        try:
+            front = (card.get("front") or "").strip()
+            back = (card.get("back") or "").strip()
+            if not front or not back:
+                failed += 1
+                errors.append(f"linha {i+1}: front/back vazios")
+                continue
+
+            subj_id = None
+            subj_name = (card.get("subject") or "").strip()
+            if subj_name:
+                subj = user_subjects.get(subj_name.lower())
+                if not subj and body.auto_create_subjects:
+                    subj = Subject(
+                        name=subj_name, period=1, priority="Média",
+                        no_teacher=True, status="Pendente",
+                        user_id=current_user.id, group_id=current_user.group_id,
+                    )
+                    db.add(subj)
+                    db.flush()
+                    user_subjects[subj_name.lower()] = subj
+                subj_id = subj.id if subj else None
+
+            difficulty = card.get("difficulty", "medium")
+            if difficulty not in VALID_DIFFICULTY:
+                difficulty = "medium"
+
+            fc = Flashcard(
+                user_id=current_user.id,
+                subject_id=subj_id,
+                front=front,
+                back=back,
+                tags=(card.get("tags") or None),
+                difficulty=difficulty,
+                next_review_at=datetime.utcnow(),
+            )
+            db.add(fc)
+            created += 1
+        except Exception as e:
+            failed += 1
+            errors.append(f"linha {i+1}: {str(e)[:80]}")
+
+    db.commit()
+    return {"created": created, "failed": failed, "errors": errors[:10]}
 
 
 @router.get("/stats")

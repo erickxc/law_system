@@ -243,7 +243,11 @@ def run_migration(
 ):
     """Executa um arquivo SQL de migrations/. Idempotente — pode rodar várias vezes."""
     # Whitelist — apenas migrations conhecidas
-    allowed = {"001_user_lockout_and_photo", "002_calendar_schedule_difficulty"}
+    allowed = {
+        "001_user_lockout_and_photo",
+        "002_calendar_schedule_difficulty",
+        "003_goal_and_share",
+    }
     if name not in allowed:
         raise HTTPException(status_code=404, detail=f"Migration '{name}' não existe")
 

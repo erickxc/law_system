@@ -44,6 +44,8 @@ class Subject(Base):
         ForeignKey("academic.teachers.id", ondelete="SET NULL"), nullable=True
     )
 
+    share_token: Mapped[Optional[str]] = mapped_column(String(64), unique=True, nullable=True, index=True)
+
     teacher: Mapped[Optional["Teacher"]] = relationship("Teacher", back_populates="subjects")
     sessions: Mapped[List["StudySession"]] = relationship("StudySession", back_populates="subject")
     contents: Mapped[List["Content"]] = relationship("Content", back_populates="subject", cascade="all, delete-orphan")

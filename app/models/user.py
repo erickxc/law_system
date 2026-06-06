@@ -63,6 +63,7 @@ class User(Base):
     )
 
     photo_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    daily_goal_minutes: Mapped[int] = mapped_column(Integer, default=30, server_default=text("30"))  # meta diária em minutos
 
     created_at: Mapped[datetime] = mapped_column(server_default=text("NOW()"))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default=text("TRUE"))

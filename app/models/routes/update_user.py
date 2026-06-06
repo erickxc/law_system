@@ -15,6 +15,10 @@ class PhotoUpdate(BaseModel):
     photo_url: Optional[str] = None  # URL externa (ou null pra remover)
 
 
+class GoalUpdate(BaseModel):
+    daily_goal_minutes: int  # 5..600
+
+
 @router.put("/users/me/update", response_model=UserResponse)
 def update_user_profile(
     user_data: UserUpdate,
@@ -59,3 +63,17 @@ def update_user_photo(
     db.commit()
     db.refresh(current_user)
     return current_user
+
+
+@router.put("/users/me/goal")
+def update_daily_goal(
+    body: GoalUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Atualiza a meta diária de minutos (5..600)."""
+    if body.daily_goal_minutes < 5 or body.daily_goal_minutes > 600:
+        raise HTTPException(status_code=400, detail="meta deve estar entre 5 e 600 minutos")
+    current_user.daily_goal_minutes = body.daily_goal_minutes
+    db.commit()
+    return {"daily_goal_minutes": current_user.daily_goal_minutes}

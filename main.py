@@ -67,6 +67,7 @@ async def security_headers(request, call_next):
 
 app.include_router(sessions.router)
 app.include_router(subject.router)
+app.include_router(subject.public_router)
 app.include_router(teacher.router)
 app.include_router(update_user.router)
 app.include_router(admin.router)
@@ -124,6 +125,7 @@ def get_me(current_user: User = Depends(get_current_user)):
         "cpf": current_user.cpf,
         "phone": current_user.phone,
         "photo_url": current_user.photo_url,
+        "daily_goal_minutes": current_user.daily_goal_minutes or 30,
         "is_approved": current_user.is_approved,
         "is_active": current_user.is_active,
     }
