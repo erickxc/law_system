@@ -309,7 +309,9 @@ def _make_front(style: str, title: str, page: int, source: str, idx: int, total:
     """Gera a pergunta (front) do card a partir do trecho/anotação."""
     pos = f" — item {idx + 1}/{total}" if total > 1 else ""
     if style == "concept":
-        return f"Sobre **{title}** (pg. {page}){pos} — qual é o {source.lower()}?"
+        # Artigo concorda com o gênero do substantivo (trecho=o, anotação=a)
+        article = "a" if source.lower().startswith(("anota", "a")) else "o"
+        return f"Sobre **{title}** (pg. {page}){pos} — qual é {article} {source.lower()}?"
     # literal
     return f"{title} (pg. {page}){pos}"
 
