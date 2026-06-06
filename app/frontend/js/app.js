@@ -33,6 +33,7 @@ function setActive(id) {
 function setPage(title, section = '') {
     document.getElementById('crumb-section').textContent = section || 'Geral';
     document.getElementById('crumb-page').textContent = title;
+    document.title = `${title} — Law System`;
 }
 
 // ─── Init ────────────────────────────────────────────────────────────────
