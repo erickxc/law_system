@@ -31,18 +31,43 @@ function setActive(id) {
 }
 
 function updateHeaderAvatar() {
-    const av = document.getElementById('headerAvatar');
-    if (!av || !me) return;
+    if (!me) return;
     const initials = getInitials(me.full_name);
-    if (me.photo_url) {
-        av.innerHTML = '';
-        av.style.backgroundImage = `url("${me.photo_url}")`;
-        av.style.backgroundSize = 'cover';
-        av.style.backgroundPosition = 'center';
-        av.textContent = '';
-    } else {
-        av.style.backgroundImage = '';
-        av.textContent = initials;
+    const photo = me.photo_url;
+
+    // Header (canto sup direito) — sem texto, fundo da imagem
+    const hdr = document.getElementById('headerAvatar');
+    if (hdr) {
+        if (photo) {
+            hdr.innerHTML = '';
+            hdr.style.backgroundImage = `url("${photo}")`;
+            hdr.style.backgroundSize = 'cover';
+            hdr.style.backgroundPosition = 'center';
+            hdr.textContent = '';
+        } else {
+            hdr.style.backgroundImage = '';
+            hdr.textContent = initials;
+        }
+    }
+
+    // Sidebar (rodapé esquerdo) — span interno mantém iniciais como fallback
+    const side = document.getElementById('sidebarAvatar');
+    const sideInit = document.getElementById('sidebar-initial');
+    if (side) {
+        if (photo) {
+            side.style.backgroundImage = `url("${photo}")`;
+            side.style.backgroundSize = 'cover';
+            side.style.backgroundPosition = 'center';
+            if (sideInit) sideInit.style.display = 'none';
+        } else {
+            side.style.backgroundImage = '';
+            if (sideInit) {
+                sideInit.style.display = '';
+                sideInit.textContent = initials;
+            }
+        }
+    } else if (sideInit) {
+        sideInit.textContent = initials;
     }
 }
 
