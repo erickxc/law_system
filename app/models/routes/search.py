@@ -44,7 +44,8 @@ def unified_search(
         return {"query": q, "subjects": [], "books": [], "notes": [], "flashcards": [], "highlights": [], "annotations": []}
 
     # SQL com ranking ts_rank para ordenar por relevância
-    def search_table(table_sql: str, fields_sql: str, joins: str = ""):
+    def search_table(table_sql: str, fields_sql: str, joins: str = "", has_created_at: bool = True):
+        order = "rank DESC, created_at DESC NULLS LAST" if has_created_at else "rank DESC"
         sql = f"""
             SELECT {fields_sql},
                 ts_rank(search_vector, to_tsquery('portuguese', :tsq)) AS rank
@@ -52,15 +53,16 @@ def unified_search(
             {joins}
             WHERE user_id = :uid
               AND search_vector @@ to_tsquery('portuguese', :tsq)
-            ORDER BY rank DESC, created_at DESC NULLS LAST
+            ORDER BY {order}
             LIMIT :lim
         """
         return db.execute(text(sql), {"tsq": tsquery, "uid": str(current_user.id), "lim": limit}).all()
 
-    # Subjects
+    # Subjects (sem created_at)
     sub_rows = search_table(
         "academic.subjects",
         "id, name, sigla, priority, status",
+        has_created_at=False,
     )
     subjects = [{"id": str(r.id), "name": r.name, "sigla": r.sigla, "priority": r.priority, "status": r.status, "rank": float(r.rank)} for r in sub_rows]
 
