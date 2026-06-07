@@ -174,32 +174,62 @@ aside.sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08
 .sticky-tag-question  { background: #7c3aed; color: white; }
 .sticky-tag-pin       { background: #dc2626; color: white; }
 
-/* Toolbar de modo post-it */
-.postit-toolbar {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+/* Painel popover de etiquetas (modal flutuante, NÃO bloqueia o PDF) */
+.postit-panel {
+    position: fixed; bottom: 24px; right: 24px;
     z-index: 100;
-    background: var(--text); color: white;
-    padding: 8px 10px; border-radius: 99px;
-    display: flex; align-items: center; gap: 4px;
-    box-shadow: 0 8px 24px rgba(0,0,0,.3);
+    width: 320px; max-width: calc(100vw - 32px);
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.2);
+    display: flex; flex-direction: column;
+    overflow: hidden;
 }
-.postit-toolbar .pt-btn {
-    width: 36px; height: 36px;
+.postit-panel-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 14px; border-bottom: 1px solid var(--border);
+    background: var(--bg-2);
+}
+.postit-panel-title { font-size: 12.5px; font-weight: 600; color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
+.postit-panel .pt-exit {
+    background: none; border: none; color: var(--text-4); cursor: pointer;
+    width: 24px; height: 24px; border-radius: 4px; font-size: 13px;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: 50%; cursor: pointer;
-    transition: transform .12s, box-shadow .12s;
-    font-size: 13px;
 }
-.postit-toolbar .pt-btn:hover { transform: scale(1.1); }
-.postit-toolbar .pt-btn.is-selected { box-shadow: 0 0 0 2px white, 0 0 0 4px var(--accent); }
-.postit-toolbar .pt-divider { width:1px; height: 20px; background: rgba(255,255,255,.15); margin: 0 4px; }
-.postit-toolbar .pt-exit {
-    background: none; color: white; padding: 6px 12px;
-    font-size: 11px; font-weight: 500; letter-spacing: .04em;
-    text-transform: uppercase; border: none; cursor: pointer;
-    opacity: .7;
+.postit-panel .pt-exit:hover { background: var(--border); color: var(--text); }
+.postit-panel-body { padding: 12px 14px 14px; }
+.postit-input-label { font-size: 11.5px; font-weight: 500; color: var(--text-2); display: block; margin-bottom: 4px; }
+.postit-text-input {
+    width: 100%; padding: 7px 10px; font-size: 13px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); border-radius: 4px;
+    outline: none; transition: border-color .12s, box-shadow .12s;
 }
-.postit-toolbar .pt-exit:hover { opacity: 1; }
+.postit-text-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); }
+.postit-help { font-size: 11px; color: var(--text-4); margin: 6px 0 10px; }
+.postit-tags-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+}
+.postit-tags-grid .pt-card {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 10px 4px; border-radius: 6px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: .02em;
+    cursor: grab; user-select: none;
+    transition: transform .1s, box-shadow .1s;
+}
+.postit-tags-grid .pt-card i { font-size: 16px; }
+.postit-tags-grid .pt-card .pt-card-label { font-size: 10.5px; line-height: 1.1; text-align: center; }
+.postit-tags-grid .pt-card:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+.postit-tags-grid .pt-card:active, .postit-tags-grid .pt-card.is-dragging { cursor: grabbing; transform: scale(.96); opacity: .8; }
+.postit-tags-grid .pt-card.is-selected { box-shadow: 0 0 0 2px var(--accent); }
+
+/* Em telas pequenas: painel embaixo full width */
+@media (max-width: 640px) {
+    .postit-panel { right: 8px; left: 8px; bottom: 8px; width: auto; max-width: none; }
+    .postit-tags-grid { grid-template-columns: repeat(6, 1fr); }
+    .postit-tags-grid .pt-card { padding: 8px 2px; }
+    .postit-tags-grid .pt-card .pt-card-label { display: none; }
+}
 
 /* Cursor PDF em modo post-it */
 body.postit-mode .pdf-page-wrap { cursor: default; }

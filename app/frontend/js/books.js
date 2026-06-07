@@ -535,7 +535,9 @@ async function renderAllPages(scrollToPage) {
             const wrapRect = wrap.getBoundingClientRect();
             const xPct = ((e.clientX - wrapRect.left) / wrapRect.width)  * 100;
             const yPct = ((e.clientY - wrapRect.top)  / wrapRect.height) * 100;
-            createStickyDirect(tag, parseInt(wrap.dataset.page), xPct, yPct);
+            // Texto vem do dataTransfer (escrito no painel) ou fallback no draft
+            const text = e.dataTransfer.getData('text/x-sticky-text') || _postitTextDraft || '';
+            createStickyDirect(tag, parseInt(wrap.dataset.page), xPct, yPct, text);
         });
 
         container.appendChild(wrap);
@@ -861,6 +863,10 @@ function togglePostitMode() {
     }
 }
 
+// Estado: rascunho de texto que é aplicado à próxima etiqueta arrastada
+let _postitTextDraft = '';
+let _draggingTag = null;
+
 function enterPostitMode(initialTag) {
     _postitMode = initialTag;
     document.body.classList.add('postit-mode');
@@ -869,46 +875,64 @@ function enterPostitMode(initialTag) {
         btn.classList.add('btn-primary');
         btn.innerHTML = '<i class="fa-solid fa-circle-stop text-[10px]"></i> Sair etiquetas';
     }
-    // Cria toolbar com botões DRAGGABLE
+    // Painel popover com campo de texto + cards de etiqueta arrastáveis
     if (!document.getElementById('postit-toolbar')) {
         const tb = document.createElement('div');
         tb.id = 'postit-toolbar';
-        tb.className = 'postit-toolbar';
-        tb.innerHTML = Object.entries(STICKY_TAGS).map(([k, v]) => `
-            <button class="pt-btn sticky-tag-${k}" data-tag="${k}" draggable="true" title="${v.label} — arraste para o PDF">
-                <i class="fa-solid ${v.icon}"></i>
-            </button>
-        `).join('') + `
-            <div class="pt-divider"></div>
-            <button class="pt-exit" onclick="exitPostitMode()">
-                <i class="fa-solid fa-xmark"></i> Sair
-            </button>
+        tb.className = 'postit-toolbar postit-panel';
+        tb.innerHTML = `
+            <div class="postit-panel-head">
+                <span class="postit-panel-title"><i class="fa-solid fa-note-sticky text-[10px]"></i> Adicionar etiqueta</span>
+                <button class="pt-exit" onclick="exitPostitMode()" title="Fechar painel">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="postit-panel-body">
+                <label class="postit-input-label">Texto da etiqueta <span style="color:var(--text-5)">(opcional)</span></label>
+                <input type="text" id="postit-text-input" class="postit-text-input" maxlength="80"
+                       placeholder="Ex: revisar art. 5º" value="">
+                <p class="postit-help">Arraste uma etiqueta abaixo para o local exato no PDF.</p>
+                <div class="postit-tags-grid">
+                    ${Object.entries(STICKY_TAGS).map(([k, v]) => `
+                        <div class="pt-card sticky-tag-${k}" data-tag="${k}" draggable="true" title="Arraste para o PDF">
+                            <i class="fa-solid ${v.icon}"></i>
+                            <span class="pt-card-label">${v.label}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
         `;
         document.body.appendChild(tb);
 
-        // Listeners dragstart em cada botão da toolbar
-        tb.querySelectorAll('.pt-btn').forEach(b => {
+        // Input de texto: vincula ao rascunho
+        const input = tb.querySelector('#postit-text-input');
+        input.addEventListener('input', () => { _postitTextDraft = input.value; });
+        // Reset draft ao abrir o painel
+        _postitTextDraft = '';
+
+        // Listeners dragstart em cada card da etiqueta
+        tb.querySelectorAll('.pt-card').forEach(b => {
             b.addEventListener('dragstart', (e) => {
                 const tag = b.dataset.tag;
                 e.dataTransfer.effectAllowed = 'copy';
                 e.dataTransfer.setData('text/x-sticky-tag', tag);
+                e.dataTransfer.setData('text/x-sticky-text', _postitTextDraft || '');
                 e.dataTransfer.setData('text/plain', tag);
                 _draggingTag = tag;
                 document.body.classList.add('dragging-sticky');
+                b.classList.add('is-dragging');
             });
             b.addEventListener('dragend', () => {
                 _draggingTag = null;
                 document.body.classList.remove('dragging-sticky');
+                b.classList.remove('is-dragging');
             });
-            // Click ainda seleciona (uso visual: indica "esta é a etiqueta")
+            // Click só destaca a etiqueta
             b.addEventListener('click', () => selectPostitTag(b.dataset.tag));
         });
     }
     selectPostitTag(initialTag);
-    toast('Arraste qualquer etiqueta da barra inferior para o PDF', 'info', 5000);
 }
-
-let _draggingTag = null;
 
 function exitPostitMode() {
     _postitMode = null;
@@ -923,19 +947,19 @@ function exitPostitMode() {
 
 function selectPostitTag(tag) {
     _postitMode = tag;
-    document.querySelectorAll('#postit-toolbar .pt-btn').forEach(b => {
+    document.querySelectorAll('#postit-toolbar .pt-card').forEach(b => {
         b.classList.toggle('is-selected', b.dataset.tag === tag);
     });
 }
 
-// Cria etiqueta direto (sem modal) no local arrastado. Usuário pode clicar pra editar texto.
-async function createStickyDirect(tag, pageNum, x_pct, y_pct) {
+// Cria etiqueta no local arrastado. Texto opcional (vem do input do painel).
+async function createStickyDirect(tag, pageNum, x_pct, y_pct, noteText = '') {
     try {
         const result = await api(`/books/${currentBookId}/annotations`, {
             method: 'POST',
             body: JSON.stringify({
                 page_number: pageNum,
-                note_text: '',
+                note_text: (noteText || '').slice(0, 80),
                 color: 'yellow',
                 tag,
                 x_pct,
@@ -950,8 +974,9 @@ async function createStickyDirect(tag, pageNum, x_pct, y_pct) {
         }
         updateNotesCount();
         renderNotesList();
-        toast(`Etiqueta "${STICKY_TAGS[tag].label}" fixada`, 'success', 1500);
-    } catch (e) { toast('Erro ao criar etiqueta: ' + e.message, 'error'); }
+        const label = STICKY_TAGS[tag].label;
+        toast(noteText ? `"${noteText.slice(0, 40)}" fixado` : `Etiqueta "${label}" fixada`, 'success', 1500);
+    } catch (e) { toast('Não foi possível criar a etiqueta. Tente novamente.', 'error'); }
 }
 
 function openStickyCreateModal(tag, pageNum, x_pct, y_pct) {
