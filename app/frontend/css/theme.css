@@ -625,10 +625,9 @@ img, svg, video, canvas { max-width: 100%; height: auto; }
 .crumb { font-size: clamp(11px, 1.4vw, 13px); flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ───── Sidebar ───── */
-/* Desktop ≥ lg: sidebar fixa */
+/* Desktop ≥ lg: sidebar fixa, mas botão hambúrguer continua disponível pra colapsar */
 @media (min-width: 1024px) {
     .sidebar-backdrop { display: none !important; }
-    .sidebar-toggle { display: none; }
     aside.sidebar.open { transform: none; }  /* sem efeito de drawer em desktop */
 }
 /* < lg: vira drawer */
