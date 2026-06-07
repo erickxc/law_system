@@ -9,11 +9,13 @@ async function showDashboard() {
     document.getElementById('mainContent').innerHTML = `<div class="page-shell">${loadingBlock()}</div>`;
 
     try {
-        const [stats, history, fcStats, upcoming] = await Promise.all([
+        const [stats, history, fcStats, upcoming, ipa, gaps] = await Promise.all([
             api('/sessions/stats').catch(() => null),
             api('/sessions/history').catch(() => []),
             api('/flashcards/stats').catch(() => null),
             api('/dashboard/upcoming?days=7&limit=8').catch(() => []),
+            api('/metrics/ipa').catch(() => null),
+            api('/metrics/gaps').catch(() => ({ gaps: [] })),
         ]);
         const tot = stats || { total_minutes:0, accuracy:0, current_streak:0, total_questions:0, last_30_days:[], by_subject:[], best_day:null };
         const hoursStr = tot.total_minutes >= 60
@@ -64,6 +66,8 @@ async function showDashboard() {
                 ${kpi('Taxa de acerto', tot.total_questions > 0 ? tot.accuracy : '—', 'fa-bullseye', tot.total_questions > 0 ? '%' : '')}
                 ${kpi('Cards a revisar', fcStats ? fcStats.due_today : '—', 'fa-layer-group', fcStats && fcStats.due_today > 0 ? 'hoje' : '')}
             </div>
+
+            ${renderIPAStrip(ipa, gaps)}
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-3 mb-5">
                 <div class="card lg:col-span-2">
@@ -280,4 +284,40 @@ function renderDashboardCharts(stats) {
             }
         });
     }
+}
+
+// ─── Inteligência Acadêmica: IPA + Pontos de Atenção ────────────────────
+function renderIPAStrip(ipa, gaps) {
+    if (!ipa && (!gaps || !gaps.gaps?.length)) return '';
+    const score = ipa ? ipa.geral : 0;
+    const color = score >= 75 ? 'var(--success)' : score >= 50 ? 'var(--warning)' : 'var(--danger)';
+    const topGaps = (gaps?.gaps || []).slice(0, 3);
+
+    return `
+    <div class="card mb-5" onclick="showIntelligence()" style="cursor: pointer; transition: background .12s;" onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">
+        <div class="card-body" style="padding: 14px 18px;">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                <div class="flex items-center gap-3">
+                    <div style="width:54px; height:54px; border-radius:50%; background: conic-gradient(${color} calc(${score} * 1%), var(--bg-2) 0); display:flex; align-items:center; justify-content:center; flex-shrink: 0;">
+                        <div style="width:40px; height:40px; background:var(--surface); border-radius:50%; display:flex; align-items:center; justify-content:center;">
+                            <span class="mono" style="font-weight:700; font-size:14px; color:${color}">${score.toFixed(0)}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10.5px] uppercase mono" style="color:var(--text-4); letter-spacing:.08em;">IPA Geral</p>
+                        <p class="text-[14px] font-semibold" style="color:var(--text)">Inteligência Acadêmica <i class="fa-solid fa-arrow-right text-[10px] ml-1" style="color:var(--text-4)"></i></p>
+                    </div>
+                </div>
+                <div class="md:col-span-2">
+                    ${topGaps.length === 0
+                        ? `<p class="text-[12.5px]" style="color:var(--text-3)"><i class="fa-solid fa-circle-check text-[10px] mr-1" style="color:var(--success)"></i> Sem lacunas detectadas. Continue assim.</p>`
+                        : `<p class="text-[10.5px] uppercase mono mb-1.5" style="color:var(--text-4); letter-spacing:.08em;">Pontos de atenção</p>
+                           <div class="flex flex-wrap gap-1.5">
+                               ${topGaps.map(g => `<span class="badge" style="background:var(--danger-bg);color:var(--danger);border-color:var(--danger)">${esc(g.subject_name)} · ${g.attention_score}pts</span>`).join('')}
+                           </div>`
+                    }
+                </div>
+            </div>
+        </div>
+    </div>`;
 }
