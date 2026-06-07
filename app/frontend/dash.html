@@ -17,10 +17,33 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <script>
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(err => console.warn('SW falhou:', err));
+    window.addEventListener('load', async () => {
+        try {
+            const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+            reg.update();
+            reg.addEventListener('updatefound', () => {
+                const newW = reg.installing;
+                if (newW) newW.addEventListener('statechange', () => {
+                    if (newW.state === 'activated' && navigator.serviceWorker.controller && !sessionStorage.getItem('sw_reloaded')) {
+                        sessionStorage.setItem('sw_reloaded', '1');
+                        location.reload();
+                    }
+                });
+            });
+        } catch (e) { console.warn('SW falhou:', e); }
     });
 }
+// Botão "Reset PWA" disponível via console pra recovery total
+window.resetPWA = async function() {
+    try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+        alert('PWA resetado. Recarregando...');
+        location.reload(true);
+    } catch (e) { alert('Falhou: ' + e.message); }
+};
 </script>
 </head>
 <body class="flex h-screen overflow-hidden">

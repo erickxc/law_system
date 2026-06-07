@@ -18,10 +18,29 @@
 if (localStorage.getItem('access_token')) {
     location.replace('dash.html');
 }
-// Registra SW
+// Registra SW (com auto-update + recovery)
 if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    window.addEventListener('load', async () => {
+        try {
+            const reg = await navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' });
+            // Verifica updates a cada vez que a página carrega
+            reg.update();
+            // Se novo SW assumir o controle, força reload pra pegar versão fresca
+            reg.addEventListener('updatefound', () => {
+                const newW = reg.installing;
+                if (newW) {
+                    newW.addEventListener('statechange', () => {
+                        if (newW.state === 'activated' && navigator.serviceWorker.controller) {
+                            // SW novo ativo, página antiga em cache — recarrega uma vez
+                            if (!sessionStorage.getItem('sw_reloaded')) {
+                                sessionStorage.setItem('sw_reloaded', '1');
+                                location.reload();
+                            }
+                        }
+                    });
+                }
+            });
+        } catch (e) { console.warn('SW falhou:', e); }
     });
 }
 </script>
