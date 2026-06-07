@@ -46,10 +46,10 @@ ALTER TABLE academic.questions
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
         to_tsvector('portuguese',
-            unaccent(coalesce(statement, '')) || ' ' ||
-            unaccent(coalesce(topic, '')) || ' ' ||
-            unaccent(coalesce(tags, '')) || ' ' ||
-            unaccent(coalesce(banca, ''))
+            coalesce(statement, '') || ' ' ||
+            coalesce(topic, '') || ' ' ||
+            coalesce(tags, '') || ' ' ||
+            coalesce(banca, '')
         )
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_questions_search ON academic.questions USING GIN (search_vector);

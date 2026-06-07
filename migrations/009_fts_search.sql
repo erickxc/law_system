@@ -1,68 +1,65 @@
 -- Migration 009 — Full-text search com tsvector em português
--- Indexes GIN pra busca rápida em livros, notas, flashcards, grifos, anotações.
+-- Sem dependência de extensão extra (unaccent removido — to_tsvector('portuguese') já faz stemming)
 
--- Extensão pra unaccent (busca sem acento)
-CREATE EXTENSION IF NOT EXISTS unaccent;
-
--- ── Books: nome + autor + gênero ──
+-- ── Books ──
 ALTER TABLE academic.books
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
         to_tsvector('portuguese',
-            unaccent(coalesce(name, '')) || ' ' ||
-            unaccent(coalesce(author, '')) || ' ' ||
-            unaccent(coalesce(genre, ''))
+            coalesce(name, '') || ' ' ||
+            coalesce(author, '') || ' ' ||
+            coalesce(genre, '')
         )
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_books_search ON academic.books USING GIN (search_vector);
 
--- ── Notes: title + content_plain + tags ──
+-- ── Notes ──
 ALTER TABLE academic.notes
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
         to_tsvector('portuguese',
-            unaccent(coalesce(title, '')) || ' ' ||
-            unaccent(coalesce(content_plain, '')) || ' ' ||
-            unaccent(coalesce(tags, ''))
+            coalesce(title, '') || ' ' ||
+            coalesce(content_plain, '') || ' ' ||
+            coalesce(tags, '')
         )
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_notes_search ON academic.notes USING GIN (search_vector);
 
--- ── Flashcards: front + back + tags ──
+-- ── Flashcards ──
 ALTER TABLE academic.flashcards
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
         to_tsvector('portuguese',
-            unaccent(coalesce(front, '')) || ' ' ||
-            unaccent(coalesce(back, '')) || ' ' ||
-            unaccent(coalesce(tags, ''))
+            coalesce(front, '') || ' ' ||
+            coalesce(back, '') || ' ' ||
+            coalesce(tags, '')
         )
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_flashcards_search ON academic.flashcards USING GIN (search_vector);
 
--- ── Highlights: selected_text ──
+-- ── Highlights ──
 ALTER TABLE academic.book_highlights
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
-        to_tsvector('portuguese', unaccent(coalesce(selected_text, '')))
+        to_tsvector('portuguese', coalesce(selected_text, ''))
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_highlights_search ON academic.book_highlights USING GIN (search_vector);
 
--- ── Annotations: note_text ──
+-- ── Annotations ──
 ALTER TABLE academic.book_annotations
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
-        to_tsvector('portuguese', unaccent(coalesce(note_text, '')))
+        to_tsvector('portuguese', coalesce(note_text, ''))
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_annotations_search ON academic.book_annotations USING GIN (search_vector);
 
--- ── Subjects: name + sigla ──
+-- ── Subjects ──
 ALTER TABLE academic.subjects
     ADD COLUMN IF NOT EXISTS search_vector tsvector
     GENERATED ALWAYS AS (
         to_tsvector('portuguese',
-            unaccent(coalesce(name, '')) || ' ' ||
-            unaccent(coalesce(sigla, ''))
+            coalesce(name, '') || ' ' ||
+            coalesce(sigla, '')
         )
     ) STORED;
 CREATE INDEX IF NOT EXISTS ix_subjects_search ON academic.subjects USING GIN (search_vector);
