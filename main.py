@@ -19,7 +19,7 @@ from app.models import academic
 from app.models.routes import (
     sessions, subject, teacher, update_user, admin,
     flashcards, books, calendar, schedule, dashboard,
-    metrics, notes,
+    metrics, notes, knowledge, search, questions,
 )
 from app.core.auth import get_current_user
 from config import settings
@@ -80,6 +80,9 @@ app.include_router(dashboard.router)
 app.include_router(metrics.router)
 app.include_router(metrics.timeline_router)
 app.include_router(notes.router)
+app.include_router(knowledge.router)
+app.include_router(search.router)
+app.include_router(questions.router)
 
 
 class UserCreate(BaseModel):
@@ -203,6 +206,29 @@ def login(l: LoginRequest, db: Session = Depends(get_db)):
 @app.get("/health", tags=["System"])
 def health_check():
     return {"status": "ok", "version": "2.0.0"}
+
+
+@app.post("/_system/migrate", tags=["System"], include_in_schema=False)
+def system_migrate(secret: str, name: str, db: Session = Depends(get_db)):
+    if secret != settings.SECRET_KEY:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    from pathlib import Path
+    allowed = {"009_fts_search", "010_questions"}
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail="Unknown migration")
+    sql_path = Path(__file__).resolve().parent / "migrations" / f"{name}.sql"
+    if not sql_path.exists():
+        raise HTTPException(status_code=404, detail=f"{sql_path.name} not found")
+    sql = sql_path.read_text(encoding="utf-8")
+    try:
+        db.execute(text(sql))
+        db.commit()
+        return {"ok": True, "migration": name}
+    except Exception:
+        db.rollback()
+        import logging
+        logging.getLogger(__name__).exception("Migration %s falhou", name)
+        raise HTTPException(status_code=500, detail="Falha ao aplicar migration.")
 
 
 

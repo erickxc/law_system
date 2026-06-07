@@ -311,6 +311,48 @@ class Note(Base):
     subject: Mapped[Optional["Subject"]] = relationship("Subject", foreign_keys=[subject_id])
 
 
+class Question(Base):
+    """Questão de prática (concurso, OAB, prova) — entidade independente do flashcard."""
+    __tablename__ = "questions"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False, index=True)
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True)
+
+    statement: Mapped[str] = mapped_column(Text, nullable=False)
+    options: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
+    correct: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    explanation: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    kind: Mapped[str] = mapped_column(String(20), default="multiple")
+    topic: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    banca: Mapped[Optional[str]] = mapped_column(String(80), nullable=True)
+    ano: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    source: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    tags: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    subject: Mapped[Optional["Subject"]] = relationship("Subject", foreign_keys=[subject_id])
+    attempts: Mapped[List["QuestionAttempt"]] = relationship("QuestionAttempt", back_populates="question", cascade="all, delete-orphan")
+
+
+class QuestionAttempt(Base):
+    __tablename__ = "question_attempts"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    question_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("academic.questions.id", ondelete="CASCADE"), nullable=False)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False)
+    answer: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    is_correct: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    time_seconds: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    attempted_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    question: Mapped["Question"] = relationship("Question", back_populates="attempts")
+
+
 class LearningEvent(Base):
     """Event sourcing simplificado da jornada de aprendizagem.
     Cada interação (leitura, grifo, anotação, revisão, sessão) vira um evento."""

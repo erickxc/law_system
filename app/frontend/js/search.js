@@ -53,8 +53,10 @@ async function loadSearchData() {
     return _searchData;
 }
 
-function runSearch(query) {
-    const q = query.trim().toLowerCase();
+let _searchDebounce = null;
+
+async function runSearch(query) {
+    const q = query.trim();
     const data = _searchData || { subjects: [], books: [], flashcards: [], events: [] };
     const groups = [];
 
@@ -72,49 +74,15 @@ function runSearch(query) {
             { icon: 'fa-user',       title: 'Perfil',       action: () => { closeSearch(); showProfile(); } },
         ];
         groups.push({ label: 'Navegar', items: shortcuts.map(s => ({ ...s, meta: 'Página' })) });
+    } else if (q.length >= 2) {
+        // Busca FTS unificada no servidor (com debounce)
+        clearTimeout(_searchDebounce);
+        _searchDebounce = setTimeout(() => runServerSearch(q), 220);
+        return;
     } else {
-        // Matérias
-        const sm = data.subjects.filter(s => s.name.toLowerCase().includes(q)).slice(0, 5)
-            .map(s => ({
-                icon: 'fa-book-bookmark',
-                title: s.name,
-                meta: `Matéria · ${s.period}º período · ${s.status}`,
-                action: () => { closeSearch(); showSubjects(); }
-            }));
-        if (sm.length) groups.push({ label: 'Matérias', items: sm });
-
-        // Livros
-        const bm = data.books.filter(b => b.name.toLowerCase().includes(q) || (b.author||'').toLowerCase().includes(q)).slice(0, 5)
-            .map(b => ({
-                icon: 'fa-book-open',
-                title: b.name,
-                meta: `Livro · ${b.author || 'sem autor'}`,
-                action: () => { closeSearch(); openBookReader(b.id); }
-            }));
-        if (bm.length) groups.push({ label: 'Livros', items: bm });
-
-        // Flashcards
-        const fm = data.flashcards.filter(c =>
-            c.front.toLowerCase().includes(q) ||
-            c.back.toLowerCase().includes(q) ||
-            (c.tags||'').toLowerCase().includes(q)
-        ).slice(0, 7).map(c => ({
-            icon: 'fa-layer-group',
-            title: c.front.length > 60 ? c.front.slice(0, 60) + '…' : c.front,
-            meta: `Flashcard${c.subject_name ? ' · ' + c.subject_name : ''}`,
-            action: () => { closeSearch(); showFlashcards(); }
-        }));
-        if (fm.length) groups.push({ label: 'Flashcards', items: fm });
-
-        // Eventos
-        const em = data.events.filter(e => e.title.toLowerCase().includes(q)).slice(0, 5)
-            .map(e => ({
-                icon: 'fa-calendar-day',
-                title: e.title,
-                meta: `${e.event_type} · ${fmtShortDate(e.start_at)} ${e.start_at.slice(11,16)}`,
-                action: () => { closeSearch(); showCalendar(); }
-            }));
-        if (em.length) groups.push({ label: 'Calendário', items: em });
+        const container = document.getElementById('search-results');
+        if (container) container.innerHTML = `<div class="search-empty">Digite ao menos 2 caracteres…</div>`;
+        return;
     }
 
     _searchSelected = 0;
@@ -189,3 +157,91 @@ document.addEventListener('keydown', (e) => {
 
 // Invalidar cache quando alguma operação CRUD acontece (helper)
 function invalidateSearchCache() { _searchData = null; }
+
+// ─── Busca FTS server-side via /search ──────────────────────────────────
+async function runServerSearch(q) {
+    const container = document.getElementById('search-results');
+    if (!container) return;
+    container.innerHTML = `<div class="search-empty"><i class="fa-solid fa-circle-notch fa-spin mb-1"></i> Buscando…</div>`;
+    try {
+        const r = await api(`/search/?q=${encodeURIComponent(q)}&limit=8`);
+        const groups = [];
+
+        if (r.subjects?.length) groups.push({
+            label: 'Matérias',
+            items: r.subjects.map(s => ({
+                icon: 'fa-book-bookmark', title: s.name,
+                meta: `Matéria${s.sigla ? ' · ' + s.sigla : ''} · ${s.status}`,
+                action: () => { closeSearch(); showSubjects(); }
+            }))
+        });
+        if (r.books?.length) groups.push({
+            label: 'Livros',
+            items: r.books.map(b => ({
+                icon: 'fa-book-open', title: b.name,
+                meta: `Livro${b.author ? ' · ' + b.author : ''} · ${b.current_page}/${b.total_pages}`,
+                action: () => { closeSearch(); openBookReader(b.id); }
+            }))
+        });
+        if (r.notes?.length) groups.push({
+            label: 'Notas',
+            items: r.notes.map(n => ({
+                icon: 'fa-pen-to-square', title: n.title,
+                meta: `Nota · ${n.kind} · ${n.preview.slice(0, 80)}`,
+                action: () => { closeSearch(); openNoteEditor(n.id); }
+            }))
+        });
+        if (r.flashcards?.length) groups.push({
+            label: 'Flashcards',
+            items: r.flashcards.map(c => ({
+                icon: 'fa-layer-group', title: c.front.length > 60 ? c.front.slice(0, 60) + '…' : c.front,
+                meta: `Flashcard${c.tags ? ' · ' + c.tags : ''}`,
+                action: () => { closeSearch(); showFlashcards(); }
+            }))
+        });
+        if (r.highlights?.length) groups.push({
+            label: 'Grifos',
+            items: r.highlights.map(h => ({
+                icon: 'fa-highlighter', title: h.selected_text.slice(0, 80),
+                meta: `Grifo · ${h.book_name || ''} · pg. ${h.page_number}`,
+                action: () => { closeSearch(); if (h.book_id) openBookReader(h.book_id); }
+            }))
+        });
+        if (r.annotations?.length) groups.push({
+            label: 'Anotações',
+            items: r.annotations.map(a => ({
+                icon: 'fa-note-sticky', title: a.note_text.slice(0, 80) || a.tag || '(etiqueta)',
+                meta: `Anotação · ${a.book_name || ''} · pg. ${a.page_number}`,
+                action: () => { closeSearch(); if (a.book_id) openBookReader(a.book_id); }
+            }))
+        });
+
+        if (groups.length === 0) {
+            container.innerHTML = `<div class="search-empty"><i class="fa-solid fa-magnifying-glass mb-2 text-[20px]" style="color:var(--text-5)"></i><p>Nada encontrado para "<strong>${esc(q)}</strong>"</p></div>`;
+            return;
+        }
+
+        _searchSelected = 0;
+        let html = '';
+        let flatIdx = 0;
+        const flatItems = [];
+        for (const g of groups) {
+            html += `<div class="search-section-label">${g.label}</div>`;
+            for (const item of g.items) {
+                html += `<div class="search-result ${flatIdx === 0 ? 'is-selected' : ''}" data-idx="${flatIdx}" onclick="executeSearchItem(${flatIdx})">
+                    <div class="search-result-icon"><i class="fa-solid ${item.icon}"></i></div>
+                    <div class="search-result-content">
+                        <div class="search-result-title">${esc(item.title)}</div>
+                        <div class="search-result-meta">${esc(item.meta)}</div>
+                    </div>
+                </div>`;
+                flatItems.push(item);
+                flatIdx++;
+            }
+        }
+        container.innerHTML = html;
+        window._searchFlatItems = flatItems;
+    } catch (e) {
+        container.innerHTML = `<div class="search-empty">Erro na busca: ${esc(e.message)}</div>`;
+    }
+}

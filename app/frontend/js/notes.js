@@ -112,6 +112,8 @@ async function openNoteEditor(noteId, defaultKind = 'text') {
                     <span class="note-toolbar-sep"></span>
                     <input type="color" id="ne-color" oninput="execEditor('foreColor',this.value)" title="Cor" style="width:28px;height:28px;border:none;background:none;cursor:pointer">
                     <button onclick="askLink()" title="Link"><i class="fa-solid fa-link"></i></button>
+                    <button onclick="insertInlineDrawing()" title="Inserir desenho aqui (canvas inline)" class="btn-inline"><i class="fa-solid fa-signature"></i></button>
+                    <button onclick="insertTable()" title="Inserir tabela 3x3"><i class="fa-solid fa-table"></i></button>
                     <button onclick="convertNoteSelectionToFlashcard()" title="Trecho → Flashcard" class="btn-fc"><i class="fa-solid fa-layer-group"></i></button>
                 </div>
                 <div id="ne-editor" class="note-editor-content md-body" contenteditable="true" spellcheck="true" oninput="markDirty()" onpaste="onEditorPaste(event)"></div>
@@ -502,6 +504,253 @@ async function runOCR() {
         toast('Erro no OCR: ' + e.message, 'error');
         console.error(e);
     }
+}
+
+// ─── Editor Híbrido: blocos inline (desenho + tabela) ───────────────────
+function insertInlineDrawing() {
+    const editor = document.getElementById('ne-editor');
+    if (!editor) return;
+    editor.focus();
+    const id = 'inline-' + Math.random().toString(36).slice(2, 9);
+    const blockHtml = `<figure data-block="drawing" class="inline-block" contenteditable="false">
+        <div class="inline-block-toolbar">
+            <span class="text-[10px] mono" style="color:var(--text-4)">Desenho</span>
+            <button onclick="editInlineDrawing('${id}')" class="btn btn-icon btn-sm" title="Editar"><i class="fa-solid fa-pen text-[9px]"></i></button>
+            <button onclick="removeInlineBlock('${id}')" class="btn btn-icon btn-sm" title="Remover" style="color:var(--danger)"><i class="fa-solid fa-trash text-[9px]"></i></button>
+        </div>
+        <div id="${id}" class="inline-svg-container" style="background:white;border-radius:4px;padding:8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 200" width="100%" height="200"><rect width="100%" height="100%" fill="white"/></svg>
+        </div>
+    </figure><p><br></p>`;
+    document.execCommand('insertHTML', false, blockHtml);
+    markDirty();
+    // Abre o editor imediatamente
+    setTimeout(() => editInlineDrawing(id), 50);
+}
+
+function removeInlineBlock(id) {
+    const el = document.getElementById(id)?.closest('figure[data-block]');
+    if (el && confirm('Remover este bloco?')) {
+        el.remove();
+        markDirty();
+    }
+}
+
+let _inlineDrawingCtx = null;  // { containerId, paths, canvas, ctx, color, size, mode }
+
+function editInlineDrawing(containerId) {
+    // Abre um sub-modal com canvas pra editar o SVG inline
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const existingSvg = container.querySelector('svg');
+    const viewBox = existingSvg?.getAttribute('viewBox') || '0 0 600 200';
+    const [, , vbW, vbH] = viewBox.split(' ').map(Number);
+
+    // Cria overlay modal sobre o modal principal
+    const overlay = document.createElement('div');
+    overlay.id = 'inline-draw-overlay';
+    overlay.className = 'modal-backdrop';
+    overlay.style.zIndex = '1100';
+    overlay.innerHTML = `
+    <div class="modal-box" style="max-width: min(900px, 96vw); padding: 18px;">
+        <div class="modal-head">
+            <h3>Editar desenho</h3>
+            <button onclick="closeInlineDrawingEditor(false)" class="modal-close"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="note-toolbar" style="margin-bottom: 8px;">
+            <button onclick="setInlineDrawMode('pen')" id="idr-pen" class="cv-tool is-active" title="Caneta"><i class="fa-solid fa-pen"></i></button>
+            <button onclick="setInlineDrawMode('highlighter')" id="idr-hl" class="cv-tool" title="Marca-texto"><i class="fa-solid fa-highlighter"></i></button>
+            <button onclick="setInlineDrawMode('eraser')" id="idr-er" class="cv-tool" title="Borracha"><i class="fa-solid fa-eraser"></i></button>
+            <span class="note-toolbar-sep"></span>
+            <input type="color" value="#1f2937" oninput="_inlineDrawingCtx && (_inlineDrawingCtx.color=this.value)" style="width:28px;height:28px;border:none;background:none">
+            <input type="range" min="1" max="20" value="2" oninput="_inlineDrawingCtx && (_inlineDrawingCtx.size=parseInt(this.value))" style="width:80px">
+            <span class="note-toolbar-sep"></span>
+            <button onclick="undoInlineDrawing()" title="Desfazer"><i class="fa-solid fa-rotate-left"></i></button>
+            <button onclick="clearInlineDrawing()" title="Limpar"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        <div style="background:#f9fafb; padding:8px; border-radius:4px;">
+            <canvas id="inline-draw-canvas" style="background:white; display:block; max-width:100%;"></canvas>
+        </div>
+        <div class="flex gap-2 justify-end pt-3 mt-3" style="border-top:1px solid var(--border)">
+            <button onclick="closeInlineDrawingEditor(false)" class="btn">Cancelar</button>
+            <button onclick="closeInlineDrawingEditor(true)" class="btn btn-primary"><i class="fa-solid fa-check text-[10px]"></i> Aplicar</button>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+
+    // Inicializa canvas com dimensões do SVG
+    const canvas = document.getElementById('inline-draw-canvas');
+    const w = Math.min(800, vbW * 1.3);
+    const h = w * (vbH / vbW);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, w, h);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    _inlineDrawingCtx = {
+        containerId, canvas, ctx, width: w, height: h, dpr,
+        paths: [], currentPath: null,
+        color: '#1f2937', size: 2, mode: 'pen',
+        origViewBox: [vbW, vbH],
+    };
+
+    // Restaura SVG existente
+    if (existingSvg) {
+        const svgStr = existingSvg.outerHTML;
+        restoreInlinePaths(svgStr, w, h, vbW, vbH);
+    }
+
+    canvas.addEventListener('pointerdown', inlinePointerDown);
+    canvas.addEventListener('pointermove', inlinePointerMove);
+    canvas.addEventListener('pointerup', inlinePointerUp);
+    canvas.addEventListener('pointercancel', inlinePointerUp);
+    canvas.style.touchAction = 'none';
+}
+
+function setInlineDrawMode(m) {
+    if (!_inlineDrawingCtx) return;
+    _inlineDrawingCtx.mode = m;
+    ['pen','hl','er'].forEach(k => document.getElementById(`idr-${k}`)?.classList.remove('is-active'));
+    document.getElementById(`idr-${m === 'highlighter' ? 'hl' : m === 'eraser' ? 'er' : 'pen'}`)?.classList.add('is-active');
+}
+
+function inlinePointerDown(e) {
+    if (!_inlineDrawingCtx) return;
+    e.preventDefault();
+    const c = _inlineDrawingCtx;
+    const pt = inlinePoint(e);
+    const path = { mode: c.mode, color: c.color, size: c.size, points: [pt] };
+    c.currentPath = path;
+    c.paths.push(path);
+    if (c.mode === 'eraser') {
+        c.ctx.globalCompositeOperation = 'destination-out';
+        c.ctx.strokeStyle = 'rgba(0,0,0,1)';
+        c.ctx.lineWidth = c.size * 4;
+    } else if (c.mode === 'highlighter') {
+        c.ctx.globalCompositeOperation = 'source-over';
+        c.ctx.strokeStyle = c.color + '40';
+        c.ctx.lineWidth = c.size * 4;
+    } else {
+        c.ctx.globalCompositeOperation = 'source-over';
+        c.ctx.strokeStyle = c.color;
+        c.ctx.lineWidth = c.size;
+    }
+    c.ctx.beginPath();
+    c.ctx.moveTo(pt.x, pt.y);
+}
+
+function inlinePointerMove(e) {
+    if (!_inlineDrawingCtx?.currentPath) return;
+    e.preventDefault();
+    const pt = inlinePoint(e);
+    _inlineDrawingCtx.currentPath.points.push(pt);
+    _inlineDrawingCtx.ctx.lineTo(pt.x, pt.y);
+    _inlineDrawingCtx.ctx.stroke();
+}
+
+function inlinePointerUp() {
+    if (!_inlineDrawingCtx) return;
+    _inlineDrawingCtx.currentPath = null;
+    _inlineDrawingCtx.ctx.globalCompositeOperation = 'source-over';
+}
+
+function inlinePoint(e) {
+    const r = _inlineDrawingCtx.canvas.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+}
+
+function undoInlineDrawing() {
+    if (!_inlineDrawingCtx?.paths.length) return;
+    _inlineDrawingCtx.paths.pop();
+    redrawInlineCanvas();
+}
+function clearInlineDrawing() {
+    if (!_inlineDrawingCtx || !confirm('Limpar tudo?')) return;
+    _inlineDrawingCtx.paths = [];
+    redrawInlineCanvas();
+}
+function redrawInlineCanvas() {
+    const c = _inlineDrawingCtx;
+    if (!c) return;
+    c.ctx.globalCompositeOperation = 'source-over';
+    c.ctx.fillStyle = 'white';
+    c.ctx.fillRect(0, 0, c.width, c.height);
+    c.paths.forEach(p => {
+        if (p.mode === 'eraser') {
+            c.ctx.globalCompositeOperation = 'destination-out';
+            c.ctx.strokeStyle = 'rgba(0,0,0,1)';
+            c.ctx.lineWidth = p.size * 4;
+        } else if (p.mode === 'highlighter') {
+            c.ctx.globalCompositeOperation = 'source-over';
+            c.ctx.strokeStyle = p.color + '40';
+            c.ctx.lineWidth = p.size * 4;
+        } else {
+            c.ctx.globalCompositeOperation = 'source-over';
+            c.ctx.strokeStyle = p.color;
+            c.ctx.lineWidth = p.size;
+        }
+        if (p.points.length < 2) return;
+        c.ctx.beginPath();
+        c.ctx.moveTo(p.points[0].x, p.points[0].y);
+        for (let i = 1; i < p.points.length; i++) c.ctx.lineTo(p.points[i].x, p.points[i].y);
+        c.ctx.stroke();
+    });
+    c.ctx.globalCompositeOperation = 'source-over';
+}
+
+function restoreInlinePaths(svgStr, w, h, origW, origH) {
+    const sx = w / origW, sy = h / origH;
+    const pathRe = /<path\s+d="([^"]+)"\s+stroke="([^"]+)"\s+stroke-width="([^"]+)"(?:\s+stroke-opacity="([^"]+)")?[^>]*\/>/g;
+    let m;
+    while ((m = pathRe.exec(svgStr)) !== null) {
+        const [, d, color, strokeWidth, opacity] = m;
+        const opacityNum = parseFloat(opacity || '1');
+        const mode = opacityNum < 0.5 ? 'highlighter' : 'pen';
+        const baseSize = mode === 'highlighter' ? parseFloat(strokeWidth) / 4 : parseFloat(strokeWidth);
+        const pts = [];
+        const cmdRe = /([ML])\s+(-?\d+\.?\d*)\s+(-?\d+\.?\d*)/g;
+        let c;
+        while ((c = cmdRe.exec(d)) !== null) pts.push({ x: parseFloat(c[2]) * sx, y: parseFloat(c[3]) * sy });
+        if (pts.length > 0) _inlineDrawingCtx.paths.push({ mode, color, size: baseSize, points: pts });
+    }
+    redrawInlineCanvas();
+}
+
+function closeInlineDrawingEditor(apply) {
+    const overlay = document.getElementById('inline-draw-overlay');
+    if (!_inlineDrawingCtx) { overlay?.remove(); return; }
+    if (apply) {
+        const c = _inlineDrawingCtx;
+        // Converte paths em SVG (em coords originais do viewBox pra ser nítido em qualquer tamanho)
+        const vbW = c.origViewBox[0], vbH = c.origViewBox[1];
+        const sx = vbW / c.width, sy = vbH / c.height;
+        const polys = c.paths.filter(p => p.mode !== 'eraser' && p.points.length >= 2).map(p => {
+            const opacity = p.mode === 'highlighter' ? 0.25 : 1.0;
+            const strokeWidth = p.size * (p.mode === 'highlighter' ? 4 : 1);
+            const d = `M ${(p.points[0].x * sx).toFixed(1)} ${(p.points[0].y * sy).toFixed(1)} ` +
+                p.points.slice(1).map(pt => `L ${(pt.x * sx).toFixed(1)} ${(pt.y * sy).toFixed(1)}`).join(' ');
+            return `<path d="${d}" stroke="${p.color}" stroke-width="${strokeWidth.toFixed(1)}" stroke-opacity="${opacity}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+        }).join('');
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${vbW} ${vbH}" width="100%" height="200"><rect width="100%" height="100%" fill="white"/>${polys}</svg>`;
+        const container = document.getElementById(c.containerId);
+        if (container) container.innerHTML = svg;
+        markDirty();
+    }
+    _inlineDrawingCtx = null;
+    overlay?.remove();
+}
+
+function insertTable() {
+    const html = `<table class="hybrid-tbl"><thead><tr><th>Coluna 1</th><th>Coluna 2</th><th>Coluna 3</th></tr></thead><tbody><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr><tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr></tbody></table><p><br></p>`;
+    document.execCommand('insertHTML', false, html);
+    markDirty();
 }
 
 // Ctrl+S para salvar dentro do editor

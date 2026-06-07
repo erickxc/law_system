@@ -637,6 +637,50 @@ body.focus-mode .focus-exit {
 [data-theme="dark"] .note-canvas-wrap { background: #1a1a1a; }
 #ne-canvas { display: block; background: white; }
 [data-theme="dark"] #ne-canvas { background: #f5f5f5; }
+/* Praticar questões */
+.practice-opt {
+    display: flex; align-items: stretch; gap: 12px; width: 100%;
+    padding: 10px 14px; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: 6px; text-align: left; cursor: pointer;
+    transition: border-color .12s, background .12s;
+    font-size: 13.5px;
+}
+.practice-opt:hover { border-color: var(--accent); background: var(--accent-bg); }
+.practice-opt-key {
+    flex-shrink: 0; width: 32px; height: 32px;
+    background: var(--bg-2); border-radius: 4px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-weight: 600; font-family: 'JetBrains Mono', monospace;
+}
+.practice-opt-text { flex: 1; color: var(--text); line-height: 1.5; padding: 6px 0; }
+.practice-opt-correct { border-color: var(--success) !important; background: var(--success-bg) !important; }
+.practice-opt-correct .practice-opt-key { background: var(--success); color: white; }
+.practice-opt-wrong { border-color: var(--danger) !important; background: var(--danger-bg) !important; }
+.practice-opt-wrong .practice-opt-key { background: var(--danger); color: white; }
+
+/* Blocos inline no editor híbrido */
+.inline-block {
+    margin: 12px 0; padding: 6px;
+    background: var(--bg-2); border: 1px solid var(--border); border-radius: 6px;
+    position: relative;
+}
+.inline-block-toolbar {
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 4px; padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+}
+.inline-block-toolbar button { width: 24px; height: 24px; }
+.inline-svg-container svg { display: block; width: 100%; max-width: 100%; }
+.hybrid-tbl {
+    width: 100%; border-collapse: collapse; margin: 8px 0;
+    font-size: 13px;
+}
+.hybrid-tbl th, .hybrid-tbl td { border: 1px solid var(--border); padding: 6px 10px; }
+.hybrid-tbl thead th { background: var(--bg-2); font-weight: 600; }
+
+.note-toolbar .btn-inline { width: auto; padding: 0 8px; font-size: 11px; color: var(--purple, #7c3aed); border-color: var(--purple, #7c3aed); }
+.note-toolbar .btn-inline:hover { background: rgba(124,58,237,.08); }
+
 .note-editor-foot {
     display: flex; align-items: center; gap: 10px;
     padding: 12px 0 0; border-top: 1px solid var(--border); margin-top: 12px;

@@ -252,6 +252,8 @@ def run_migration(
         "006_highlight_rects",
         "007_learning_events",
         "008_notes",
+        "009_fts_search",
+        "010_questions",
     }
     if name not in allowed:
         raise HTTPException(status_code=404, detail=f"Migration '{name}' não existe")

@@ -11,7 +11,7 @@ Sistema de gerenciamento de estudos jurídicos. Backend FastAPI + PostgreSQL, fr
 | Camada | Tecnologia |
 |--------|-----------|
 | Backend | Python 3.11+, FastAPI 0.129, SQLAlchemy 2.0 |
-| Banco | PostgreSQL 14+ (local) / Supabase (produção) |
+| Banco | PostgreSQL 14+ (local) / Neon (produção) |
 | Auth | OAuth2PasswordBearer + JWT (PyJWT) + bcrypt |
 | Frontend | HTML5, Tailwind CSS (CDN), Vanilla JS ES6+, Chart.js |
 | Deploy | Vercel (`api/index.py` como handler) |
@@ -85,7 +85,7 @@ migrations/001_user_lockout_and_photo.sql   # photo_url, failed_login_attempts, 
 Ver `.env.example`. Arquivo `.env` **nunca commitar**.
 
 ```
-# Database — use DB_URL para Supabase/Vercel, ou variáveis individuais para local
+# Database — use DB_URL para Neon/Vercel, ou variáveis individuais para local
 DB_URL=postgresql://user:pass@host:5432/dbname    # produção
 DB_HOST=localhost                                  # dev local
 DB_PORT=5432
@@ -112,7 +112,7 @@ ADMIN_EMAIL=
 ENVIRONMENT=development          # ou production
 ```
 
-`config.py` converte `postgres://` → `postgresql://` automaticamente (compatibilidade Supabase).
+`config.py` converte `postgres://` → `postgresql://` automaticamente (compatibilidade Neon/Heroku-style URLs).
 
 ---
 
@@ -210,7 +210,7 @@ python -m http.server 5500
 
 - Entry point: `api/index.py` (wrapper que expõe `app` do `main.py`)
 - `vercel.json` roteia tudo para `api/index.py`
-- Banco: Supabase via `DB_URL` nas env vars do Vercel
+- Banco: Neon (Postgres serverless) via `DB_URL` nas env vars do Vercel
 - Frontend: arquivos estáticos em `app/frontend/` servidos via FastAPI `StaticFiles`
 
 ---
@@ -316,7 +316,7 @@ python test_all.py       # Teste end-to-end de todos os endpoints (71 testes)
 - **Email automático** (SMTP configurado mas nenhuma rota usa). Casos previstos: boas-vindas ao admin no register, notificação ao user no approve, lembrete de pagamento pendente. Pulei a pedido do usuário.
 - **Forgot/reset password** — depende de email.
 - **Alembic** — schema ainda gerenciado por `create_all()` + SQL manual.
-- **Upload de arquivos** (foto, anexos de sessão) — Vercel não tem disco persistente. Solução atual: URL externa (Cloudinary/Imgur/Supabase Storage).
+- **Upload de arquivos** (foto, anexos de sessão) — Vercel não tem disco persistente. Solução atual: URL externa (Cloudinary/Imgur) ou data:image em base64 (cap 2MB).
 - **Notificações in-app persistentes** — só temos toasts efêmeros.
 - **PWA / service worker** — sem offline.
 - **Unit tests** — só `test_all.py` (e2e).

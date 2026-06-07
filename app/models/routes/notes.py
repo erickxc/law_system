@@ -27,13 +27,35 @@ ALLOWED_TAGS = {
     "h1", "h2", "h3", "h4", "ul", "ol", "li",
     "blockquote", "code", "pre",
     "a", "img", "span", "div",
+    # SVG inline (editor híbrido — desenho dentro do texto)
+    "svg", "path", "rect", "circle", "ellipse", "line", "polyline", "polygon", "g", "text", "tspan",
+    # Tabelas
+    "table", "thead", "tbody", "tr", "th", "td",
+    # figure pra envolver SVG
+    "figure", "figcaption",
 }
 ALLOWED_ATTRS = {
     "a": {"href", "title", "target", "rel"},
     "img": {"src", "alt", "title", "width", "height"},
-    "span": {"style"},
-    "div": {"style"},
+    "span": {"style", "class"},
+    "div": {"style", "class", "data-block", "contenteditable"},
     "p": {"style"},
+    "figure": {"class", "data-block"},
+    "figcaption": {"class"},
+    "svg": {"xmlns", "viewBox", "width", "height", "preserveAspectRatio", "class"},
+    "path": {"d", "stroke", "stroke-width", "stroke-opacity", "stroke-linecap", "stroke-linejoin", "fill", "fill-opacity", "transform"},
+    "rect": {"x", "y", "width", "height", "fill", "stroke", "stroke-width", "rx", "ry"},
+    "circle": {"cx", "cy", "r", "fill", "stroke", "stroke-width"},
+    "ellipse": {"cx", "cy", "rx", "ry", "fill", "stroke", "stroke-width"},
+    "line": {"x1", "y1", "x2", "y2", "stroke", "stroke-width", "stroke-linecap"},
+    "polyline": {"points", "stroke", "stroke-width", "fill"},
+    "polygon": {"points", "stroke", "stroke-width", "fill"},
+    "g": {"transform", "stroke", "fill", "opacity"},
+    "text": {"x", "y", "font-size", "font-family", "fill", "text-anchor"},
+    "tspan": {"x", "y", "dx", "dy", "font-size"},
+    "table": {"class"},
+    "th": {"colspan", "rowspan"},
+    "td": {"colspan", "rowspan"},
 }
 # Atributos style permitidos (cor + negrito + tamanho)
 ALLOWED_STYLE_PROPS = {"color", "background-color", "font-weight", "font-size", "text-align", "text-decoration"}

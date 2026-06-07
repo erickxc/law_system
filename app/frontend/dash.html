@@ -64,11 +64,17 @@ if ('serviceWorker' in navigator) {
         <a href="#" onclick="showIntelligence()" id="menu-inteligencia" class="sidebar-link">
             <i class="fa-solid fa-chart-pie"></i><span>Inteligência</span>
         </a>
+        <a href="#" onclick="showKnowledgeGraph()" id="menu-grafo" class="sidebar-link">
+            <i class="fa-solid fa-circle-nodes"></i><span>Mapa de Conhecimento</span>
+        </a>
 
         <p class="sidebar-section">Estudo</p>
         <a href="#" onclick="showFlashcards()" id="menu-flashcards" class="sidebar-link">
             <i class="fa-solid fa-layer-group"></i><span>Flashcards</span>
             <span id="fc-due-badge" class="hidden ml-auto mono text-[10px]" style="background:var(--warning);color:white;padding:1px 5px;border-radius:3px;"></span>
+        </a>
+        <a href="#" onclick="showQuestions()" id="menu-questoes" class="sidebar-link">
+            <i class="fa-solid fa-circle-question"></i><span>Questões</span>
         </a>
         <a href="#" onclick="showSessions()" id="menu-sessoes" class="sidebar-link">
             <i class="fa-solid fa-stopwatch"></i><span>Sessões</span>
@@ -160,6 +166,8 @@ if ('serviceWorker' in navigator) {
 <script src="js/schedule.js"></script>
 <script src="js/intelligence.js"></script>
 <script src="js/notes.js"></script>
+<script src="js/knowledge.js"></script>
+<script src="js/questions.js"></script>
 <script src="js/profile.js"></script>
 <script src="js/active-session.js"></script>
 <script src="js/search.js"></script>
