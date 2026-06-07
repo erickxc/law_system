@@ -109,7 +109,7 @@ def get_ipa(
         for s in subjects:
             has_book = db.query(Book.id).filter(Book.subject_id == s.id).first() is not None
             has_card = db.query(Flashcard.id).filter(Flashcard.subject_id == s.id).first() is not None
-            has_sess = db.query(StudySession.session_id).filter(
+            has_sess = db.query(StudySession.id).filter(
                 StudySession.subject_id == s.id,
                 StudySession.start_time >= period_start,
             ).first() is not None
@@ -274,7 +274,7 @@ def get_heatmap(
             StudySession.subject_id,
             Subject.name,
             func.coalesce(func.sum(StudySession.duration_seconds), 0),
-            func.count(StudySession.session_id),
+            func.count(StudySession.id),
         )
         .outerjoin(Subject, Subject.id == StudySession.subject_id)
         .filter(
@@ -300,7 +300,7 @@ def get_heatmap(
         db.query(
             func.date(StudySession.start_time).label("d"),
             func.coalesce(func.sum(StudySession.duration_seconds), 0),
-            func.count(StudySession.session_id),
+            func.count(StudySession.id),
         )
         .filter(
             StudySession.user_id == current_user.id,
