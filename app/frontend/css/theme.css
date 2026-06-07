@@ -102,44 +102,6 @@ aside.sidebar.collapsed > * { opacity: 0; pointer-events: none; }
 /* Backdrop pra fechar sidebar em tablet/mobile */
 .sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 49; backdrop-filter: blur(2px); }
 
-/* Tablet/Mobile: sidebar vira drawer overlay */
-@media (max-width: 1024px) {
-    aside.sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 50; transform: translateX(-100%); }
-    aside.sidebar.open { transform: translateX(0); box-shadow: 0 0 24px rgba(0,0,0,.3); }
-    aside.sidebar.collapsed { transform: translateX(-100%); width: 224px; }
-    aside.sidebar.collapsed > * { opacity: 1; pointer-events: auto; }
-    .sidebar-backdrop:not(.hidden) { display: block !important; }
-    /* Topbar pega 100% da largura */
-    main { width: 100%; }
-}
-@media (min-width: 1025px) {
-    .sidebar-backdrop { display: none !important; }
-    .sidebar-toggle { display: none; }  /* botão hambúrguer some no desktop largo */
-}
-
-/* Tablet (S9 ~1280×800, ou portrait 800×1280) — ajustes de denso/touch */
-@media (max-width: 1024px) {
-    /* Topbar com botões maiores pra dedo */
-    .topbar { padding: 0 12px; height: 52px; gap: 4px; }
-    .crumb { font-size: 11.5px; }
-    /* Alvos de toque ≥40px (WCAG) */
-    .btn-icon { min-width: 40px; min-height: 40px; }
-    .btn-sm { min-height: 36px; padding: 6px 10px; font-size: 12.5px; }
-    /* Modal ocupa quase a tela inteira */
-    .modal-box { max-width: 96vw !important; max-height: 92vh !important; margin: 4vh auto; }
-    /* Painel de notas vira drawer */
-    #notes-panel { position: absolute !important; right: 0; top: 0; bottom: 0; z-index: 30; box-shadow: -8px 0 24px rgba(0,0,0,.15); width: 320px !important; }
-}
-
-/* Mobile menor */
-@media (max-width: 640px) {
-    .topbar { padding: 0 8px; }
-    aside.sidebar { width: 88vw; max-width: 320px; }
-    /* Esconde labels longas, mantém ícone */
-    .topbar .search-shortcut { display: none; }
-    #userDisplayName { display: none; }
-    .crumb { font-size: 11px; }
-}
 .sidebar-section { font-size: 10.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: #71717a; padding: 14px 14px 4px; }
 .sidebar-link {
     display: flex; align-items: center; gap: 9px;
@@ -592,4 +554,185 @@ body.focus-mode .focus-exit {
 /* ── Reduced motion ──────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+
+/* ╔════════════════════════════════════════════════════════════════════╗
+   ║  RESPONSIVE SYSTEM — Mobile-first com 4 breakpoints                ║
+   ║                                                                    ║
+   ║  sm (640px)   smartphone landscape                                 ║
+   ║  md (768px)   tablet portrait                                      ║
+   ║  lg (1024px)  tablet landscape (Tab S9 retrato)                    ║
+   ║  xl (1280px)  desktop pequeno (Tab S9 paisagem ≈)                  ║
+   ║  2xl (1536px) desktop largo                                        ║
+   ║                                                                    ║
+   ║  Estratégia: tudo fluido com clamp() + grids auto-fill;            ║
+   ║  componentes adaptam padding/font-size por tier.                   ║
+   ╚════════════════════════════════════════════════════════════════════╝ */
+
+/* Tokens responsivos (escalam por viewport) */
+:root {
+    --page-px: clamp(12px, 2.5vw, 28px);       /* padding horizontal de páginas */
+    --page-py: clamp(14px, 2vw, 22px);          /* padding vertical */
+    --gap-md: clamp(10px, 1.5vw, 18px);         /* gap padrão entre cards */
+    --gap-sm: clamp(6px, 1vw, 12px);
+    --radius: 6px;
+    --topbar-h: clamp(48px, 6vh, 56px);
+    --sidebar-w: 224px;
+    --modal-pad: clamp(16px, 3vw, 24px);
+}
+
+/* Reset html/body para responsivo */
+html, body { min-width: 320px; -webkit-text-size-adjust: 100%; }
+img, svg, video, canvas { max-width: 100%; height: auto; }
+
+/* Page shell fluido */
+.page-shell { padding: var(--page-py) var(--page-px); max-width: 100%; }
+
+/* Topbar fluida + alvos de toque maiores em tablet */
+.topbar { padding: 0 var(--page-px); height: var(--topbar-h); gap: 6px; min-width: 0; }
+.topbar > * { min-width: 0; }
+.crumb { font-size: clamp(11px, 1.4vw, 13px); flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ───── Sidebar ───── */
+/* Desktop ≥ lg: sidebar fixa */
+@media (min-width: 1024px) {
+    .sidebar-backdrop { display: none !important; }
+    .sidebar-toggle { display: none; }
+    aside.sidebar.open { transform: none; }  /* sem efeito de drawer em desktop */
+}
+/* < lg: vira drawer */
+@media (max-width: 1023.98px) {
+    aside.sidebar {
+        position: fixed; top: 0; left: 0; bottom: 0;
+        z-index: 50; transform: translateX(-100%);
+        width: min(88vw, 320px);
+    }
+    aside.sidebar.open { transform: translateX(0); box-shadow: 0 0 32px rgba(0,0,0,.35); }
+    aside.sidebar.collapsed { transform: translateX(-100%); width: min(88vw, 320px); }
+    aside.sidebar.collapsed > * { opacity: 1; pointer-events: auto; }
+    main { width: 100%; }
+    .sidebar-backdrop:not(.hidden) { display: block; }
+}
+
+/* ───── Alvos de toque (WCAG) em telas touch ───── */
+@media (max-width: 1023.98px) {
+    .btn { min-height: 38px; padding: 8px 12px; font-size: 13px; }
+    .btn-sm { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+    .btn-icon { min-width: 38px; min-height: 38px; }
+    .btn-lg { min-height: 44px; padding: 10px 18px; font-size: 14px; }
+    .input { padding: 9px 12px; font-size: 14px; min-height: 40px; }
+    select.input, textarea.input { font-size: 14px; }
+    .sidebar-link { padding: 9px 14px; font-size: 13.5px; }
+}
+
+/* ───── Esconde elementos não-essenciais em mobile ───── */
+@media (max-width: 640px) {
+    .topbar .search-shortcut { display: none; }
+    #userDisplayName { display: none; }
+    .crumb { font-size: 11px; }
+}
+
+/* ───── Modais ───── */
+/* Mobile: full-screen; desktop: centralizado */
+.modal-backdrop { padding: clamp(8px, 2vw, 20px); }
+.modal-box { padding: var(--modal-pad); width: 100%; }
+@media (max-width: 640px) {
+    .modal-backdrop { padding: 0; align-items: stretch; }
+    .modal-box {
+        max-width: 100% !important; max-height: 100vh !important;
+        border-radius: 0 !important; border: none !important;
+        padding: 18px;
+    }
+}
+@media (min-width: 641px) and (max-width: 1023.98px) {
+    .modal-box { max-width: min(640px, 92vw) !important; max-height: 88vh; }
+}
+
+/* ───── Forms: 2 cols → 1 col em mobile ───── */
+@media (max-width: 640px) {
+    .grid.grid-cols-2 { grid-template-columns: 1fr !important; }
+    .grid.grid-cols-3 { grid-template-columns: 1fr !important; }
+    .grid.md\:grid-cols-3, .grid.md\:grid-cols-4 { grid-template-columns: 1fr !important; }
+}
+
+/* ───── KPI grid fluido (auto-fill) ───── */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--gap-md);
+}
+
+/* ───── Tabelas: overflow horizontal + scroll suave ───── */
+.tbl-wrap, .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tbl { min-width: 480px; }                /* garante coluna mínima visível */
+.tbl tbody td, .tbl thead th { white-space: nowrap; }
+/* Cards que contêm tabelas: permite scroll horizontal da tabela apenas */
+.card:has(table.tbl), .card:has(.tbl-wrap) { overflow: hidden; }
+.card .card-body:has(table.tbl) { overflow-x: auto; -webkit-overflow-scrolling: touch; padding: 0; }
+.card .card-body:has(table.tbl) > table.tbl { margin: 0; }
+
+/* Em telas estreitas: padding menor nas células pra caber mais coluna */
+@media (max-width: 640px) {
+    .tbl thead th { padding: 7px 8px; font-size: 10.5px; }
+    .tbl tbody td { padding: 8px 8px; font-size: 12.5px; }
+}
+
+/* ───── Toasts: posição/tamanho adaptativos ───── */
+@media (max-width: 640px) {
+    #toast-container { top: auto; bottom: 16px; left: 12px; right: 12px; align-items: stretch; }
+    .toast { min-width: 0; max-width: 100%; }
+}
+
+/* ───── PDF Reader topbar: enrolar em mobile ───── */
+.reader-topbar { flex-wrap: wrap; height: auto; min-height: 48px; padding: 6px 12px; gap: 6px; row-gap: 8px; }
+.reader-topbar .input { padding: 4px 8px; }
+@media (max-width: 640px) {
+    .reader-topbar .mono.text-\[11px\] { font-size: 10.5px; }
+}
+
+/* ───── Painel de notas vira drawer em < lg ───── */
+@media (max-width: 1023.98px) {
+    #notes-panel:not(.hidden) {
+        position: fixed !important;
+        right: 0; top: var(--topbar-h); bottom: 0;
+        z-index: 30; width: min(360px, 92vw) !important;
+        box-shadow: -8px 0 24px rgba(0,0,0,.2);
+    }
+}
+
+/* ───── Toolbar de etiquetas (post-it): wrap em mobile ───── */
+@media (max-width: 640px) {
+    .postit-toolbar {
+        bottom: 12px; left: 12px; right: 12px; transform: none;
+        flex-wrap: wrap; justify-content: center;
+        border-radius: 24px;
+    }
+    .postit-toolbar .pt-btn { width: 40px; height: 40px; font-size: 14px; }  /* maior pra dedo */
+    .postit-toolbar .pt-exit { font-size: 12px; }
+}
+
+/* ───── Flashcard reviewer: card menor em mobile ───── */
+@media (max-width: 640px) {
+    .card-scene { height: 240px !important; }
+    .card-face p[style*="20px"], .card-face p[style*="19px"] { font-size: 16px !important; }
+}
+
+/* ───── Search overlay: full-screen em mobile ───── */
+@media (max-width: 640px) {
+    .search-overlay { padding-top: 0; }
+    .search-box { width: 100%; max-width: 100%; height: 100vh; max-height: 100vh; border-radius: 0; }
+}
+
+/* ───── Tipografia fluida em títulos ───── */
+.page-title { font-size: clamp(16px, 2.2vw, 22px); }
+.page-sub { font-size: clamp(11.5px, 1.4vw, 13px); }
+.kpi-value { font-size: clamp(20px, 2.5vw, 26px); }
+.kpi-label { font-size: clamp(10.5px, 1.2vw, 11.5px); }
+
+/* ───── Print (relatórios) ───── */
+@media print {
+    aside.sidebar, .topbar, .sidebar-backdrop, #toast-container, .modal-backdrop { display: none !important; }
+    main, .page-shell { padding: 0 !important; }
+    body { background: white; color: black; }
 }
