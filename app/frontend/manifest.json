@@ -2,7 +2,7 @@
   "name": "Law System — Estudos Jurídicos",
   "short_name": "Law System",
   "description": "Sistema de estudos jurídicos: matérias, livros, flashcards, leitor PDF e mais.",
-  "start_url": "/dash.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",

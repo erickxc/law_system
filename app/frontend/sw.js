@@ -1,7 +1,7 @@
 /* Service Worker — Law System PWA
    Estratégia: cache shell (HTML/CSS/JS) + network-first pra API.
 */
-const CACHE = 'lawsys-v2';
+const CACHE = 'lawsys-v3';
 const SHELL = [
     '/dash.html',
     '/index.html',

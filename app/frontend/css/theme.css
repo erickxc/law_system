@@ -234,6 +234,12 @@ aside.sidebar nav { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,.08
 /* Cursor PDF em modo post-it */
 body.postit-mode .pdf-page-wrap { cursor: default; }
 body.dragging-sticky .pdf-page-wrap { cursor: copy; }
+
+/* Modo SPen: bloqueia gestos do navegador e dá feedback visual */
+body.spen-mode .pdf-page-wrap { cursor: crosshair; }
+body.spen-mode .pdf-textLayer { touch-action: none !important; opacity: 0.35 !important; }
+body.spen-mode .pdf-textLayer > span { background: rgba(37, 99, 235, 0.08); }
+body.spen-mode #pdf-scroll { overscroll-behavior: contain; }
 .pdf-page-wrap.drop-target { outline: 3px dashed var(--accent); outline-offset: -3px; background: rgba(59,130,246,.04); }
 
 /* Placeholder de página ainda não renderizada */

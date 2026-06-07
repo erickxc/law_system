@@ -337,6 +337,7 @@ async function openBookReader(bookId) {
                 <span id="reader-zoom" class="mono text-[11px]" style="color:var(--text-3); width:36px; text-align:center;">100%</span>
                 <button onclick="readerZoom(0.2)" class="btn btn-icon btn-sm" title="Ampliar"><i class="fa-solid fa-plus text-[10px]"></i></button>
                 <span style="width:1px; height:20px; background:var(--border); margin: 0 6px;"></span>
+                <button onclick="toggleSPenMode()" class="btn btn-sm" id="btn-spen" title="Selecionar com SPen/dedo (touch)"><i class="fa-solid fa-pen-fancy text-[10px]"></i> SPen</button>
                 <button onclick="togglePostitMode()" class="btn btn-sm" id="btn-postit"><i class="fa-solid fa-note-sticky text-[10px]"></i> Etiquetas</button>
                 <button onclick="toggleNotesPanel()" class="btn btn-sm" id="btn-notes-toggle"><i class="fa-solid fa-bookmark text-[10px]"></i> Notas (<span id="notes-count">${highlights.length + annotations.length}</span>)</button>
             </div>
@@ -1548,3 +1549,129 @@ async function deleteNote(id, type) {
         renderNotesList();
     } catch (e) { toast(e.message, 'error'); }
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Modo SPen — tracking manual de seleção via PointerEvents
+// Pra resolver o caso em que long-press com SPen/dedo no tablet não cria
+// seleção nativa. Quando ativo, dragar com SPen/dedo seleciona o texto.
+// ═══════════════════════════════════════════════════════════════════════
+
+let _spenMode = false;
+let _spenState = null;  // { startNode, startOffset, lastRange, wrap }
+
+function toggleSPenMode() {
+    _spenMode = !_spenMode;
+    document.body.classList.toggle('spen-mode', _spenMode);
+    const btn = document.getElementById('btn-spen');
+    if (btn) {
+        btn.classList.toggle('btn-primary', _spenMode);
+        btn.innerHTML = _spenMode
+            ? '<i class="fa-solid fa-circle-stop text-[10px]"></i> Sair SPen'
+            : '<i class="fa-solid fa-pen-fancy text-[10px]"></i> SPen';
+    }
+    if (_spenMode) {
+        toast('Modo SPen: arraste com a caneta ou dedo sobre o texto pra selecionar', 'info', 4500);
+    } else {
+        clearSpenSelection();
+    }
+}
+
+// Resolve a posição do caret a partir de coordenadas (cross-browser)
+function caretFromPoint(x, y) {
+    if (document.caretRangeFromPoint) {
+        return document.caretRangeFromPoint(x, y);
+    }
+    if (document.caretPositionFromPoint) {
+        const pos = document.caretPositionFromPoint(x, y);
+        if (!pos) return null;
+        const r = document.createRange();
+        try { r.setStart(pos.offsetNode, pos.offset); r.setEnd(pos.offsetNode, pos.offset); } catch { return null; }
+        return r;
+    }
+    return null;
+}
+
+function spenPointerDown(e) {
+    if (!_spenMode) return;
+    // Só aceita SPen, dedo ou mouse — ignora se vier do popover ou já em sticky
+    if (e.target.closest('#selection-popover, .sticky-note, .note-pin, .hl-overlay, .postit-panel')) return;
+    const wrap = e.target.closest('.pdf-page-wrap');
+    if (!wrap) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    const r = caretFromPoint(e.clientX, e.clientY);
+    if (!r) return;
+    const startNode = r.startContainer;
+    const startOffset = r.startOffset;
+    _spenState = { startNode, startOffset, lastRange: r, wrap };
+    // Limpa seleção atual e cria nova ancorada
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    const range = document.createRange();
+    range.setStart(startNode, startOffset);
+    range.setEnd(startNode, startOffset);
+    sel.addRange(range);
+}
+
+function spenPointerMove(e) {
+    if (!_spenMode || !_spenState) return;
+    e.preventDefault();
+    const r = caretFromPoint(e.clientX, e.clientY);
+    if (!r) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    const range = document.createRange();
+    try {
+        // Determina ordem (anchor pode estar antes ou depois)
+        const startNode = _spenState.startNode;
+        const startOffset = _spenState.startOffset;
+        const endNode = r.startContainer;
+        const endOffset = r.startOffset;
+
+        const cmp = startNode.compareDocumentPosition(endNode);
+        const sameNode = startNode === endNode;
+        const backward = !sameNode
+            ? (cmp & Node.DOCUMENT_POSITION_PRECEDING) !== 0
+            : endOffset < startOffset;
+
+        if (backward) {
+            range.setStart(endNode, endOffset);
+            range.setEnd(startNode, startOffset);
+        } else {
+            range.setStart(startNode, startOffset);
+            range.setEnd(endNode, endOffset);
+        }
+        sel.addRange(range);
+        _spenState.lastRange = range;
+    } catch { /* ignora out-of-bounds */ }
+}
+
+function spenPointerUp(e) {
+    if (!_spenMode || !_spenState) return;
+    const sel = window.getSelection();
+    const text = sel ? sel.toString().trim() : '';
+    _spenState = null;
+    if (text.length < 2) return;
+
+    // Reaproveita handleSelectionEnd pra abrir o popover com cores + anotar
+    handleSelectionEnd({ type: 'pointerup' });
+}
+
+function clearSpenSelection() {
+    const sel = window.getSelection();
+    if (sel) sel.removeAllRanges();
+    _spenState = null;
+    hidePopover();
+}
+
+// Anexar listeners globais uma vez. Usam capture pra rodar antes de outros handlers.
+(function bindSpenListeners() {
+    if (typeof window === 'undefined') return;
+    if (window._spenBound) return;
+    window._spenBound = true;
+    document.addEventListener('pointerdown', spenPointerDown, { capture: true });
+    document.addEventListener('pointermove', spenPointerMove, { capture: true });
+    document.addEventListener('pointerup', spenPointerUp, { capture: true });
+    document.addEventListener('pointercancel', spenPointerUp, { capture: true });
+})();
