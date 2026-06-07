@@ -319,7 +319,7 @@ async function openBookReader(bookId) {
 
     document.getElementById('mainContent').innerHTML = `
     <div class="h-full flex flex-col" style="background: #f4f4f5;">
-        <div class="topbar" style="border-top: none;">
+        <div class="topbar reader-topbar" style="border-top: none; flex-wrap: wrap; height: auto; min-height: 48px; padding: 6px 12px; gap: 6px;">
             <div class="flex items-center gap-3">
                 <button onclick="showBooks()" class="btn btn-icon btn-sm"><i class="fa-solid fa-arrow-left text-[10px]"></i></button>
                 <div>
@@ -394,9 +394,19 @@ async function openBookReader(bookId) {
         .popover-color { width: 22px; height: 22px; border-radius: 3px; border: 1px solid rgba(255,255,255,.2); cursor: pointer; transition: transform .12s; }
         .popover-color:hover { transform: scale(1.15); }
         .pdf-page-wrap { position: relative; background: white; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
-        .pdf-textLayer { position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden; opacity: 0.2; line-height: 1.0; user-select: text; }
-        .pdf-textLayer > span, .pdf-textLayer > br { color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%; }
+        .pdf-textLayer {
+            position: absolute; left: 0; top: 0; right: 0; bottom: 0; overflow: hidden;
+            opacity: 0.2; line-height: 1.0;
+            user-select: text; -webkit-user-select: text; -ms-user-select: text;
+            touch-action: pan-y;  /* permite scroll vertical e seleção; bloqueia outros gestos */
+            -webkit-touch-callout: default;
+        }
+        .pdf-textLayer > span, .pdf-textLayer > br {
+            color: transparent; position: absolute; white-space: pre; cursor: text; transform-origin: 0% 0%;
+            user-select: text; -webkit-user-select: text;
+        }
         .pdf-textLayer ::selection { background: rgba(0, 100, 255, 0.3); }
+        .pdf-textLayer ::-moz-selection { background: rgba(0, 100, 255, 0.3); }
         .hl-overlay { position: absolute; mix-blend-mode: multiply; border-radius: 2px; transition: filter .12s; }
         .hl-overlay:hover { filter: brightness(0.92); }
         .hl-yellow { background: rgba(253, 224, 71, 0.55); }
@@ -441,12 +451,16 @@ async function renderReader(book) {
         // Renderizar TODAS as páginas (lazy via IntersectionObserver)
         await renderAllPages(book.current_page || 1);
 
-        // Bind selection listener
+        // Bind selection listener (mouse + touch + SPen via pointer)
         const container = document.getElementById('pdf-container');
         if (container) {
             container.addEventListener('mouseup', handleSelectionEnd);
+            container.addEventListener('touchend', handleSelectionEnd, { passive: true });
+            container.addEventListener('pointerup', handleSelectionEnd);
         }
+        // Fechar popover ao tocar fora
         document.addEventListener('mousedown', maybeClosePopover);
+        document.addEventListener('touchstart', maybeClosePopover, { passive: true });
     } catch (e) {
         console.error(e);
         document.getElementById('pdf-container').innerHTML = `
@@ -1088,15 +1102,18 @@ function showNoteDetail(item, type) {
 let _lastSelection = null;
 
 function handleSelectionEnd(e) {
+    // Touch/SPen: precisa de delay maior pra a seleção ser propagada
+    const delay = (e && (e.type === 'touchend' || e.type === 'pointerup')) ? 120 : 10;
     setTimeout(() => {
         const sel = window.getSelection();
-        const text = sel.toString().trim();
+        const text = sel ? sel.toString().trim() : '';
         if (!text || text.length < 2) {
             hidePopover();
             return;
         }
+        if (!sel.rangeCount) return;
         const range = sel.getRangeAt(0);
-        const pageWrap = range.startContainer.parentElement?.closest('.pdf-page-wrap');
+        const pageWrap = (range.startContainer.nodeType === 3 ? range.startContainer.parentElement : range.startContainer)?.closest('.pdf-page-wrap');
         if (!pageWrap) {
             hidePopover();
             return;
@@ -1125,9 +1142,16 @@ function showPopover(range) {
     const rect = range.getBoundingClientRect();
     const pop = document.getElementById('selection-popover');
     if (!pop) return;
+    pop.style.position = 'fixed';
     pop.style.display = 'block';
-    pop.style.left = `${rect.left + (rect.width / 2) - 100}px`;
-    pop.style.top  = `${rect.top - 48}px`;
+    // Centraliza no meio da seleção, com fallback se sair da viewport
+    const popW = 220; // largura aproximada
+    let left = rect.left + (rect.width / 2) - (popW / 2);
+    left = Math.max(8, Math.min(window.innerWidth - popW - 8, left));
+    let top = rect.top - 52;
+    if (top < 8) top = rect.bottom + 8; // se não couber em cima, mostra embaixo
+    pop.style.left = `${left}px`;
+    pop.style.top  = `${top}px`;
 }
 
 function hidePopover() {

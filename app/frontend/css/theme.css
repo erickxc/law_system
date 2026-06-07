@@ -90,7 +90,56 @@ body { background: var(--bg); color: var(--text); font-size: 13.5px; line-height
 .mono { font-family: 'JetBrains Mono', monospace; font-feature-settings: 'tnum' 1; }
 
 /* ── Sidebar ─────────────────────────────────────────────────────────── */
-aside.sidebar { background: var(--side); color: var(--side-text); border-right: 1px solid #27272a; width: 224px; flex-shrink: 0; }
+aside.sidebar { background: var(--side); color: var(--side-text); border-right: 1px solid #27272a; width: 224px; flex-shrink: 0; transition: transform .22s ease, width .22s ease; }
+
+/* Sidebar colapsada (desktop): some o conteúdo lateral mas mantém layout */
+aside.sidebar.collapsed { width: 0; overflow: hidden; border-right: none; }
+aside.sidebar.collapsed > * { opacity: 0; pointer-events: none; }
+
+/* Botão hambúrguer da topbar */
+.sidebar-toggle { margin-right: 8px; flex-shrink: 0; }
+
+/* Backdrop pra fechar sidebar em tablet/mobile */
+.sidebar-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 49; backdrop-filter: blur(2px); }
+
+/* Tablet/Mobile: sidebar vira drawer overlay */
+@media (max-width: 1024px) {
+    aside.sidebar { position: fixed; left: 0; top: 0; bottom: 0; z-index: 50; transform: translateX(-100%); }
+    aside.sidebar.open { transform: translateX(0); box-shadow: 0 0 24px rgba(0,0,0,.3); }
+    aside.sidebar.collapsed { transform: translateX(-100%); width: 224px; }
+    aside.sidebar.collapsed > * { opacity: 1; pointer-events: auto; }
+    .sidebar-backdrop:not(.hidden) { display: block !important; }
+    /* Topbar pega 100% da largura */
+    main { width: 100%; }
+}
+@media (min-width: 1025px) {
+    .sidebar-backdrop { display: none !important; }
+    .sidebar-toggle { display: none; }  /* botão hambúrguer some no desktop largo */
+}
+
+/* Tablet (S9 ~1280×800, ou portrait 800×1280) — ajustes de denso/touch */
+@media (max-width: 1024px) {
+    /* Topbar com botões maiores pra dedo */
+    .topbar { padding: 0 12px; height: 52px; gap: 4px; }
+    .crumb { font-size: 11.5px; }
+    /* Alvos de toque ≥40px (WCAG) */
+    .btn-icon { min-width: 40px; min-height: 40px; }
+    .btn-sm { min-height: 36px; padding: 6px 10px; font-size: 12.5px; }
+    /* Modal ocupa quase a tela inteira */
+    .modal-box { max-width: 96vw !important; max-height: 92vh !important; margin: 4vh auto; }
+    /* Painel de notas vira drawer */
+    #notes-panel { position: absolute !important; right: 0; top: 0; bottom: 0; z-index: 30; box-shadow: -8px 0 24px rgba(0,0,0,.15); width: 320px !important; }
+}
+
+/* Mobile menor */
+@media (max-width: 640px) {
+    .topbar { padding: 0 8px; }
+    aside.sidebar { width: 88vw; max-width: 320px; }
+    /* Esconde labels longas, mantém ícone */
+    .topbar .search-shortcut { display: none; }
+    #userDisplayName { display: none; }
+    .crumb { font-size: 11px; }
+}
 .sidebar-section { font-size: 10.5px; font-weight: 500; letter-spacing: .05em; text-transform: uppercase; color: #71717a; padding: 14px 14px 4px; }
 .sidebar-link {
     display: flex; align-items: center; gap: 9px;

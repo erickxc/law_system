@@ -144,6 +144,48 @@ function kpi(label, value, icon, unit) {
 // ─── Logout ──────────────────────────────────────────────────────────────
 function logout() { localStorage.removeItem('access_token'); location.href = 'index.html'; }
 
+// ─── Sidebar (colapsar / drawer mobile) ─────────────────────────────────
+const SIDEBAR_KEY = 'lawsys.sidebarCollapsed';
+function isMobileViewport() { return window.matchMedia('(max-width: 1024px)').matches; }
+
+function toggleSidebar(force) {
+    const aside = document.getElementById('sidebar');
+    const backdrop = document.getElementById('sidebar-backdrop');
+    if (!aside) return;
+    const mobile = isMobileViewport();
+    if (mobile) {
+        // Em tablet/mobile: drawer com overlay
+        const open = typeof force === 'boolean' ? force : !aside.classList.contains('open');
+        aside.classList.toggle('open', open);
+        if (backdrop) backdrop.classList.toggle('hidden', !open);
+    } else {
+        // Desktop: colapsa lateral
+        const collapsed = typeof force === 'boolean' ? !force : !aside.classList.contains('collapsed');
+        aside.classList.toggle('collapsed', collapsed);
+        localStorage.setItem(SIDEBAR_KEY, collapsed ? '1' : '0');
+    }
+}
+
+// Aplica estado salvo na inicialização (só desktop)
+(function initSidebarState() {
+    if (typeof window === 'undefined') return;
+    window.addEventListener('DOMContentLoaded', () => {
+        const aside = document.getElementById('sidebar');
+        if (!aside || isMobileViewport()) return;
+        if (localStorage.getItem(SIDEBAR_KEY) === '1') aside.classList.add('collapsed');
+    });
+    // Ao redimensionar (rodando tablet) ajusta automaticamente
+    window.addEventListener('resize', () => {
+        const aside = document.getElementById('sidebar');
+        const backdrop = document.getElementById('sidebar-backdrop');
+        if (!aside) return;
+        if (!isMobileViewport()) {
+            aside.classList.remove('open');
+            if (backdrop) backdrop.classList.add('hidden');
+        }
+    });
+})();
+
 // ─── Dark mode ───────────────────────────────────────────────────────────
 function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);

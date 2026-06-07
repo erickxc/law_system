@@ -16,8 +16,11 @@
 
 <div id="toast-container"></div>
 
+<!-- Sidebar overlay (clique fora pra fechar no mobile/tablet) -->
+<div id="sidebar-backdrop" class="sidebar-backdrop hidden" onclick="toggleSidebar(false)"></div>
+
 <!-- Sidebar -->
-<aside class="sidebar flex flex-col">
+<aside class="sidebar flex flex-col" id="sidebar">
     <div class="px-4 py-3 flex items-center gap-2" style="border-bottom: 1px solid #27272a;">
         <div class="brand-mark"><i class="fa-solid fa-scale-balanced"></i></div>
         <div>
@@ -93,6 +96,9 @@
 <!-- Main -->
 <main class="flex-1 flex flex-col overflow-hidden">
     <header class="topbar">
+        <button onclick="toggleSidebar()" class="btn btn-icon btn-sm sidebar-toggle" id="sidebar-toggle" title="Mostrar/ocultar menu" aria-label="Alternar menu lateral">
+            <i class="fa-solid fa-bars text-[12px]"></i>
+        </button>
         <div class="crumb">
             <span id="crumb-section">Geral</span>
             <span class="mx-1.5" style="color:var(--text-5)">/</span>
