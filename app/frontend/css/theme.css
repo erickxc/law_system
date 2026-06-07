@@ -581,6 +581,75 @@ body.focus-mode .focus-exit {
     box-shadow: 0 2px 6px rgba(220,38,38,.25);
 }
 
+/* ── Editor Acadêmico (Notas) ────────────────────────────────────────── */
+.note-editor { display: flex; flex-direction: column; height: 88vh; max-height: 88vh; }
+.note-editor-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 0 0 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+.note-title-input {
+    flex: 1; min-width: 200px;
+    border: none; outline: none; background: transparent;
+    font-size: clamp(16px, 2vw, 20px); font-weight: 600; color: var(--text);
+    padding: 6px 0;
+}
+.note-title-input:focus { border-bottom: 2px solid var(--accent); }
+.note-editor-body { flex: 1; display: flex; min-height: 0; gap: 0; }
+@media (max-width: 1024px) {
+    .note-editor-body { flex-direction: column; }
+}
+.note-toolbar {
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px 8px; background: var(--bg-2);
+    border-bottom: 1px solid var(--border); flex-wrap: wrap;
+}
+.note-toolbar button {
+    width: 30px; height: 30px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid transparent;
+    border-radius: 4px; cursor: pointer; color: var(--text-2);
+    font-size: 12px;
+    transition: background .12s, border-color .12s;
+}
+.note-toolbar button:hover { background: var(--surface); border-color: var(--border-2); }
+.note-toolbar button.is-active, .note-toolbar .cv-tool.is-active { background: var(--accent); color: white; border-color: var(--accent); }
+.note-toolbar-sep { width: 1px; height: 18px; background: var(--border); margin: 0 2px; }
+.note-toolbar .btn-fc, .note-toolbar .btn-ocr {
+    width: auto; padding: 0 10px; font-size: 11px; font-weight: 600;
+    color: var(--accent); border-color: var(--accent);
+}
+.note-toolbar .btn-fc:hover, .note-toolbar .btn-ocr:hover { background: var(--accent-bg); }
+.note-editor-content {
+    flex: 1; overflow-y: auto; padding: 16px;
+    font-size: 14px; line-height: 1.6; color: var(--text);
+    background: var(--surface);
+    outline: none;
+}
+.note-editor-content:empty::before {
+    content: 'Comece a escrever…';
+    color: var(--text-5); font-style: italic;
+}
+.note-canvas-wrap {
+    flex: 1; min-height: 280px; overflow: hidden; position: relative;
+    background: #f9fafb;
+}
+[data-theme="dark"] .note-canvas-wrap { background: #1a1a1a; }
+#ne-canvas { display: block; background: white; }
+[data-theme="dark"] #ne-canvas { background: #f5f5f5; }
+.note-editor-foot {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 0 0; border-top: 1px solid var(--border); margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+/* Modal full-screen pra editor */
+.modal-box:has(.note-editor) { max-width: min(1200px, 96vw) !important; max-height: 96vh; padding: 18px; }
+@media (max-width: 640px) {
+    .modal-box:has(.note-editor) { max-width: 100% !important; height: 100vh; max-height: 100vh; border-radius: 0; }
+    .note-editor { height: calc(100vh - 36px); }
+}
+
 /* ── Reduced motion ──────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }

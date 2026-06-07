@@ -281,6 +281,36 @@ class CalendarEvent(Base):
     subject: Mapped[Optional["Subject"]] = relationship("Subject", foreign_keys=[subject_id])
 
 
+class Note(Base):
+    """Notas acadêmicas: resumos (texto), manuscritos (canvas/SVG) ou híbridos."""
+    __tablename__ = "notes"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True
+    )
+    book_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.books.id", ondelete="SET NULL"), nullable=True
+    )
+
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False, default="text")
+    content_html: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    content_plain: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    canvas_svg: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    canvas_png: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    tags: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    subject: Mapped[Optional["Subject"]] = relationship("Subject", foreign_keys=[subject_id])
+
+
 class LearningEvent(Base):
     """Event sourcing simplificado da jornada de aprendizagem.
     Cada interação (leitura, grifo, anotação, revisão, sessão) vira um evento."""
