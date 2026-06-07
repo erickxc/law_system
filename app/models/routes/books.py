@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from app.database import get_db
 from app.core.auth import get_current_user
+from app.core.events import emit_event
 from app.models.academic import Book, BookAnnotation, BookHighlight, Subject
 
 router = APIRouter(prefix="/books", tags=["Books"])
@@ -246,6 +247,17 @@ def create_annotation(
         y_pct=data.y_pct,
     )
     db.add(ann)
+    db.flush()
+    emit_event(
+        db,
+        user_id=current_user.id,
+        event_type="etiqueta" if data.tag else "anotacao",
+        entity_type="annotation",
+        entity_id=ann.id,
+        subject_id=book.subject_id,
+        page_number=data.page_number,
+        meta={"book_id": str(book_id), "tag": data.tag, "color": data.color},
+    )
     db.commit()
     db.refresh(ann)
     return _annotation_dict(ann)
@@ -328,6 +340,17 @@ def create_highlight(
         rects=data.rects or [],
     )
     db.add(h)
+    db.flush()
+    emit_event(
+        db,
+        user_id=current_user.id,
+        event_type="grifo",
+        entity_type="highlight",
+        entity_id=h.id,
+        subject_id=book.subject_id,
+        page_number=data.page_number,
+        meta={"book_id": str(book_id), "color": data.color, "text_preview": (data.selected_text or "")[:80]},
+    )
     db.commit()
     db.refresh(h)
     return _highlight_dict(h)

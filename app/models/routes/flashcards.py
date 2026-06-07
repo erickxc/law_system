@@ -13,6 +13,7 @@ import csv
 
 from app.database import get_db
 from app.core.auth import get_current_user
+from app.core.events import emit_event
 from app.models.academic import Flashcard, FlashcardReview, Subject, Book, BookHighlight, BookAnnotation
 
 router = APIRouter(prefix="/flashcards", tags=["Flashcards"])
@@ -616,6 +617,17 @@ def review_flashcard(
     card.interval_days = new_interval
     card.ease_factor = new_ef
     card.next_review_at = next_review
+
+    emit_event(
+        db,
+        user_id=current_user.id,
+        event_type="revisao",
+        entity_type="flashcard",
+        entity_id=card.id,
+        subject_id=card.subject_id,
+        score=confidence,
+        meta={"is_correct": is_correct, "interval_days": round(new_interval, 1)},
+    )
 
     db.commit()
     db.expire(card)

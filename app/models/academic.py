@@ -281,6 +281,28 @@ class CalendarEvent(Base):
     subject: Mapped[Optional["Subject"]] = relationship("Subject", foreign_keys=[subject_id])
 
 
+class LearningEvent(Base):
+    """Event sourcing simplificado da jornada de aprendizagem.
+    Cada interação (leitura, grifo, anotação, revisão, sessão) vira um evento."""
+    __tablename__ = "learning_events"
+    __table_args__ = {"schema": "academic"}
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("core.users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    entity_type: Mapped[Optional[str]] = mapped_column(String(30), nullable=True)
+    entity_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
+    subject_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        ForeignKey("academic.subjects.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    page_number: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    meta: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False, index=True)
+
+
 class ClassSchedule(Base):
     __tablename__ = "class_schedules"
     __table_args__ = {"schema": "academic"}

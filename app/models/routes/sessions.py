@@ -9,6 +9,7 @@ from app.database import get_db
 from app.models.academic import StudySession, SessionTask, Subject
 from app.models.schemas.study import StudySessionCreate, StudySessionResponse
 from app.core.auth import get_current_user
+from app.core.events import emit_event
 
 router = APIRouter(prefix="/sessions", tags=["Sessions"])
 
@@ -43,6 +44,20 @@ def create_session(
             description=task.description,
             is_done=task.is_done
         ))
+
+    emit_event(
+        db,
+        user_id=current_user.id,
+        event_type="sessao_concluida",
+        entity_type="session",
+        entity_id=new_session.id,
+        subject_id=session_data.subject_id,
+        meta={
+            "duration_seconds": session_data.duration_seconds,
+            "total_questions": session_data.total_questions,
+            "correct_answers": session_data.correct_answers,
+        },
+    )
 
     db.commit()
     return {"message": "Sessão salva com sucesso!", "session_id": str(new_session.id)}
