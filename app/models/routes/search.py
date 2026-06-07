@@ -66,10 +66,11 @@ def unified_search(
     )
     subjects = [{"id": str(r.id), "name": r.name, "sigla": r.sigla, "priority": r.priority, "status": r.status, "rank": float(r.rank)} for r in sub_rows]
 
-    # Books
+    # Books (sem created_at)
     book_rows = search_table(
         "academic.books",
         "id, name, author, current_page, total_pages, subject_id",
+        has_created_at=False,
     )
     books = [{"id": str(r.id), "name": r.name, "author": r.author, "current_page": r.current_page, "total_pages": r.total_pages, "subject_id": str(r.subject_id) if r.subject_id else None, "rank": float(r.rank)} for r in book_rows]
 
